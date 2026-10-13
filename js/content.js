@@ -139,6 +139,59 @@ window.CONTENT = {
   ],
 
   /* ------------------------------------------------------------------ */
+  /* Recurring observances shown on the calendar                         */
+  /* ------------------------------------------------------------------ */
+  vrats: {
+    ekadashi: {
+      name: "Ekadashi", deva: "एकादशी", deity: "vishnu",
+      summary: "The eleventh lunar day, sacred to Vishnu.",
+      meaning: "Ekadashi falls twice a month, on the eleventh day of each lunar fortnight. Devotees of Vishnu fast from grains and beans, or eat simply, and spend the day in prayer. The fast is broken the next morning after sunrise. Each of the 24 Ekadashis of the year has its own name and story.",
+      prayers: ["vasudeva", "shantakaram", "jagdish", "narayana"]
+    },
+    purnima: {
+      name: "Purnima", deva: "पूर्णिमा", deity: "vishnu",
+      summary: "Full moon.",
+      meaning: "The full moon is an auspicious day for worship, charity and fasting. Many families perform the Satyanarayan Katha, a puja to Vishnu, on Purnima.",
+      prayers: ["jagdish", "gayatri", "purnamadah"]
+    },
+    amavasya: {
+      name: "Amavasya", deva: "अमावस्या", deity: "universal",
+      summary: "New moon, a day to remember the ancestors.",
+      meaning: "On the new moon, offerings of water and sesame (tarpan) are made to the ancestors, and many people keep a quiet, reflective day. New ventures are usually not begun.",
+      prayers: ["mahamrityunjaya", "tvameva", "sarve-bhavantu"]
+    },
+    sankashti: {
+      name: "Sankashti Chaturthi", deva: "संकष्टी", deity: "ganesha",
+      summary: "Ganesha's monthly fast, broken at moonrise.",
+      meaning: "On the fourth day after each full moon, devotees fast for Ganesha, the remover of difficulties (sankat), and break the fast after sighting the moon. When it falls on a Tuesday it is Angaraki Chaturthi, especially auspicious.",
+      prayers: ["ganesh-mantra", "ganesha", "ganesh-aarti", "sukhkarta"]
+    },
+    pradosh: {
+      name: "Pradosh Vrat", deva: "प्रदोष", deity: "shiva",
+      summary: "Shiva's twilight worship on the thirteenth lunar day.",
+      meaning: "Twice a month, on the thirteenth lunar day, Shiva is worshipped in the hour and a half after sunset, when he is said to dance in joy on Mount Kailash. Pradosh on a Monday (Soma Pradosh) or Saturday (Shani Pradosh) is especially valued.",
+      prayers: ["shiva", "shiv-aarti", "rudrashtakam", "karpura-gauram"]
+    },
+    shivaratri: {
+      name: "Masik Shivaratri", deva: "शिवरात्रि", deity: "shiva",
+      summary: "Shiva's monthly night of worship.",
+      meaning: "Every month, the fourteenth night of the waning moon is Shivaratri. Devotees fast and worship Shiva at night. The greatest of these is Maha Shivaratri in Phalguna.",
+      prayers: ["shiva", "mahamrityunjaya", "shiv-chalisa", "shiva-panchakshara"]
+    }
+  },
+
+  /* Deity traditionally worshipped on each weekday, Sunday first */
+  weekdays: [
+    { deity: "surya", name: "Ravivar", note: "Sunday is the Sun's day.", prayers: ["japa-kusuma", "surya-mantra", "gayatri"] },
+    { deity: "shiva", name: "Somvar", note: "Monday is sacred to Shiva.", prayers: ["shiva", "rudrashtakam", "shiv-aarti"] },
+    { deity: "hanuman", name: "Mangalvar", note: "Tuesday is for Hanuman and Ganesha.", prayers: ["hanuman-chalisa", "manojavam", "hanuman-aarti"] },
+    { deity: "ganesha", name: "Budhvar", note: "Wednesday is Ganesha's day.", prayers: ["ganesha", "ganesh-mantra", "ganesh-aarti"] },
+    { deity: "vishnu", name: "Guruvar", note: "Thursday is for Vishnu and the guru.", prayers: ["jagdish", "vasudeva", "guru"] },
+    { deity: "devi", name: "Shukravar", note: "Friday is for the Goddess: Durga, Lakshmi and Santoshi Ma.", prayers: ["lakshmi-aarti", "mahalakshmi", "ambe-aarti"] },
+    { deity: "hanuman", name: "Shanivar", note: "Saturday is for Shani and Hanuman.", prayers: ["hanuman-chalisa", "ramaskandam", "navagraha"] }
+  ],
+
+  /* ------------------------------------------------------------------ */
   /* Academy: structured courses                                         */
   /* ------------------------------------------------------------------ */
   categories: [
@@ -153,6 +206,7 @@ window.CONTENT = {
   courses: [
     {
       id: "foundations",
+      deva: "सनातन",
       category: "philosophy",
       title: "Foundations of Hinduism",
       subtitle: "Key ideas in five short lessons",
@@ -183,6 +237,7 @@ window.CONTENT = {
     },
     {
       id: "trimurti",
+      deva: "त्रिमूर्ति",
       category: "deities",
       title: "The Trimurti",
       subtitle: "Brahma, Vishnu and Shiva",
@@ -209,6 +264,7 @@ window.CONTENT = {
     },
     {
       id: "devi",
+      deva: "देवी",
       category: "deities",
       title: "The Divine Mother",
       subtitle: "Shakti, Durga, Lakshmi and Saraswati",
@@ -231,6 +287,7 @@ window.CONTENT = {
     },
     {
       id: "ganesha",
+      deva: "गणेश",
       category: "deities",
       title: "Ganesha",
       subtitle: "Remover of obstacles",
@@ -253,6 +310,7 @@ window.CONTENT = {
     },
     {
       id: "gita",
+      deva: "गीता",
       category: "scripture",
       title: "Bhagavad Gita Essentials",
       subtitle: "The Song of God in six lessons",
@@ -287,6 +345,7 @@ window.CONTENT = {
     },
     {
       id: "epics",
+      deva: "इतिहास",
       category: "scripture",
       title: "The Great Epics",
       subtitle: "Ramayana and Mahabharata",
@@ -309,6 +368,7 @@ window.CONTENT = {
     },
     {
       id: "meditation",
+      deva: "ध्यान",
       category: "practice",
       title: "Meditation & Mantra",
       subtitle: "A beginner's daily practice",
@@ -335,6 +395,7 @@ window.CONTENT = {
     },
     {
       id: "temples",
+      deva: "मन्दिर",
       category: "temples",
       title: "Understanding the Temple",
       subtitle: "Architecture, etiquette and pilgrimage",
@@ -363,6 +424,8 @@ window.CONTENT = {
   festivals: [
     {
       id: "makar-sankranti",
+      deva: "संक्रान्ति",
+      prayers: ["surya-mantra", "japa-kusuma", "gayatri"],
       name: "Makar Sankranti",
       month: 1,
       when: "Around 14 January, when the sun enters Capricorn",
@@ -375,6 +438,8 @@ window.CONTENT = {
     },
     {
       id: "vasant-panchami",
+      deva: "वसन्त",
+      prayers: ["ya-kundendu", "saraswati", "saraswati-aarti"],
       name: "Vasant Panchami",
       month: 2,
       when: "Fifth day of the bright half of Magha (Jan–Feb)",
@@ -387,6 +452,8 @@ window.CONTENT = {
     },
     {
       id: "maha-shivaratri",
+      deva: "शिवरात्रि",
+      prayers: ["shiva", "mahamrityunjaya", "rudrashtakam", "shiv-chalisa"],
       name: "Maha Shivaratri",
       month: 2,
       when: "Night before the new moon in Phalguna (Feb–Mar)",
@@ -399,6 +466,8 @@ window.CONTENT = {
     },
     {
       id: "holi",
+      deva: "होली",
+      prayers: ["madhurashtakam", "kunj-bihari", "hare-krishna"],
       name: "Holi",
       month: 3,
       when: "Full moon of Phalguna (Feb–Mar)",
@@ -411,6 +480,8 @@ window.CONTENT = {
     },
     {
       id: "ram-navami",
+      deva: "राम",
+      prayers: ["ramchandra-kripalu", "rama-mantra", "ramaya"],
       name: "Rama Navami",
       month: 4,
       when: "Ninth day of the bright half of Chaitra (Mar–Apr)",
@@ -423,6 +494,8 @@ window.CONTENT = {
     },
     {
       id: "raksha-bandhan",
+      deva: "रक्षा",
+      prayers: ["sarve-bhavantu", "vanamali"],
       name: "Raksha Bandhan",
       month: 8,
       when: "Full moon of Shravana (Jul–Aug)",
@@ -435,6 +508,8 @@ window.CONTENT = {
     },
     {
       id: "janmashtami",
+      deva: "कृष्ण",
+      prayers: ["madhurashtakam", "kunj-bihari", "krishna-vande", "hare-krishna"],
       name: "Krishna Janmashtami",
       month: 8,
       when: "Eighth day of the dark half of Bhadrapada (Aug–Sep)",
@@ -447,6 +522,8 @@ window.CONTENT = {
     },
     {
       id: "ganesh-chaturthi",
+      deva: "गणेश",
+      prayers: ["ganesh-aarti", "sukhkarta", "ganesh-mantra", "ganesha"],
       name: "Ganesh Chaturthi",
       month: 9,
       when: "Fourth day of the bright half of Bhadrapada (Aug–Sep)",
@@ -459,6 +536,9 @@ window.CONTENT = {
     },
     {
       id: "navaratri",
+      dayName: "Sharad Navaratri begins",
+      deva: "नवरात्रि",
+      prayers: ["ya-devi", "ambe-aarti", "durga-chalisa", "durga-mantra"],
       name: "Navaratri & Dussehra",
       month: 10,
       when: "First ten days of the bright half of Ashvin (Sep–Oct)",
@@ -471,6 +551,8 @@ window.CONTENT = {
     },
     {
       id: "karva-chauth",
+      deva: "करवा",
+      prayers: ["sarva-mangala", "shiva"],
       name: "Karva Chauth",
       month: 10,
       when: "Fourth day after the Ashvin full moon (Oct–Nov)",
@@ -483,6 +565,9 @@ window.CONTENT = {
     },
     {
       id: "diwali",
+      dayName: "Diwali · Lakshmi Puja",
+      deva: "दीपावली",
+      prayers: ["lakshmi-aarti", "mahalakshmi", "deepa-jyoti", "ganesh-aarti"],
       name: "Diwali",
       month: 11,
       when: "New moon of Kartika (Oct–Nov)",
@@ -495,6 +580,8 @@ window.CONTENT = {
     },
     {
       id: "kartik-purnima",
+      deva: "कार्तिक",
+      prayers: ["deepa-jyoti", "shiva", "jagdish"],
       name: "Kartik Purnima / Dev Deepavali",
       month: 11,
       when: "Full moon of Kartika (Nov)",
@@ -504,6 +591,173 @@ window.CONTENT = {
       meaning: "In Varanasi, the ghats are lit with countless lamps to honour Shiva's victory over the demon Tripurasura. It is also an auspicious day for holy bathing and charity.",
       traditions: ["Floating lamps on rivers", "Holy bathing", "Charity"],
       atHome: ["Float a small lamp in a bowl of water.", "Give to a cause close to your heart."]
+    },
+    {
+      id: "ugadi", name: "Ugadi · Gudi Padwa", deva: "नववर्ष", month: 3,
+      when: "First day of the bright half of Chaitra (Mar–Apr)",
+      summary: "The Hindu New Year, and the start of the spring Navaratri.",
+      meaning: "Chaitra Shukla Pratipada begins the new lunar year in much of India. It is Ugadi in Karnataka, Andhra Pradesh and Telangana, Gudi Padwa in Maharashtra and Cheti Chand for Sindhis. Tradition holds that Brahma began creation on this day. Chaitra Navaratri, nine nights of the Goddess, begins now and ends on Rama Navami.",
+      traditions: ["Raising a gudi (a decorated pole with an inverted pot) in Maharashtra", "Ugadi pachadi: a dish of six tastes, for life's mix of experiences", "Hearing the year's panchanga read aloud", "Oil bath, new clothes and mango-leaf garlands on doorways"],
+      atHome: ["Clean the home and hang a string of mango leaves at the door.", "Make a simple dish mixing sweet, sour, bitter, salty, spicy and astringent tastes, and share it.", "Begin the spring Navaratri by lighting a lamp each evening."],
+      prayers: ["ganesha", "durga-mantra", "ya-devi"]
+    },
+    {
+      id: "hanuman-jayanti", name: "Hanuman Jayanti", deva: "हनुमान", month: 4,
+      when: "Full moon of Chaitra (Mar–Apr)",
+      summary: "The birth of Hanuman, the devoted servant of Rama.",
+      meaning: "Hanuman embodies strength placed wholly in the service of love. In North India his birth is celebrated on the full moon of Chaitra; some regions celebrate it at other times of year.",
+      traditions: ["Reciting the Hanuman Chalisa, often 7 or 108 times", "Offering sindoor and jasmine oil at Hanuman temples", "Reading the Sundara Kanda of the Ramayana"],
+      atHome: ["Recite the Hanuman Chalisa at sunrise.", "Offer red flowers and a sweet such as boondi.", "Read the story of Hanuman's leap to Lanka in the Ramayana."],
+      prayers: ["hanuman-chalisa", "manojavam", "hanuman-aarti"]
+    },
+    {
+      id: "akshaya-tritiya", name: "Akshaya Tritiya", deva: "अक्षय", month: 4,
+      when: "Third day of the bright half of Vaishakha (Apr–May)",
+      summary: "A day of imperishable blessings for new beginnings and generosity.",
+      meaning: "“Akshaya” means never diminishing. Good deeds, charity and new ventures begun today are believed to bear lasting fruit. It is also remembered as the birthday of Parashurama and the day the Treta Yuga began.",
+      traditions: ["Charity, especially of food, water and grain", "Beginning new ventures or buying gold", "Worship of Vishnu and Lakshmi"],
+      atHome: ["Give food or water to someone in need.", "Begin something you have been putting off.", "Offer a lamp to Lakshmi and Vishnu in the evening."],
+      prayers: ["lakshmi-mantra", "mahalakshmi", "vasudeva"]
+    },
+    {
+      id: "ganga-dussehra", name: "Ganga Dussehra", deva: "गङ्गा", month: 6,
+      when: "Tenth day of the bright half of Jyeshtha (May–Jun)",
+      summary: "The descent of the holy Ganga from heaven to earth.",
+      meaning: "Celebrates the day the Ganga descended to earth through Shiva's matted locks, brought down by the austerities of King Bhagiratha to free his ancestors.",
+      traditions: ["Bathing in the Ganga or another river", "Evening Ganga aarti at Haridwar and Varanasi", "Floating lamps on the water"],
+      atHome: ["Recite Gange Cha Yamune while bathing.", "Float a small lamp in a bowl of water at dusk."],
+      prayers: ["ganga-snana", "shiva", "deepa-jyoti"]
+    },
+    {
+      id: "rath-yatra", name: "Jagannath Rath Yatra", deva: "रथयात्रा", month: 7,
+      when: "Second day of the bright half of Ashadha (Jun–Jul)",
+      summary: "The great chariot procession of Lord Jagannath at Puri.",
+      meaning: "Jagannath, a form of Krishna, rides out of his temple at Puri with his brother Balabhadra and sister Subhadra on three towering wooden chariots, pulled by hundreds of thousands of devotees. Rath Yatras are now held in cities around the world.",
+      traditions: ["Pulling the chariots with ropes", "Kirtan and dancing in the streets", "Sharing mahaprasad"],
+      atHome: ["Join a local Rath Yatra if one is held nearby.", "Sing the Hare Krishna mantra or Jaya Radha Madhava."],
+      prayers: ["hare-krishna", "radha-madhav", "achyutam"]
+    },
+    {
+      id: "guru-purnima", name: "Guru Purnima", deva: "गुरु", month: 7,
+      when: "Full moon of Ashadha (Jun–Jul)",
+      summary: "A day to honour your teachers.",
+      meaning: "Also called Vyasa Purnima, it honours the sage Vyasa, who compiled the Vedas and composed the Mahabharata, and through him every teacher who has guided us.",
+      traditions: ["Honouring one's guru with flowers and gifts", "Reading scripture", "Thanking teachers and mentors"],
+      atHome: ["Thank a teacher who shaped you, with a call, a message or a visit.", "Recite Gurur Brahma.", "Read a passage of the Bhagavad Gita."],
+      prayers: ["guru", "krishna-vande", "asato-ma"]
+    },
+    {
+      id: "nag-panchami", name: "Nag Panchami", deva: "नाग", month: 8,
+      when: "Fifth day of the bright half of Shravana (Jul–Aug)",
+      summary: "Honouring the serpent deities.",
+      meaning: "Serpents are revered as guardians of the earth's waters and treasures, and are closely linked with Shiva and Vishnu. On this day they are offered milk and prayers for the family's protection.",
+      traditions: ["Worship of serpent images in clay or silver", "Offering milk at anthills or temples", "Not digging the earth"],
+      atHome: ["Offer prayers to Shiva, who wears the serpent Vasuki.", "Avoid harming any living creature today."],
+      prayers: ["shiva", "karpura-gauram"]
+    },
+    {
+      id: "hartalika-teej", name: "Hartalika Teej", deva: "तीज", month: 9,
+      when: "Third day of the bright half of Bhadrapada (Aug–Sep)",
+      summary: "Women honour Parvati's devotion to Shiva.",
+      meaning: "Parvati performed long austerities to win Shiva as her husband. On Hartalika Teej women fast, often without water, and worship Shiva and Parvati for marital happiness, or for a good husband.",
+      traditions: ["A strict fast", "Clay images of Shiva and Parvati", "Night-long singing"],
+      atHome: ["Make simple clay images of Shiva and Parvati and offer flowers.", "Hear the story of Parvati's penance."],
+      prayers: ["shiva", "sarva-mangala", "shiv-aarti"]
+    },
+    {
+      id: "anant-chaturdashi", name: "Anant Chaturdashi", deva: "अनन्त", month: 9,
+      when: "Fourteenth day of the bright half of Bhadrapada (Sep)",
+      summary: "Farewell to Ganesha, and worship of the infinite Vishnu.",
+      meaning: "The final day of Ganeshotsav, when clay images of Ganesha are immersed in water. It is also the day of Anant, the infinite Vishnu, whose protective thread with fourteen knots is tied on the arm.",
+      traditions: ["Ganesh visarjan processions", "Tying the anant sutra", "Vishnu puja"],
+      atHome: ["Immerse a clay Ganesha in a bucket of water and pour it onto plants.", "Tie a thread on your wrist as a prayer for protection."],
+      prayers: ["ganesh-aarti", "sukhkarta", "vasudeva"]
+    },
+    {
+      id: "pitru-paksha", name: "Pitru Paksha begins", deva: "पितृ", month: 9,
+      when: "Dark half of Bhadrapada (Sep–Oct)",
+      summary: "Sixteen days for remembering the ancestors.",
+      meaning: "During Pitru Paksha families offer shraddha and tarpan (water, sesame and food) to their ancestors on the lunar day of each one's passing. New ventures and celebrations are traditionally postponed. It ends on Mahalaya Amavasya.",
+      traditions: ["Tarpan: offering water mixed with sesame", "Feeding brahmins, the poor, crows and cows", "Remembering the names of departed family"],
+      atHome: ["Light a lamp before photos of departed family members.", "Cook a dish they loved and give food to someone in need.", "Share family stories with younger relatives."],
+      prayers: ["mahamrityunjaya", "sarve-bhavantu", "tvameva"]
+    },
+    {
+      id: "sharad-purnima", name: "Sharad Purnima", deva: "शरद", month: 10,
+      when: "Full moon of Ashvin (Oct)",
+      summary: "The brightest full moon of the year.",
+      meaning: "On this autumn night the moon is said to shine with all sixteen kalas and to pour amrit into its rays. It recalls Krishna's Raas Leela with the gopis, and in Bengal and Odisha it is Kojagari Lakshmi Puja.",
+      traditions: ["Leaving kheer out in the moonlight overnight", "Staying awake to worship Lakshmi", "Raas and garba under the moon"],
+      atHome: ["Make kheer and leave it in the moonlight, then share it in the morning.", "Sit outside for a few minutes under the full moon in quiet reflection."],
+      prayers: ["lakshmi-aarti", "madhurashtakam", "lakshmi-mantra"]
+    },
+    {
+      id: "chhath", name: "Chhath Puja", deva: "छठ", month: 11,
+      when: "Sixth day of the bright half of Kartika (Oct–Nov)",
+      summary: "Offerings to the setting and rising sun.",
+      meaning: "A festival of Bihar, Jharkhand and eastern Uttar Pradesh, now celebrated worldwide. Over four days, devotees fast and stand in rivers to offer arghya to the setting sun and, at dawn, the rising sun, giving thanks to Surya and Chhathi Maiya.",
+      traditions: ["A 36-hour waterless fast", "Evening and dawn arghya in a river or pond", "Thekua and fruit offered in bamboo baskets"],
+      atHome: ["Offer water to the sun at sunset and again at sunrise.", "Make thekua and share it."],
+      prayers: ["japa-kusuma", "surya-mantra", "gayatri"]
+    },
+    {
+      id: "tulsi-vivah", name: "Tulsi Vivah", deva: "तुलसी", month: 11,
+      when: "Twelfth day of the bright half of Kartika (Nov)",
+      summary: "The ceremonial wedding of the tulsi plant to Vishnu.",
+      meaning: "The holy basil, Tulsi, is honoured as a goddess and married to Vishnu in the form of Shaligram or Krishna. It marks the start of the wedding season after the four months of Chaturmas.",
+      traditions: ["Decorating the tulsi plant as a bride", "A wedding ceremony with a Shaligram stone", "Sharing sweets"],
+      atHome: ["Water your tulsi plant, decorate it with a red cloth and light a lamp beside it.", "Sing Om Jai Jagdish Hare."],
+      prayers: ["jagdish", "vasudeva", "shantakaram"]
+    },
+    {
+      id: "holika-dahan", name: "Holika Dahan", deva: "होलिका", parent: "holi",
+      summary: "The bonfire on the eve of Holi.",
+      meaning: "A bonfire is lit after sunset to recall how the demoness Holika burned while the devoted child Prahlada was protected by Vishnu."
+    },
+    {
+      id: "janmashtami-vaishnava", name: "Janmashtami (ISKCON / Vaishnava)", deva: "कृष्ण", parent: "janmashtami",
+      summary: "Krishna's birthday as observed by ISKCON and Vaishnava communities.",
+      meaning: "Vaishnava communities, including ISKCON, follow a different rule from Smarta households and this year celebrate Janmashtami a day later."
+    },
+    {
+      id: "mahalaya", name: "Mahalaya Amavasya", deva: "महालय", parent: "pitru-paksha",
+      summary: "The final day of Pitru Paksha and the eve of Navaratri.",
+      meaning: "The most important day for remembering all ancestors, including those whose date of passing is unknown. In Bengal it marks the invocation of Durga before Durga Puja."
+    },
+    {
+      id: "durga-ashtami", name: "Durga Ashtami", deva: "अष्टमी", parent: "navaratri",
+      summary: "The eighth day of Navaratri, honouring Mahagauri.",
+      meaning: "One of the most sacred days of Navaratri. Many families perform kanya puja, honouring young girls as forms of the Goddess, and in Bengal it is the height of Durga Puja."
+    },
+    {
+      id: "maha-navami", name: "Maha Navami", deva: "नवमी", parent: "navaratri",
+      summary: "The ninth night of Navaratri, honouring Siddhidatri.",
+      meaning: "The final day of Navaratri worship. In the South, books, tools and instruments are worshipped as Ayudha Puja."
+    },
+    {
+      id: "dussehra", name: "Dussehra · Vijayadashami", deva: "विजय", parent: "navaratri",
+      summary: "The victory of good over evil.",
+      meaning: "Celebrates Rama's victory over Ravana and Durga's victory over Mahishasura. Effigies of Ravana are burned, and it is an auspicious day to begin learning."
+    },
+    {
+      id: "dhanteras", name: "Dhanteras", deva: "धनतेरस", parent: "diwali",
+      summary: "The first day of Diwali.",
+      meaning: "Honours Dhanvantari, the physician of the gods, who rose from the churning ocean with the nectar of immortality. Families buy a new vessel or metal and light the first lamps of Diwali."
+    },
+    {
+      id: "naraka-chaturdashi", name: "Naraka Chaturdashi", deva: "नरक", parent: "diwali",
+      summary: "Choti Diwali: Krishna's victory over Narakasura.",
+      meaning: "Celebrates Krishna and Satyabhama's defeat of the demon Narakasura. An oil bath before sunrise and lamps at dusk mark the day."
+    },
+    {
+      id: "govardhan-puja", name: "Govardhan Puja · Annakut", deva: "गोवर्धन", parent: "diwali",
+      summary: "Krishna lifts Govardhan hill.",
+      meaning: "Remembers how Krishna lifted Govardhan hill to shelter the people of Vraja from Indra's storms. A “mountain of food” (annakut) is offered and shared."
+    },
+    {
+      id: "bhai-dooj", name: "Bhai Dooj", deva: "भाई दूज", parent: "diwali",
+      summary: "Celebrating brothers and sisters.",
+      meaning: "Sisters apply tilaka to their brothers' foreheads and pray for their long life, recalling the god of death Yama's visit to his sister Yamuna. It closes the five days of Diwali."
     }
   ],
 
@@ -513,6 +767,7 @@ window.CONTENT = {
   lifeEvents: [
     {
       id: "birth",
+      deva: "नामकरण",
       name: "Birth & Naming",
       sanskrit: "Jatakarma & Namakarana",
       glyph: "👶",
@@ -531,6 +786,7 @@ window.CONTENT = {
     },
     {
       id: "annaprashan",
+      deva: "अन्नप्राशन",
       name: "First Solid Food",
       sanskrit: "Annaprashana",
       glyph: "🍚",
@@ -547,6 +803,7 @@ window.CONTENT = {
     },
     {
       id: "mundan",
+      deva: "चूडाकरण",
       name: "First Haircut",
       sanskrit: "Chudakarana (Mundan)",
       glyph: "✂️",
@@ -564,6 +821,7 @@ window.CONTENT = {
     },
     {
       id: "upanayana",
+      deva: "उपनयन",
       name: "Sacred Thread",
       sanskrit: "Upanayana",
       glyph: "🧶",
@@ -581,6 +839,7 @@ window.CONTENT = {
     },
     {
       id: "vivaha",
+      deva: "विवाह",
       name: "Wedding",
       sanskrit: "Vivaha",
       glyph: "💍",
@@ -600,6 +859,7 @@ window.CONTENT = {
     },
     {
       id: "griha-pravesh",
+      deva: "गृहप्रवेश",
       name: "Housewarming",
       sanskrit: "Griha Pravesha",
       glyph: "🏡",
@@ -617,6 +877,7 @@ window.CONTENT = {
     },
     {
       id: "antyeshti",
+      deva: "अन्त्येष्टि",
       name: "Last Rites",
       sanskrit: "Antyeshti",
       glyph: "🕯️",
@@ -631,132 +892,6 @@ window.CONTENT = {
         "A mourning period of 10 to 13 days ends with the shraddha ceremony and a meal for family and the community."
       ],
       withPriest: "Funeral homes in many countries can arrange a Hindu priest and cremation that follows these customs."
-    }
-  ],
-
-  /* ------------------------------------------------------------------ */
-  /* Prayers & mantras                                                   */
-  /* ------------------------------------------------------------------ */
-  prayers: [
-    {
-      id: "gayatri",
-      name: "Gayatri Mantra",
-      deity: "Savitr (the Sun)",
-      time: "Dawn, noon and dusk",
-      glyph: "☀️",
-      gradient: "g5",
-      source: "Rig Veda 3.62.10",
-      sanskrit: "ॐ भूर्भुवः स्वः\nतत्सवितुर्वरेण्यं\nभर्गो देवस्य धीमहि\nधियो यो नः प्रचोदयात्",
-      transliteration: "Om bhūr bhuvaḥ svaḥ\ntat savitur vareṇyaṃ\nbhargo devasya dhīmahi\ndhiyo yo naḥ pracodayāt",
-      meaning: "We meditate on the radiant light of the divine Sun, which fills the earth, the sky and the heavens. May it awaken and guide our minds."
-    },
-    {
-      id: "morning",
-      name: "Morning Prayer",
-      deity: "Lakshmi, Saraswati, Govinda",
-      time: "On waking",
-      glyph: "🌅",
-      gradient: "g1",
-      source: "Traditional",
-      sanskrit: "कराग्रे वसते लक्ष्मीः\nकरमध्ये सरस्वती\nकरमूले तु गोविन्दः\nप्रभाते करदर्शनम्",
-      transliteration: "Karāgre vasate lakṣmīḥ\nkaramadhye sarasvatī\nkaramūle tu govindaḥ\nprabhāte karadarśanam",
-      meaning: "Lakshmi dwells at the fingertips, Saraswati in the palm and Govinda at the base of the hand. So look at your hands on waking.\n\nA reminder that prosperity, knowledge and the divine are present in the work of our own hands."
-    },
-    {
-      id: "ganesha",
-      name: "Vakratunda Mahakaya",
-      deity: "Ganesha",
-      time: "Before any new task",
-      glyph: "🐘",
-      gradient: "g5",
-      source: "Traditional",
-      sanskrit: "वक्रतुण्ड महाकाय\nसूर्यकोटि समप्रभ\nनिर्विघ्नं कुरु मे देव\nसर्वकार्येषु सर्वदा",
-      transliteration: "Vakratuṇḍa mahākāya\nsūryakoṭi samaprabha\nnirvighnaṃ kuru me deva\nsarvakāryeṣu sarvadā",
-      meaning: "O Lord with the curved trunk and mighty body, radiant as a million suns: please remove the obstacles from all my work, always."
-    },
-    {
-      id: "shiva",
-      name: "Om Namah Shivaya",
-      deity: "Shiva",
-      time: "Any time; ideal for japa",
-      glyph: "🔱",
-      gradient: "g2",
-      source: "Krishna Yajurveda (Sri Rudram)",
-      sanskrit: "ॐ नमः शिवाय",
-      transliteration: "Om namaḥ śivāya",
-      meaning: "I bow to Shiva, the auspicious one and the inner Self.\n\nThe five syllables (na-maḥ-śi-vā-ya) are also linked to the five elements."
-    },
-    {
-      id: "mahamrityunjaya",
-      name: "Mahamrityunjaya Mantra",
-      deity: "Shiva",
-      time: "For healing and protection",
-      glyph: "🌿",
-      gradient: "g3",
-      source: "Rig Veda 7.59.12",
-      sanskrit: "ॐ त्र्यम्बकं यजामहे\nसुगन्धिं पुष्टिवर्धनम्\nउर्वारुकमिव बन्धनान्\nमृत्योर्मुक्षीय मामृतात्",
-      transliteration: "Om tryambakaṃ yajāmahe\nsugandhiṃ puṣṭivardhanam\nurvārukam iva bandhanān\nmṛtyor mukṣīya māmṛtāt",
-      meaning: "We worship the three-eyed one, who is fragrant and nourishes all beings. As a ripe cucumber falls easily from its vine, may we be freed from death, but not from immortality."
-    },
-    {
-      id: "saraswati",
-      name: "Saraswati Vandana",
-      deity: "Saraswati",
-      time: "Before study",
-      glyph: "🪷",
-      gradient: "g6",
-      source: "Traditional",
-      sanskrit: "सरस्वति नमस्तुभ्यं\nवरदे कामरूपिणि\nविद्यारम्भं करिष्यामि\nसिद्धिर्भवतु मे सदा",
-      transliteration: "Sarasvati namastubhyaṃ\nvarade kāmarūpiṇi\nvidyārambhaṃ kariṣyāmi\nsiddhir bhavatu me sadā",
-      meaning: "Salutations to you, Saraswati, giver of blessings who takes any form. I am beginning my studies; may I always succeed."
-    },
-    {
-      id: "asato-ma",
-      name: "Asato Ma",
-      deity: "Brahman",
-      time: "Any time",
-      glyph: "🪔",
-      gradient: "g7",
-      source: "Brihadaranyaka Upanishad 1.3.28",
-      sanskrit: "असतो मा सद्गमय\nतमसो मा ज्योतिर्गमय\nमृत्योर्मा अमृतं गमय\nॐ शान्तिः शान्तिः शान्तिः",
-      transliteration: "Asato mā sad gamaya\ntamaso mā jyotir gamaya\nmṛtyor mā amṛtaṃ gamaya\nOm śāntiḥ śāntiḥ śāntiḥ",
-      meaning: "Lead me from the unreal to the real.\nLead me from darkness to light.\nLead me from death to immortality.\nOm, peace, peace, peace."
-    },
-    {
-      id: "sahana",
-      name: "Om Saha Navavatu",
-      deity: "Brahman",
-      time: "Before learning together",
-      glyph: "🤝",
-      gradient: "g4",
-      source: "Taittiriya Upanishad 2.2.2",
-      sanskrit: "ॐ सह नाववतु\nसह नौ भुनक्तु\nसह वीर्यं करवावहै\nतेजस्वि नावधीतमस्तु\nमा विद्विषावहै\nॐ शान्तिः शान्तिः शान्तिः",
-      transliteration: "Om saha nāv avatu\nsaha nau bhunaktu\nsaha vīryaṃ karavāvahai\ntejasvi nāv adhītam astu\nmā vidviṣāvahai\nOm śāntiḥ śāntiḥ śāntiḥ",
-      meaning: "May we be protected together. May we be nourished together. May we work together with energy. May our study be enlightening. May there be no ill will between us. Om, peace, peace, peace."
-    },
-    {
-      id: "purnamadah",
-      name: "Purnamadah",
-      deity: "Brahman",
-      time: "Opening or closing prayer",
-      glyph: "⭕",
-      gradient: "g8",
-      source: "Isha Upanishad, invocation",
-      sanskrit: "ॐ पूर्णमदः पूर्णमिदं\nपूर्णात्पूर्णमुदच्यते\nपूर्णस्य पूर्णमादाय\nपूर्णमेवावशिष्यते\nॐ शान्तिः शान्तिः शान्तिः",
-      transliteration: "Om pūrṇam adaḥ pūrṇam idaṃ\npūrṇāt pūrṇam udacyate\npūrṇasya pūrṇam ādāya\npūrṇam evāvaśiṣyate\nOm śāntiḥ śāntiḥ śāntiḥ",
-      meaning: "That is whole; this is whole. From wholeness, wholeness arises. When wholeness is taken from wholeness, wholeness remains. Om, peace, peace, peace."
-    },
-    {
-      id: "hare-krishna",
-      name: "Maha Mantra",
-      deity: "Krishna & Rama",
-      time: "Any time; ideal for japa",
-      glyph: "🦚",
-      gradient: "g2",
-      source: "Kali-Santarana Upanishad",
-      sanskrit: "हरे राम हरे राम\nराम राम हरे हरे\nहरे कृष्ण हरे कृष्ण\nकृष्ण कृष्ण हरे हरे",
-      transliteration: "Hare Rāma Hare Rāma\nRāma Rāma Hare Hare\nHare Kṛṣṇa Hare Kṛṣṇa\nKṛṣṇa Kṛṣṇa Hare Hare",
-      meaning: "A call to the divine using the names Hari, Rama and Krishna, asking to be drawn into loving service."
     }
   ]
 };

@@ -1,11 +1,11 @@
 {
   "name": "Dharma Path",
   "short_name": "Dharma Path",
-  "description": "A free guide to Hinduism for modern life.",
+  "description": "A free guide to Hinduism: calendar, prayers, scriptures and courses.",
   "start_url": "./#/home",
   "display": "standalone",
-  "background_color": "#fbf7f2",
-  "theme_color": "#e8590c",
+  "background_color": "#f6f1e9",
+  "theme_color": "#16120e",
   "icons": [
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

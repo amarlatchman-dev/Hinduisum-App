@@ -1,6 +1,9 @@
-// Offline support: cache the app shell, then serve cache-first with network update.
-const CACHE = "dharma-path-v2";
-const SHELL = ["./", "index.html", "css/styles.css", "js/content.js", "js/app.js", "manifest.json", "icons/icon.svg", "texts/index.json", "texts/gita.json"];
+// Offline support: cache the app shell, then serve cache-first and refresh in the background.
+const CACHE = "dharma-path-v3";
+const SHELL = [
+  "./", "index.html", "css/styles.css", "js/content.js", "js/prayers.js", "js/app.js",
+  "manifest.json", "icons/icon.svg", "texts/index.json", "texts/gita.json", "calendar/index.json"
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

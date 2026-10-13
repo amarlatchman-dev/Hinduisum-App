@@ -3,26 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e8590c">
-  <meta name="description" content="Dharma Path — a free guide to Hinduism for modern life: daily wisdom, courses, festivals, life rituals and prayers.">
+  <meta name="theme-color" content="#f6f1e9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f0d0b" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Dharma Path: a free guide to Hinduism. A Hindu calendar, prayers for every moment, the great scriptures and short courses.">
   <title>Dharma Path</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=Tiro+Devanagari+Sanskrit&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try {
+      var t = JSON.parse(localStorage.getItem("dp:theme"));
+      document.documentElement.dataset.theme = t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    } catch (e) { document.documentElement.dataset.theme = "light"; }
+  </script>
 </head>
 <body>
   <div class="app">
-    <header class="topbar">
+    <header class="topbar" id="topbar">
       <button class="icon-btn" id="backBtn" aria-label="Back" hidden>
         <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <h1 class="brand" id="pageTitle"><span class="om">ॐ</span> Dharma Path</h1>
-      <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode">
-        <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      <h1 class="brand" id="pageTitle"></h1>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch between light and dark">
+        <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>
       </button>
     </header>
 
@@ -30,33 +38,30 @@
 
     <nav class="tabbar" aria-label="Main">
       <a href="#/home" data-tab="home">
-        <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M3 18h18"/><path d="M6 18a6 6 0 0112 0"/><path d="M12 4v3M4.9 8.9l2.1 2.1M19.1 8.9L17 11"/></svg>
         <span>Today</span>
       </a>
-      <a href="#/academy" data-tab="academy">
-        <svg viewBox="0 0 24 24"><path d="M2 8l10-5 10 5-10 5z"/><path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>
-        <span>Academy</span>
-      </a>
-      <a href="#/read" data-tab="read">
-        <svg viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>
-        <span>Read</span>
-      </a>
-      <a href="#/festivals" data-tab="festivals">
-        <svg viewBox="0 0 24 24"><path d="M12 3c2 3 3 5 3 7a3 3 0 01-6 0c0-2 1-4 3-7z"/><path d="M5 17h14l-2 4H7z"/></svg>
-        <span>Festivals</span>
-      </a>
-      <a href="#/life" data-tab="life">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-        <span>Life</span>
+      <a href="#/calendar" data-tab="calendar">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.2"/></svg>
+        <span>Calendar</span>
       </a>
       <a href="#/puja" data-tab="puja">
-        <svg viewBox="0 0 24 24"><path d="M12 2v4M8 6h8M7 10h10l-1 11H8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3c1.8 2.2 2.7 3.9 2.7 5.3a2.7 2.7 0 01-5.4 0C9.3 6.9 10.2 5.2 12 3z"/><path d="M4 13h16c0 3.9-3.6 7-8 7s-8-3.1-8-7z"/></svg>
         <span>Puja</span>
+      </a>
+      <a href="#/read" data-tab="read">
+        <svg viewBox="0 0 24 24"><path d="M12 6.5C10 5 7 4.5 3.5 4.5v14c3.5 0 6.5.5 8.5 2 2-1.5 5-2 8.5-2v-14c-3.5 0-6.5.5-8.5 2z"/><path d="M12 6.5V20"/></svg>
+        <span>Read</span>
+      </a>
+      <a href="#/learn" data-tab="learn">
+        <svg viewBox="0 0 24 24"><path d="M12 20c-4-2.5-6.5-6-6.5-10C8 10.5 10.5 13 12 16c1.5-3 4-5.5 6.5-6 0 4-2.5 7.5-6.5 10z"/><path d="M12 16c-1-3.5-1-7 0-11 1 4 1 7.5 0 11z"/></svg>
+        <span>Learn</span>
       </a>
     </nav>
   </div>
 
   <script src="js/content.js"></script>
+  <script src="js/prayers.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

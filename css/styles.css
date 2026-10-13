@@ -527,6 +527,9 @@ a.row:active { background: var(--surface-2); }
 
 /* ---------- Japa ---------- */
 .japa { text-align: center; }
+.japa-dev { font-family: var(--deva); color: var(--gold); font-size: 1.2rem; line-height: 1.85; margin: 12px 0 0; white-space: pre-line; }
+.japa-say { font-family: var(--display); font-weight: 600; font-size: 1.6rem; line-height: 1.25; margin: 6px 0 0; white-space: pre-line; }
+.japa-mean { font-family: var(--display); font-style: italic; font-size: 1.12rem; line-height: 1.45; color: var(--ink-2); margin: 10px auto 16px; max-width: 30em; }
 .japa-ring {
   position: relative;
   width: 232px; height: 232px;

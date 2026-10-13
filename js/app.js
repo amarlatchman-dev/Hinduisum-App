@@ -412,7 +412,7 @@
           <a class="tile" href="#/read"><span class="dv">ग्रन्थ</span><div><h3>Scriptures</h3><p>Gita, Ramayana, Mahabharata</p></div></a>
           <a class="tile" href="#/learn"><span class="dv">शिक्षा</span><div><h3>Academy</h3><p>${C.courses.length} short courses</p></div></a>
           <a class="tile" href="#/learn#rites"><span class="dv">संस्कार</span><div><h3>Rites of passage</h3><p>Step-by-step guidance</p></div></a>
-          <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa</h3><p>A 108-bead mantra counter</p></div></a>
+          <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Chant a mantra on a mala of 108 beads</p></div></a>
         </div>
       </div>
 
@@ -629,7 +629,7 @@
       </div>
 
       <div class="tiles" style="margin:16px 0 4px">
-        <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa counter</h3><p>Count a mala of 108</p></div></a>
+        <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Mantra chanting with a mala counter</p></div></a>
         <a class="tile" href="${href({ fav: "1" })}" data-favs><span class="dv">प्रिय</span><div><h3>Favourites</h3><p>${favs.length} saved</p></div></a>
       </div>
 
@@ -684,7 +684,7 @@
       <div class="card"><p style="margin:0;color:var(--ink-2)">${esc(p.about)}</p>
         <div class="btn-row" style="margin-top:14px">
           <button class="btn ${isFav ? "" : "ghost"}" data-fav="${p.id}">${isFav ? "★ Saved" : "☆ Save"}</button>
-          ${p.japa ? `<a class="btn ghost" href="#/japa?m=${p.id}">Chant with counter</a>` : ""}
+          ${p.japa ? `<a class="btn ghost" href="#/japa?m=${p.id}">Chant on the mala</a>` : ""}
           ${"speechSynthesis" in window ? `<button class="btn ghost" data-speak="${p.id}">Read meaning aloud</button>` : ""}
         </div>
       </div>
@@ -708,65 +708,98 @@
       ${related.length ? `<div class="section"><div class="section-head"><h2 class="section-title">More for ${esc(deityOf(p.deity).name)}</h2><a href="#/puja#browse?d=${p.deity}">See all</a></div><div class="list">${related.map(prayerRow).join("")}</div></div>` : ""}`;
   }
 
+  // Turn scholarly IAST into an easy reading for chanting: "oṃ namaḥ śivāya" → "Om Namah Shivaya".
+  function readable(iast) {
+    return iast
+      .replace(/[śṣ]/g, "sh").replace(/[ŚṢ]/g, "Sh")
+      .replace(/ṛ/g, "ri").replace(/[ṃṁ]/g, "m").replace(/ḥ/g, "h")
+      .replace(/ā/g, "a").replace(/ī/g, "i").replace(/ū/g, "u")
+      .replace(/[ñṅṇ]/g, "n").replace(/ṭ/g, "t").replace(/ḍ/g, "d")
+      .replace(/c(?!h)/g, "ch").replace(/'/g, "")
+      .replace(/(^|[\s-])([a-z])/g, (m, sp, ch) => sp + ch.toUpperCase());
+  }
+
+  const japaKey = (id) => "japa:" + id;
+  const japaState = (id) => store.get(japaKey(id), { count: 0, malas: 0 });
+
   function japaView(query) {
     const mantras = P.filter((p) => p.japa);
     const id = query.get("m") || store.get("japaMantra", "shiva");
     const m = byId(mantras, id) || mantras[0];
-    const count = store.get("japaCount", 0);
-    const malas = store.get("japaMalas", 0);
+    const { count, malas } = japaState(m.id);
     const R = 100, CIRC = 2 * Math.PI * R;
     return `
-      <h2 class="page-title">Japa</h2>
-      <p class="page-sub">Tap the circle once for each repetition. A mala has 108 beads.</p>
-      <div class="card japa">
-        <select id="japaSelect" class="chip" aria-label="Mantra">
-          ${mantras.map((p) => `<option value="${p.id}" ${p.id === m.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
-        </select>
-        <p style="font-family:var(--deva);color:var(--gold);font-size:1.15rem;margin:16px 0 0;white-space:pre-line">${esc(m.verses[0][0])}</p>
-        <p class="meta" style="font-style:italic;margin:4px 0 0">${esc(m.verses[0][1])}</p>
-        <button class="japa-ring" id="japaBtn" aria-label="Count one repetition">
+      <div class="eyebrow" style="margin:14px 2px 0">Mantra chanting · Mala counter</div>
+      <h2 class="page-title" style="margin-top:4px">Japa</h2>
+      <p class="page-sub">Japa is the quiet, repeated chanting of a mantra, traditionally counted on a mala of 108 beads. Choose a mantra, then tap the circle each time you chant it.</p>
+      <div class="card japa" data-mantra="${m.id}">
+        <div class="eyebrow">Now chanting</div>
+        <p class="japa-dev">${esc(m.verses[0][0])}</p>
+        <p class="japa-say">${esc(readable(m.verses[0][1]))}</p>
+        <p class="japa-mean">${esc(m.verses[0][2])}</p>
+        <button class="chip" data-scroll="mantras">Choose a different mantra</button>
+        <button class="japa-ring" id="japaBtn" aria-label="Count one chant">
           <svg viewBox="0 0 220 220"><circle cx="110" cy="110" r="${R}" stroke="rgba(212,176,106,0.18)"/><circle id="japaArc" cx="110" cy="110" r="${R}" stroke="#d4b06a" stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC * (1 - count / 108)}"/></svg>
-          <span class="count" id="japaCount">${count}</span><span class="of">OF 108</span>
+          <span class="count" id="japaCount">${count}</span><span class="of">OF 108 BEADS</span>
         </button>
-        <p class="meta"><span id="malaCount">${malas}</span> malas completed</p>
-        <button class="btn ghost" id="japaReset">Reset</button>
+        <p class="meta"><span id="malaCount">${malas}</span> full ${malas === 1 ? "mala" : "malas"} chanted</p>
+        <button class="btn ghost" id="japaReset">Start again</button>
       </div>
-      <p class="footer-note">Your phone gives a short vibration when you complete a mala.</p>`;
+      <p class="footer-note" style="margin-top:6px">Each mantra keeps its own count. Your phone vibrates gently when you finish a mala.</p>
+
+      <div class="section" id="mantras">
+        <div class="section-head"><h2 class="section-title">Choose a mantra</h2></div>
+        <div class="list">
+          ${mantras.map((p) => {
+            const st = japaState(p.id);
+            const line = readable(p.verses[0][1].split("\n")[0]);
+            const same = line.toLowerCase().replace(/[^a-z]/g, "") === p.name.toLowerCase().replace(/[^a-z]/g, "");
+            return `<a class="row" href="#/japa?m=${p.id}">
+              ${seal(deityOf(p.deity).deva)}
+              <span class="body"><h3>${esc(p.name)}</h3>${same ? "" : `<p style="font-style:italic;color:var(--ink-2)">${esc(line)}${p.verses[0][1].includes("\n") ? " …" : ""}</p>`}<p>${esc(p.gist)}</p>${st.malas ? `<p>${st.malas} ${st.malas === 1 ? "mala" : "malas"} chanted</p>` : ""}</span>
+              ${p.id === m.id ? `<span class="tag gold">Chanting</span>` : `<span class="chev">›</span>`}
+            </a>`;
+          }).join("")}
+        </div>
+      </div>`;
   }
 
   function bindJapa() {
+    const card = view.querySelector(".japa");
+    const id = card.dataset.mantra;
     const btn = document.getElementById("japaBtn");
     const arc = document.getElementById("japaArc");
     const countEl = document.getElementById("japaCount");
     const malaEl = document.getElementById("malaCount");
-    const select = document.getElementById("japaSelect");
     const CIRC = 2 * Math.PI * 100;
-    const paint = (n) => { countEl.textContent = n; arc.setAttribute("stroke-dashoffset", CIRC * (1 - n / 108)); };
+    const paint = (st) => {
+      countEl.textContent = st.count;
+      arc.setAttribute("stroke-dashoffset", CIRC * (1 - st.count / 108));
+      malaEl.textContent = st.malas;
+      malaEl.nextSibling.textContent = ` full ${st.malas === 1 ? "mala" : "malas"} chanted`;
+    };
 
-    store.set("japaMantra", select.value);
-    select.addEventListener("change", () => {
-      store.set("japaMantra", select.value);
-      location.hash = "#/japa?m=" + select.value;
-    });
+    store.set("japaMantra", id);
     btn.addEventListener("click", () => {
-      let n = store.get("japaCount", 0) + 1;
-      if (n >= 108) {
-        n = 0;
-        const malas = store.get("japaMalas", 0) + 1;
-        store.set("japaMalas", malas);
-        malaEl.textContent = malas;
+      const st = japaState(id);
+      st.count += 1;
+      if (st.count >= 108) {
+        st.count = 0;
+        st.malas += 1;
         if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
       } else if (navigator.vibrate) {
         navigator.vibrate(8);
       }
-      store.set("japaCount", n);
-      paint(n);
+      store.set(japaKey(id), st);
+      paint(st);
     });
     document.getElementById("japaReset").addEventListener("click", () => {
-      store.set("japaCount", 0);
-      store.set("japaMalas", 0);
-      paint(0);
-      malaEl.textContent = 0;
+      const st = { count: 0, malas: 0 };
+      store.set(japaKey(id), st);
+      paint(st);
+    });
+    card.querySelector("[data-scroll]").addEventListener("click", () => {
+      document.getElementById("mantras").scrollIntoView({ behavior: "smooth" });
     });
   }
 

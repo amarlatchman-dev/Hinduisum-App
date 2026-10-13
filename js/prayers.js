@@ -52,84 +52,98 @@ window.PRAYERS = [
   /* ================================================================== */
   {
     id: "shiva", name: "Om Namah Shivaya", type: "mantra", deity: "shiva", japa: true,
+    gist: "I bow to Shiva, the Self within all.",
     moments: ["morning", "peace", "evening"], lang: "Sanskrit", author: "Krishna Yajurveda, Shri Rudram",
     about: "The panchakshara, Shiva's five-syllable mantra, is the heart of the Shri Rudram in the Yajurveda. It can be repeated at any time, by anyone.",
     verses: [["ॐ नमः शिवाय", "oṃ namaḥ śivāya", "Om. I bow to Shiva, the auspicious one, the Self within all."]]
   },
   {
     id: "gayatri", name: "Gayatri Mantra", type: "mantra", deity: "surya", japa: true,
+    gist: "May the divine light inspire our minds.",
     moments: ["morning", "study", "waking"], lang: "Sanskrit", author: "Rig Veda 3.62.10, seer Vishvamitra",
     about: "The most revered verse of the Vedas, addressed to Savitr, the divine light of the sun. It is traditionally chanted at dawn, noon and dusk.",
     verses: [["ॐ भूर्भुवः स्वः\nतत्सवितुर्वरेण्यं\nभर्गो देवस्य धीमहि\nधियो यो नः प्रचोदयात्", "oṃ bhūr bhuvaḥ svaḥ\ntat savitur vareṇyaṃ\nbhargo devasya dhīmahi\ndhiyo yo naḥ pracodayāt", "Om. Earth, sky and heaven. We meditate on the glorious light of the divine Savitr. May that light inspire and guide our minds."]]
   },
   {
     id: "mahamrityunjaya", name: "Mahamrityunjaya Mantra", type: "mantra", deity: "shiva", japa: true,
+    gist: "O three-eyed Lord, free us from death and fear.",
     moments: ["health", "protection", "peace"], lang: "Sanskrit", author: "Rig Veda 7.59.12",
     about: "The “great death-conquering” mantra to Shiva as Tryambaka, the three-eyed one. It is chanted for healing, protection and release from fear.",
     verses: [["ॐ त्र्यम्बकं यजामहे\nसुगन्धिं पुष्टिवर्धनम्।\nउर्वारुकमिव बन्धनान्\nमृत्योर्मुक्षीय माऽमृतात्॥", "oṃ tryambakaṃ yajāmahe\nsugandhiṃ puṣṭivardhanam\nurvārukam iva bandhanān\nmṛtyor mukṣīya mā'mṛtāt", "We worship the three-eyed Lord, fragrant, who nourishes all life. As the ripe cucumber is freed from its vine, may we be freed from death, and never from immortality."]]
   },
   {
     id: "ganesh-mantra", name: "Om Gam Ganapataye Namah", type: "mantra", deity: "ganesha", japa: true,
+    gist: "Salutations to Ganesha, remover of obstacles.",
     moments: ["work", "morning", "study"], lang: "Sanskrit", author: "Ganapati Atharvashirsha tradition",
     about: "Ganesha's seed-syllable mantra. “Gam” is his bija sound. Chant it before any beginning to clear the way.",
     verses: [["ॐ गं गणपतये नमः", "oṃ gaṃ gaṇapataye namaḥ", "Om. Salutations to Ganapati, lord of all beings, remover of obstacles."]]
   },
   {
     id: "vasudeva", name: "Om Namo Bhagavate Vasudevaya", type: "mantra", deity: "vishnu", japa: true,
+    gist: "I bow to Lord Vasudeva, who dwells in all beings.",
     moments: ["morning", "peace", "evening"], lang: "Sanskrit", author: "Bhagavata Purana",
     about: "The twelve-syllable mantra (dvadashakshari) to Vishnu and Krishna, beloved of devotees since the Bhagavata Purana.",
     verses: [["ॐ नमो भगवते वासुदेवाय", "oṃ namo bhagavate vāsudevāya", "Om. I bow to the Blessed Lord Vasudeva, who dwells in all beings."]]
   },
   {
     id: "narayana", name: "Om Namo Narayanaya", type: "mantra", deity: "vishnu", japa: true,
+    gist: "Salutations to Narayana, refuge of all beings.",
     moments: ["morning", "peace", "sleep"], lang: "Sanskrit", author: "Narayana Upanishad",
     about: "The eight-syllable mantra (ashtakshari) of Narayana, the refuge of all beings, central to Sri Vaishnava worship.",
     verses: [["ॐ नमो नारायणाय", "oṃ namo nārāyaṇāya", "Om. Salutations to Narayana, the resting place of all beings."]]
   },
   {
     id: "hare-krishna", name: "Hare Krishna Maha Mantra", type: "mantra", deity: "krishna", japa: true,
+    gist: "Calling on the Divine as Hari, Krishna and Rama.",
     moments: ["morning", "evening", "peace"], lang: "Sanskrit", author: "Kali-Santarana Upanishad",
     about: "The “great mantra” of sixteen names, popularised by Chaitanya Mahaprabhu as the simplest path of devotion for this age.",
     verses: [["हरे राम हरे राम राम राम हरे हरे।\nहरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे॥", "hare rāma hare rāma rāma rāma hare hare\nhare kṛṣṇa hare kṛṣṇa kṛṣṇa kṛṣṇa hare hare", "A call to the Divine through the names Hari, Rama and Krishna, asking to be drawn into loving service."]]
   },
   {
     id: "rama-mantra", name: "Shri Ram Jai Ram", type: "mantra", deity: "rama", japa: true,
+    gist: "Glory and victory to Shri Rama.",
     moments: ["morning", "peace", "protection"], lang: "Sanskrit", author: "Traditional; made famous by Samarth Ramdas",
     about: "The thirteen-syllable Rama mantra, chanted by saints such as Samarth Ramdas and still sung in homes and temples across India.",
     verses: [["श्री राम जय राम जय जय राम", "śrī rāma jaya rāma jaya jaya rāma", "Glory to Shri Rama. Victory to Rama, victory, victory to Rama."]]
   },
   {
     id: "hanuman-mantra", name: "Om Shri Hanumate Namah", type: "mantra", deity: "hanuman", japa: true,
+    gist: "Salutations to glorious Hanuman.",
     moments: ["protection", "morning", "health"], lang: "Sanskrit", author: "Traditional",
     about: "A simple salutation to Hanuman, traditionally chanted on Tuesdays and Saturdays for strength, courage and protection.",
     verses: [["ॐ श्री हनुमते नमः", "oṃ śrī hanumate namaḥ", "Om. Salutations to the glorious Hanuman."]]
   },
   {
     id: "durga-mantra", name: "Om Dum Durgayai Namah", type: "mantra", deity: "devi", japa: true,
+    gist: "Salutations to Durga, the protecting Mother.",
     moments: ["protection", "morning"], lang: "Sanskrit", author: "Traditional",
     about: "Durga's mantra with her bija syllable “dum”. It is especially chanted during Navaratri.",
     verses: [["ॐ दुं दुर्गायै नमः", "oṃ duṃ durgāyai namaḥ", "Om. Salutations to Durga, the invincible Mother who protects her children."]]
   },
   {
     id: "lakshmi-mantra", name: "Om Shreem Mahalakshmyai Namah", type: "mantra", deity: "lakshmi", japa: true,
+    gist: "Salutations to Lakshmi, source of good fortune.",
     moments: ["morning", "work", "lamp"], lang: "Sanskrit", author: "Traditional",
     about: "Lakshmi's mantra with her bija syllable “shreem”, chanted for abundance in every sense: wealth, harmony and grace. Fridays and Diwali are her special days.",
     verses: [["ॐ श्रीं महालक्ष्म्यै नमः", "oṃ śrīṃ mahālakṣmyai namaḥ", "Om. Salutations to the great Lakshmi, source of all good fortune."]]
   },
   {
     id: "saraswati-mantra", name: "Om Aim Saraswatyai Namah", type: "mantra", deity: "saraswati", japa: true,
+    gist: "Salutations to Saraswati, goddess of wisdom.",
     moments: ["study", "morning"], lang: "Sanskrit", author: "Traditional",
     about: "Saraswati's mantra with her bija syllable “aim”. Students chant it before study and examinations.",
     verses: [["ॐ ऐं सरस्वत्यै नमः", "oṃ aiṃ sarasvatyai namaḥ", "Om. Salutations to Saraswati, goddess of wisdom, speech and the arts."]]
   },
   {
     id: "surya-mantra", name: "Om Suryaya Namah", type: "mantra", deity: "surya", japa: true,
+    gist: "Salutations to the Sun, giver of light and life.",
     moments: ["waking", "morning", "health"], lang: "Sanskrit", author: "Traditional",
     about: "A greeting to the Sun, often repeated while offering water at sunrise or with each round of Surya Namaskar.",
     verses: [["ॐ सूर्याय नमः", "oṃ sūryāya namaḥ", "Om. Salutations to Surya, the Sun, giver of light and life."]]
   },
   {
     id: "lokah", name: "Lokah Samastah", type: "mantra", deity: "universal", japa: true,
+    gist: "May all beings everywhere be happy.",
     moments: ["peace", "evening", "sleep"], lang: "Sanskrit", author: "Traditional closing prayer",
     about: "A short universal blessing often used to close prayer, yoga or meditation.",
     verses: [["लोकाः समस्ताः सुखिनो भवन्तु", "lokāḥ samastāḥ sukhino bhavantu", "May all beings in all the worlds be happy."]]

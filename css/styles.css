@@ -93,7 +93,7 @@ html, body {
   transform: translateX(-50%);
   width: 100%; max-width: 560px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   background: var(--surface);
   border-top: 1px solid var(--line);
@@ -326,3 +326,75 @@ a.card:active { transform: scale(0.99); }
 .g6 { background: linear-gradient(140deg, #1098ad, #0b4a6f); }
 .g7 { background: linear-gradient(140deg, #7048e8, #5f1d6e); }
 .g8 { background: linear-gradient(140deg, #868e96, #343a40); }
+
+/* ---------- Scriptures ---------- */
+a.hero { display: block; text-decoration: none; }
+.book-card { padding: 0; overflow: hidden; }
+.book-card > :not(.book-head) { margin-left: 18px; margin-right: 18px; }
+.book-card > :last-child { margin-bottom: 18px; }
+.book-head {
+  position: relative;
+  display: block;
+  padding: 22px 18px 18px;
+  color: #fff;
+  text-decoration: none;
+}
+.book-head .glyph { position: absolute; top: 16px; right: 18px; font-size: 2.2rem; }
+.book-head .deva { font-family: var(--deva); font-size: 1rem; opacity: 0.9; }
+.book-head h3 { margin: 2px 0; font-family: var(--serif); font-size: 1.45rem; }
+.book-head p { margin: 0; opacity: 0.9; font-size: 0.88rem; }
+.book-card .progress { margin-top: 6px; }
+a.btn { text-decoration: none; }
+.btn[disabled] { opacity: 0.6; }
+
+.part-num { font-family: var(--serif); font-weight: 700; color: var(--saffron); font-size: 1.2rem !important; }
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.sec-tile {
+  display: grid; place-items: center;
+  min-height: 48px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-align: center;
+}
+.sec-tile.here { background: var(--saffron); color: #fff; }
+
+.reader-head { padding: 14px 2px 6px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.reader-head h2 { font-family: var(--serif); font-size: 1.6rem; margin: 4px 0 2px; }
+.reader-head .meta { margin: 0; }
+.reader-tools { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.reader-tools a.chip { text-decoration: none; }
+
+.reader { font-size: calc(1.06rem * var(--read-scale, 1)); line-height: 1.7; }
+.reader .verse { padding: 18px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 70px; }
+.reader .verse.highlight { background: var(--saffron-soft); border-radius: 14px; padding: 18px 12px; }
+.reader .vnum { font-size: 0.75rem; font-weight: 600; color: var(--saffron); letter-spacing: 0.05em; }
+.reader .sanskrit { font-size: 1.15em; text-align: left; margin: 6px 0 2px; }
+.reader .translit { text-align: left; font-size: 0.88em; margin: 0 0 8px; }
+.reader .vtext { margin: 6px 0 0; font-family: var(--serif); }
+.reader .para { font-family: var(--serif); margin: 0 0 1em; }
+.reader .para.sub { font-family: var(--sans); color: var(--muted); font-style: italic; text-align: center; }
+.reader .para.fn { font-family: var(--sans); font-size: 0.8em; color: var(--muted); margin-bottom: 0.5em; }
+
+.reader-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 26px 0 10px; }
+.read-progress {
+  position: fixed;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(62px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 560px;
+  height: 3px;
+  background: transparent;
+  z-index: 11;
+}
+.read-progress span { display: block; height: 100%; width: 0; background: var(--gold); transition: width 0.2s; }

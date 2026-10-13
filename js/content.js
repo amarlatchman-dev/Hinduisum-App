@@ -82,6 +82,63 @@ window.CONTENT = {
   ],
 
   /* ------------------------------------------------------------------ */
+  /* Gita verse of the day: [chapter, verse] refs, rotated by day        */
+  /* ------------------------------------------------------------------ */
+  gitaDaily: [
+    [2, 13], [2, 14], [2, 20], [2, 22], [2, 23], [2, 47], [2, 48], [2, 50], [2, 56], [2, 62],
+    [2, 63], [2, 70], [3, 8], [3, 19], [3, 21], [3, 27], [3, 35], [4, 7], [4, 8], [4, 18],
+    [4, 38], [4, 39], [5, 10], [5, 18], [6, 5], [6, 6], [6, 17], [6, 19], [6, 26], [6, 30],
+    [6, 35], [7, 7], [7, 19], [8, 5], [9, 22], [9, 26], [9, 27], [9, 29], [10, 8], [10, 20],
+    [12, 13], [12, 14], [12, 15], [13, 27], [15, 7], [15, 15], [16, 1], [16, 21], [17, 15], [17, 20],
+    [18, 46], [18, 47], [18, 63], [18, 65], [18, 66], [18, 78]
+  ],
+
+  /* ------------------------------------------------------------------ */
+  /* Scripture library (texts are in /texts, built by scripts/build_texts.py) */
+  /* ------------------------------------------------------------------ */
+  books: [
+    {
+      id: "gita",
+      title: "Bhagavad Gita",
+      sanskritTitle: "भगवद्गीता",
+      tagline: "Krishna's teaching to Arjuna · 18 chapters, 701 verses",
+      partLabel: "Chapter",
+      sectionLabel: null,
+      verses: true,
+      glyph: "🪷",
+      gradient: "g1",
+      translation: "English by Annie Besant (1922). Sanskrit with transliteration.",
+      about: "The Bhagavad Gita is a 700-verse dialogue set on the battlefield of Kurukshetra, part of the Mahabharata's Bhishma Parva. Krishna counsels the warrior Arjuna on duty, the Self and the paths of action, knowledge and devotion."
+    },
+    {
+      id: "ramayana",
+      title: "Ramayana",
+      sanskritTitle: "रामायण",
+      tagline: "Valmiki's epic of Rama · 7 kandas",
+      partLabel: "Kanda",
+      sectionLabel: "Sarga",
+      verses: true,
+      glyph: "🏹",
+      gradient: "g3",
+      translation: "English by Manmatha Nath Dutt (1891–94), verse by verse with the Sanskrit critical edition. Verses that could not be matched reliably are omitted.",
+      about: "Attributed to the sage Valmiki, the Ramayana tells of Prince Rama's exile, the abduction of Sita by Ravana, her rescue with the help of Hanuman, and Rama's return to Ayodhya."
+    },
+    {
+      id: "mahabharata",
+      title: "Mahabharata",
+      sanskritTitle: "महाभारत",
+      tagline: "Vyasa's great epic · all 18 parvas",
+      partLabel: "Parva",
+      sectionLabel: "Section",
+      verses: false,
+      glyph: "🐚",
+      gradient: "g2",
+      translation: "Complete English prose translation by Kisari Mohan Ganguli (1883–96), as scanned and proofed by sacred-texts.com.",
+      about: "Attributed to Vyasa, the Mahabharata follows the rivalry of the Pandavas and Kauravas, culminating in the war at Kurukshetra. It is among the longest poems ever composed and contains the Bhagavad Gita."
+    }
+  ],
+
+  /* ------------------------------------------------------------------ */
   /* Academy: structured courses                                         */
   /* ------------------------------------------------------------------ */
   categories: [

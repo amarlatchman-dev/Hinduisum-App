@@ -282,6 +282,179 @@
   }
 
   /* ====================================================================== */
+  /* Audio                                                                   */
+  /* A recording listed in audio/index.json is used when one exists.         */
+  /* Otherwise the device's own Hindi voice chants the Devanagari text.      */
+  /* ====================================================================== */
+  const synth = "speechSynthesis" in window ? window.speechSynthesis : null;
+  let voices = [];
+  let recordings = {};
+  let playToken = 0;
+  let currentAudio = null;
+  let wakeLock = null;
+  const utterances = []; // keep references so the browser does not drop them mid-speech
+
+  if (synth) {
+    const loadVoices = () => { voices = synth.getVoices() || []; };
+    loadVoices();
+    if (synth.addEventListener) synth.addEventListener("voiceschanged", loadVoices);
+    else synth.onvoiceschanged = loadVoices;
+  }
+  const recordingsReady = loadJSON("audio/index.json").then((r) => { recordings = r || {}; }).catch(() => {});
+
+  const canSpeak = () => !!synth;
+  const hasAudio = (id) => !!recordings[id] || canSpeak();
+  function indicVoice() {
+    return voices.find((v) => /^hi([-_]|$)/i.test(v.lang)) ||
+      voices.find((v) => /^(mr|ne|sa)([-_]|$)/i.test(v.lang)) || null;
+  }
+  const englishVoice = () => voices.find((v) => /^en[-_]IN/i.test(v.lang)) || null;
+
+  // Speak one piece of text. Resolves when it finishes or is cancelled.
+  function say(text, { rate = 0.85, english = false } = {}) {
+    return new Promise((resolve) => {
+      if (!synth) return resolve();
+      const u = new SpeechSynthesisUtterance(text);
+      // Without a Hindi voice, chantText() supplies romanised words, which read best in English.
+      if (!english && voices.length && !indicVoice()) english = true;
+      const v = english ? englishVoice() : indicVoice();
+      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = english ? "en-IN" : "hi-IN"; }
+      u.rate = rate;
+      u.pitch = english ? 1 : 0.9;
+      u.onend = u.onerror = () => { utterances.splice(utterances.indexOf(u), 1); resolve(); };
+      utterances.push(u);
+      synth.speak(u);
+    });
+  }
+
+  // Text for one verse: Devanagari when a Hindi voice exists, otherwise the plain reading.
+  function chantText(v, p) {
+    const text = indicVoice() || !voices.length ? v[0] : (p.lang === "Sanskrit" ? readable(v[1]) : v[1]);
+    return text.replace(/[।॥\n]+/g, ", ").replace(/(\s*,\s*)+/g, ", ").replace(/^,\s*|,\s*$/g, "");
+  }
+
+  function playRecording(src) {
+    return new Promise((resolve) => {
+      const a = new Audio(src);
+      currentAudio = a;
+      a.onended = a.onerror = () => { if (currentAudio === a) currentAudio = null; resolve(); };
+      a.play().catch(() => resolve());
+    });
+  }
+
+  // One full chant of a prayer or mantra.
+  function chantOnce(p, rate) {
+    if (recordings[p.id]) return playRecording(recordings[p.id]);
+    return say(p.verses.map((v) => chantText(v, p)).join(", "), { rate });
+  }
+
+  function stopAudio() {
+    playToken++;
+    // Cancelling an idle synthesiser can make Chrome drop the next utterance.
+    if (synth && (synth.speaking || synth.pending)) synth.cancel();
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    Drone.stop();
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+    document.querySelectorAll(".stanza.playing").forEach((el) => el.classList.remove("playing"));
+    document.querySelectorAll("[data-listen], #chantAlong").forEach((b) => b.classList.remove("on"));
+    const l = document.querySelector("[data-listen]");
+    if (l) l.innerHTML = PLAY_ICON + "Listen";
+    const c = document.getElementById("chantAlong");
+    if (c) c.innerHTML = PLAY_ICON + "Chant along";
+  }
+
+  function keepAwake() {
+    if (navigator.wakeLock && !wakeLock) navigator.wakeLock.request("screen").then((l) => { wakeLock = l; }).catch(() => {});
+  }
+
+  const PLAY_ICON = '<svg class="ico" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></svg>';
+  const STOP_ICON = '<svg class="ico" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg>';
+
+  function voiceNote(p) {
+    if (recordings[p.id]) return "Recorded chant.";
+    if (!canSpeak()) return "Audio isn't supported in this browser.";
+    if (voices.length && !indicVoice()) return "No Hindi voice was found on this device, so the words are read with an English voice. For a better pronunciation, add Hindi in your phone's text-to-speech settings.";
+    return "Chanted by your device's Hindi voice.";
+  }
+
+  /* A soft tanpura drone (Pa, Sa, Sa, low Sa), synthesised in the browser. */
+  const Drone = {
+    ctx: null, master: null, timer: null,
+    on: () => store.get("audio:drone", true),
+    start() {
+      if (this.timer || !this.on()) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      this.ctx = this.ctx || new AC();
+      if (this.ctx.resume) this.ctx.resume();
+      const ctx = this.ctx;
+      this.master = ctx.createGain();
+      this.master.gain.setValueAtTime(0, ctx.currentTime);
+      this.master.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 2);
+      this.master.connect(ctx.destination);
+      const sa = 130.81;
+      const pattern = [sa * 1.5, sa * 2, sa * 2, sa];
+      let i = 0;
+      const pluck = () => {
+        const f = pattern[i++ % pattern.length];
+        const t = ctx.currentTime;
+        [1, 1.003, 2.001].forEach((mult, k) => {
+          const o = ctx.createOscillator();
+          o.type = k === 2 ? "triangle" : "sawtooth";
+          o.frequency.value = f * mult;
+          const lp = ctx.createBiquadFilter();
+          lp.type = "lowpass";
+          lp.Q.value = 4;
+          lp.frequency.setValueAtTime(2600, t);
+          lp.frequency.exponentialRampToValueAtTime(420, t + 3.5);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(k === 2 ? 0.012 : 0.03, t + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 4.8);
+          o.connect(lp).connect(g).connect(this.master);
+          o.start(t);
+          o.stop(t + 5);
+        });
+      };
+      pluck();
+      this.timer = setInterval(pluck, 1150);
+    },
+    stop() {
+      if (!this.timer) return;
+      clearInterval(this.timer);
+      this.timer = null;
+      const m = this.master, ctx = this.ctx;
+      m.gain.cancelScheduledValues(ctx.currentTime);
+      m.gain.setValueAtTime(m.gain.value, ctx.currentTime);
+      m.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+      setTimeout(() => m.disconnect(), 1400);
+    }
+  };
+
+  // Listen to a whole prayer, verse by verse, highlighting the verse being chanted.
+  async function listen(p, btn) {
+    if (btn.classList.contains("on")) return stopAudio();
+    stopAudio();
+    const token = playToken;
+    btn.classList.add("on");
+    btn.innerHTML = STOP_ICON + "Stop";
+    keepAwake();
+    Drone.start();
+    if (recordings[p.id]) {
+      await playRecording(recordings[p.id]);
+    } else {
+      const els = [...document.querySelectorAll("#stanzas .stanza")];
+      for (let i = 0; i < p.verses.length; i++) {
+        if (token !== playToken) return;
+        els.forEach((el, k) => el.classList.toggle("playing", k === i));
+        if (els[i] && p.verses.length > 1) els[i].scrollIntoView({ behavior: "smooth", block: "center" });
+        await say(chantText(p.verses[i], p), { rate: 0.85 });
+      }
+    }
+    if (token === playToken) stopAudio();
+  }
+
+  /* ====================================================================== */
   /* Prayer helpers                                                          */
   /* ====================================================================== */
   const typeOf = (id) => byId(PM.types, id);
@@ -685,9 +858,15 @@
         <div class="btn-row" style="margin-top:14px">
           <button class="btn ${isFav ? "" : "ghost"}" data-fav="${p.id}">${isFav ? "★ Saved" : "☆ Save"}</button>
           ${p.japa ? `<a class="btn ghost" href="#/japa?m=${p.id}">Chant on the mala</a>` : ""}
-          ${"speechSynthesis" in window ? `<button class="btn ghost" data-speak="${p.id}">Read meaning aloud</button>` : ""}
         </div>
       </div>
+      ${hasAudio(p.id) ? `
+      <div class="player">
+        <button class="btn" data-listen="${p.id}">${PLAY_ICON}Listen</button>
+        ${canSpeak() ? `<button class="btn ghost" data-meaning="${p.id}">Hear the meaning</button>` : ""}
+        <button class="chip ${Drone.on() ? "active" : ""}" data-drone>Tanpura</button>
+      </div>
+      <p class="meta" id="audioNote" style="margin:-4px 4px 14px">${esc(voiceNote(p))}</p>` : ""}
       <div class="chips wrap" style="margin:6px 0 12px">
         <button class="chip ${show.dev ? "active" : ""}" data-show="dev">देवनागरी</button>
         <button class="chip ${show.rom ? "active" : ""}" data-show="rom">Roman</button>
@@ -743,7 +922,12 @@
           <span class="count" id="japaCount">${count}</span><span class="of">OF 108 BEADS</span>
         </button>
         <p class="meta"><span id="malaCount">${malas}</span> full ${malas === 1 ? "mala" : "malas"} chanted</p>
-        <button class="btn ghost" id="japaReset">Start again</button>
+        <div class="btn-row" style="justify-content:center">
+          ${hasAudio(m.id) ? `<button class="btn" id="chantAlong">${PLAY_ICON}Chant along</button>
+          <button class="chip ${Drone.on() ? "active" : ""}" data-drone>Tanpura</button>` : ""}
+          <button class="btn ghost" id="japaReset">Start again</button>
+        </div>
+        ${hasAudio(m.id) ? `<p class="meta" id="audioNote" style="margin:12px 0 0">Chant along plays the mantra again and again and moves the counter with each repetition. ${esc(voiceNote(m))}</p>` : ""}
       </div>
       <p class="footer-note" style="margin-top:6px">Each mantra keeps its own count. Your phone vibrates gently when you finish a mala.</p>
 
@@ -779,11 +963,12 @@
       malaEl.nextSibling.textContent = ` full ${st.malas === 1 ? "mala" : "malas"} chanted`;
     };
 
-    store.set("japaMantra", id);
-    btn.addEventListener("click", () => {
+    // Count one repetition. Returns true when it completes a mala.
+    const step = () => {
       const st = japaState(id);
       st.count += 1;
-      if (st.count >= 108) {
+      const full = st.count >= 108;
+      if (full) {
         st.count = 0;
         st.malas += 1;
         if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
@@ -792,12 +977,40 @@
       }
       store.set(japaKey(id), st);
       paint(st);
-    });
+      return full;
+    };
+
+    store.set("japaMantra", id);
+    btn.addEventListener("click", step);
     document.getElementById("japaReset").addEventListener("click", () => {
+      stopAudio();
       const st = { count: 0, malas: 0 };
       store.set(japaKey(id), st);
       paint(st);
     });
+
+    const along = document.getElementById("chantAlong");
+    if (along) {
+      const m = prayer(id);
+      along.addEventListener("click", async () => {
+        if (along.classList.contains("on")) return stopAudio();
+        stopAudio();
+        const token = playToken;
+        along.classList.add("on");
+        along.innerHTML = STOP_ICON + "Stop chanting";
+        keepAwake();
+        Drone.start();
+        while (token === playToken) {
+          await chantOnce(m, 0.8);
+          if (token !== playToken) break;
+          if (step()) break; // stop at the end of a full mala
+          await new Promise((r) => setTimeout(r, 450));
+        }
+        if (token === playToken) stopAudio();
+        const note = along.isConnected && document.getElementById("audioNote");
+        if (note) note.textContent = `Chant along plays the mantra again and again and moves the counter with each repetition. ${voiceNote(m)}`;
+      });
+    }
     card.querySelector("[data-scroll]").addEventListener("click", () => {
       document.getElementById("mantras").scrollIntoView({ behavior: "smooth" });
     });
@@ -1166,7 +1379,7 @@
     if (section === "academy" && !id) section = "learn";
     if (section === "life" && !id) section = "learn";
 
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    stopAudio();
     const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
@@ -1180,8 +1393,8 @@
         case "festival": html = await festivalView(id); break;
         case "festivals": html = await guidesView(); break;
         case "location": html = await locationView(); break;
-        case "puja": html = id ? prayerView(id) : await pujaView(query); break;
-        case "japa": html = japaView(query); break;
+        case "puja": if (id) await recordingsReady; html = id ? prayerView(id) : await pujaView(query); break;
+        case "japa": await recordingsReady; html = japaView(query); break;
         case "learn": html = learnView(); break;
         case "academy": html = courseView(id); break;
         case "life": html = lifeEventView(id); break;
@@ -1272,10 +1485,21 @@
       const on = !favs.includes(id);
       t.textContent = on ? "★ Saved" : "☆ Save";
       t.classList.toggle("ghost", !on);
-    } else if (t.dataset.speak) {
-      const p = prayer(t.dataset.speak);
-      speechSynthesis.cancel();
-      speechSynthesis.speak(new SpeechSynthesisUtterance(p.name + ". " + p.verses.map((v) => v[2]).join(" ")));
+    } else if (t.dataset.listen) {
+      const p = prayer(t.dataset.listen);
+      listen(p, t);
+      const note = document.getElementById("audioNote");
+      if (note) setTimeout(() => { if (note.isConnected) note.textContent = voiceNote(p); }, 600);
+    } else if (t.dataset.meaning) {
+      const p = prayer(t.dataset.meaning);
+      stopAudio();
+      say(p.name + ". " + p.verses.map((v) => v[2]).join(" "), { rate: 0.95, english: true });
+    } else if ("drone" in t.dataset) {
+      const on = !Drone.on();
+      store.set("audio:drone", on);
+      t.classList.toggle("active", on);
+      if (!on) Drone.stop();
+      else if (document.querySelector("[data-listen].on, #chantAlong.on")) Drone.start();
     } else if (t.dataset.show) {
       const show = store.get("prayerShow", { dev: true, rom: true, en: true });
       show[t.dataset.show] = !show[t.dataset.show];

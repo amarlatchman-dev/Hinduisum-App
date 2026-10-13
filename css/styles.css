@@ -649,3 +649,18 @@ details.lesson .body { padding: 0 18px 18px 58px; }
 }
 
 [id] { scroll-margin-top: 76px; }
+
+/* ---------- Audio ---------- */
+.player { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; }
+.btn .ico { width: 16px; height: 16px; margin-left: -4px; }
+.btn.on { background: var(--gold); border-color: var(--gold); color: #1a140d; }
+.stanza.playing { position: relative; }
+.stanza.playing::before {
+  content: "";
+  position: absolute;
+  left: -20px; top: 18px; bottom: 18px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--gold);
+}
+.stanza.playing .dev { color: var(--gold); }

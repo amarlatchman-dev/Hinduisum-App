@@ -8,7 +8,7 @@ A free, open guide to Hinduism for modern life: a Hindu calendar with real dates
 | --- | --- |
 | **Today** | The Hindu date (tithi, month, Vikram Samvat), a Bhagavad Gita verse of the day, a month calendar with upcoming festivals, a prayer suggested for the time of day, books in progress and a daily reflection |
 | **Calendar** | Month view of festivals and vrats (Ekadashi, Purnima, Amavasya, Sankashti, Pradosh, Shivaratri) for 2026–2028, a page for every day with its meaning and prayers, festival guides, and a choice of 18 cities |
-| **Puja** | 70 prayers grouped as mantras, shlokas, stotras, aartis, chalisas and bhajans, filterable by deity and by moment (waking, meals, study, travel, sleep…). Suggestions change with the time of day, weekday and today's festival. Includes favourites, read-aloud and a 108-bead japa counter |
+| **Puja** | 70 prayers grouped as mantras, shlokas, stotras, aartis, chalisas and bhajans, filterable by deity and by moment (waking, meals, study, travel, sleep…). Suggestions change with the time of day, weekday and today's festival. Every prayer can be heard chanted, verse by verse, and the 108-bead japa counter has a "chant along" mode that chants the mantra and counts each repetition, with an optional tanpura drone |
 | **Read** | The Bhagavad Gita, Ramayana and Mahabharata in full, with Sanskrit and English. Your place in each book is saved automatically |
 | **Learn** | Short courses on philosophy, deities, scripture, practice and temples, and step-by-step guides to the samskaras (naming, wedding, housewarming, last rites and more) |
 
@@ -42,6 +42,12 @@ Content lives in two files. To add more, append an object to the relevant array:
 - [`js/prayers.js`](js/prayers.js): prayers, each with a type, deity, moments and verses (`[devanagari, romanisation, english, label?]`)
 
 When you change files, increase `CACHE` in `sw.js` (for example `dharma-path-v4`) so installed apps pick up the update.
+
+## Audio
+
+Prayers are chanted by the phone's built-in Hindi voice (Web Speech API), reading the Devanagari. Phones without a Hindi voice hear the romanised words read in English. The tanpura drone is synthesised in the browser with the Web Audio API, so it needs no audio files.
+
+Real recordings take priority: add an MP3 to `audio/` and list it in `audio/index.json`. See [`audio/README.md`](audio/README.md).
 
 ## Calendar
 

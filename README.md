@@ -10,7 +10,7 @@ A free, open guide to Hinduism for modern life: a Hindu calendar with real dates
 | **Calendar** | Month view of festivals and vrats (Ekadashi, Purnima, Amavasya, Sankashti, Pradosh, Shivaratri) for 2026–2028, a page for every day with its meaning and prayers, festival guides, and a choice of 18 cities |
 | **Puja** | 70 prayers grouped as mantras, shlokas, stotras, aartis, chalisas and bhajans, filterable by deity and by moment (waking, meals, study, travel, sleep…). Suggestions change with the time of day, weekday and today's festival. Every prayer can be heard chanted, verse by verse, and the 108-bead japa counter has a "chant along" mode that chants the mantra and counts each repetition, with an optional tanpura drone. **Aarti mode** shows one verse at a time in large type on a dark screen for the whole family, repeats the refrain after each verse and can turn the pages itself while it chants. Any prayer can be **recorded in your own voice**, and that recording then plays instead of the device voice |
 | **Read** | The Bhagavad Gita, Rig Veda (selected hymns), Sama Veda, Upanishads, Ramayana, Mahabharata, Vishnu Purana and Yoga Sutras, with Sanskrit where available. Your place in each book is saved automatically. Tap any verse to bookmark it, highlight it, write a note, copy it or share it as an image |
-| **Learn** | Short courses on philosophy, deities, scripture, practice and temples, and step-by-step guides to the samskaras (naming, wedding, housewarming, last rites and more) |
+| **Learn** | 18 illustrated courses with 96 lessons on philosophy, deities, scripture, practice, temples and pilgrimage. Each lesson has its own page with an original illustration, key terms, a short practice and links to the prayers and scriptures it mentions, and completed lessons count toward your practice. Also step-by-step guides to the samskaras (naming, wedding, housewarming, last rites and more) |
 
 Across the app:
 
@@ -46,6 +46,8 @@ Content lives in two files. To add more, append an object to the relevant array:
   - `vrats`, `weekdays`: text for recurring observances and each weekday's deity
   - `courses`, `lifeEvents`: Academy courses and rites of passage
 - [`js/prayers.js`](js/prayers.js): prayers, each with a type, deity, moments and verses (`[devanagari, romanisation, english, label?]`)
+- [`js/academy.js`](js/academy.js): the Academy courses. Each lesson has a `title`, an `art` illustration, an optional `caption`, an HTML `body`, and optional `terms`, `practice` and `links`. Reading time is worked out from the text.
+- [`img/learn/`](img/learn/): the lesson illustrations, original gold line drawings as SVG. A lesson's `art` can also point to a photo or painting (for example `img/learn/varanasi.jpg`).
 
 When you change files, increase `CACHE` in `sw.js` (for example `dharma-path-v9`) so installed apps pick up the update.
 
@@ -105,4 +107,4 @@ The Rig Veda hymn selection and its English translations live in `scripts/rigved
 
 ## Content notes
 
-All explanations, and the translations of the prayers and daily wisdom, are original writing for this project. The prayers themselves are traditional texts in the public domain; their Devanagari was checked against an independent transcription where one was available. The scripture translations are the public-domain editions listed above, except the Rig Veda selection, which was translated for this project.
+All explanations and lessons, and the translations of the prayers and daily wisdom, are original writing for this project, and the lesson illustrations are original drawings. The prayers themselves are traditional texts in the public domain; their Devanagari was checked against an independent transcription where one was available. The scripture translations are the public-domain editions listed above, except the Rig Veda selection, which was translated for this project.

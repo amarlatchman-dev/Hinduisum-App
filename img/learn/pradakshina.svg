@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<radialGradient id="g" r=".5"><stop offset="0" stop-color="#f5b04a" stop-opacity=".55"/><stop offset="1" stop-color="#f5b04a" stop-opacity="0"/></radialGradient>
+<g id="f"><path d="M0-4C3-4 4-1 3.6 2C3.2 5 3 7 2 8.6C1 10-1.4 10-2.2 8.6C-3 7-3.2 4-3.4 1.5C-3.6-1.5-2.6-4 0-4Z"/><circle cx="-1.7" cy="-6.6" r="1.4"/><circle cx=".6" cy="-7.3" r="1"/><circle cx="2.3" cy="-6.6" r=".9"/><circle cx="3.5" cy="-5.3" r=".8"/><circle cx="4.2" cy="-3.7" r=".7"/></g>
+<g id="p"><use href="#f" transform="translate(-4.6 5) scale(-1 1)"/><use href="#f" transform="translate(4.6 -6)"/></g>
+</defs>
+<g fill="none" stroke="#d4b06a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<g stroke-opacity=".15" stroke-width="1.2"><circle cx="240" cy="150" r="124"/><path d="M352 150L358 150M348.2 179L354 180.5M337 206L342.2 209M319.2 229.2L323.4 233.4M296 247L299 252.2M269 258.2L270.5 264M240 262L240 268M211 258.2L209.5 264M184 247L181 252.2M160.8 229.2L156.6 233.4M143 206L137.8 209M131.8 179L126 180.5M128 150L122 150M131.8 121L126 119.5M143 94L137.8 91M160.8 70.8L156.6 66.6M184 53L181 47.8M211 41.8L209.5 36M240 38L240 32M269 41.8L270.5 36M296 53L299 47.8M319.2 70.8L323.4 66.6M337 94L342.2 91M348.2 121L354 119.5"/></g>
+<circle cx="240" cy="150" r="96" stroke-width="18" stroke-opacity=".07"/>
+<circle cx="240" cy="150" r="105"/><circle cx="240" cy="150" r="87" stroke-width="1.2"/>
+<path d="M335.3 161.7A96 96 0 0 1 307.9 217.9M228.3 245.3A96 96 0 0 1 172.1 217.9M144.7 138.3A96 96 0 0 1 172.1 82.1M251.7 54.7A96 96 0 0 1 307.9 82.1" stroke-width="1.6"/>
+<path transform="translate(304.2 221.3) rotate(228)" d="M-5.5 4L0-2L5.5 4"/><path transform="translate(168.7 214.2) rotate(318)" d="M-5.5 4L0-2L5.5 4"/><path transform="translate(175.8 78.7) rotate(408)" d="M-5.5 4L0-2L5.5 4"/><path transform="translate(311.3 85.8) rotate(498)" d="M-5.5 4L0-2L5.5 4"/>
+<g fill="#d4b06a" fill-opacity=".7" stroke="none"><use href="#p" transform="translate(282.1 236.3) rotate(244)"/><use href="#p" transform="translate(250 245.5) rotate(264)"/><use href="#p" transform="translate(153.7 192.1) rotate(334)"/><use href="#p" transform="translate(144.5 160) rotate(354)"/><use href="#p" transform="translate(197.9 63.7) rotate(424)"/><use href="#p" transform="translate(230 54.5) rotate(444)"/><use href="#p" transform="translate(326.3 107.9) rotate(514)"/><use href="#p" transform="translate(335.5 140) rotate(534)"/></g>
+<g transform="translate(240 146)">
+<path d="M-12 38V52H12V38" fill="#d4b06a" fill-opacity=".1" stroke-width="1.2"/>
+<path d="M-9 56H9M-11 60H11" stroke-width="1.2" stroke-opacity=".7"/>
+<g fill="#d4b06a" stroke="none"><circle cx="-7" cy="45" r="1.6"/><circle cx="7" cy="45" r="1.6"/></g>
+<path d="M-32-32H-12V-38H12V-32H32V-12H38V12H32V32H12V38H-12V32H-32V12H-38V-12H-32Z" fill="#d4b06a" fill-opacity=".14"/>
+<path d="M-24-24H-8V-29H8V-24H24V-8H29V8H24V24H8V29H-8V24H-24V8H-29V-8H-24Z" stroke-width="1.2"/>
+<path d="M-6 29V38M6 29V38" stroke-width="1.2"/>
+<rect x="-14" y="-14" width="28" height="28" fill="url(#g)" stroke-width="1.2" stroke-opacity=".8"/>
+<path d="M-14-14L-24-24M14-14L24-24M14 14L24 24M-14 14L-24 24" stroke-width="1.2" stroke-opacity=".5"/>
+<circle r="6" fill="#d4b06a" fill-opacity=".3" stroke-width="1.2"/><circle r="2" fill="#f3ead9" fill-opacity=".9" stroke="none"/>
+</g>
+</g>
+</svg>

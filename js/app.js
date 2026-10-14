@@ -681,7 +681,7 @@
         <div class="section-head"><h2 class="section-title">Explore</h2></div>
         <div class="tiles">
           <a class="tile" href="#/read"><span class="dv">ग्रन्थ</span><div><h3>Scriptures</h3><p>Gita, Vedas, Upanishads and epics</p></div></a>
-          <a class="tile" href="#/learn"><span class="dv">शिक्षा</span><div><h3>Academy</h3><p>${C.courses.length} short courses</p></div></a>
+          <a class="tile" href="#/learn"><span class="dv">शिक्षा</span><div><h3>Academy</h3><p>${C.courses.length} illustrated courses</p></div></a>
           <a class="tile" href="#/learn#rites"><span class="dv">संस्कार</span><div><h3>Rites of passage</h3><p>Step-by-step guidance</p></div></a>
           <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Chant a mantra on a mala of 108 beads</p></div></a>
         </div>
@@ -1914,12 +1914,46 @@
   /* ====================================================================== */
   const completed = (courseId) => store.get("progress:" + courseId, []);
 
+  // The 2026 Academy rewrite reordered some lessons; carry finished lessons over to their new places once.
+  if (!store.get("academy:v2", false)) {
+    const moved = { foundations: { 4: 5 }, devi: { 2: 3 }, gita: { 4: 5, 5: 7 }, epics: { 1: 2, 2: 5 }, meditation: { 3: 4 }, temples: { 1: 3, 2: null } };
+    Object.entries(moved).forEach(([cid, map]) => {
+      const done = completed(cid);
+      if (done.length) store.set("progress:" + cid, [...new Set(done.map((i) => (i in map ? map[i] : i)).filter((i) => i != null))]);
+    });
+    store.set("academy:v2", true);
+  }
+
+  const lessonWords = (l) => stripTags(l.body + " " + (l.practice || "")).split(/\s+/).length;
+  const lessonMins = (l) => Math.max(2, Math.round(lessonWords(l) / 200));
+  const artSrc = (art) => /\.(jpe?g|png|webp|svg)$/i.test(art) ? art : `img/learn/${art}.svg`;
+  const plate = (art, alt, cls = "") => art ? `<figure class="plate ${cls}"><img src="${artSrc(art)}" alt="${esc(alt || "")}" loading="lazy" decoding="async"></figure>` : "";
+  const lessonHref = (cid, i) => `#/academy/${cid}/${i + 1}`;
+
+  // The next lesson to open in a course: the first one not yet completed.
+  function nextLesson(c) {
+    const done = completed(c.id);
+    const i = c.lessons.findIndex((l, k) => !done.includes(k));
+    return i < 0 ? null : i;
+  }
+
   function learnView() {
     const active = store.get("academyFilter", "all");
-    const courses = active === "all" ? C.courses : C.courses.filter((c) => c.category === active);
+    const order = C.categories.map((c) => c.id);
+    const courses = (active === "all" ? C.courses : C.courses.filter((c) => c.category === active))
+      .slice().sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category));
+    const last = store.get("academy:last", null);
+    const lc = last && byId(C.courses, last.c);
+    const li = lc ? (completed(lc.id).includes(last.i) ? nextLesson(lc) : last.i) : null;
+    const total = C.courses.reduce((n, c) => n + c.lessons.length, 0);
     return `
       <h2 class="page-title">Learn</h2>
-      <p class="page-sub">Short courses on Hindu thought and practice, and guides to the sacred rites of life.</p>
+      <p class="page-sub">${C.courses.length} illustrated courses and ${total} lessons on Hindu thought and practice, and guides to the sacred rites of life.</p>
+      ${lc && li != null ? `
+        <a class="night continue-lesson" href="${lessonHref(lc.id, li)}">
+          ${plate(lc.lessons[li].art, "", "mini")}
+          <span class="body"><span class="eyebrow">Continue learning</span><h3>${esc(lc.lessons[li].title)}</h3><span class="meta">${esc(lc.title)} · Lesson ${li + 1} of ${lc.lessons.length}</span></span>
+          <span class="chev">›</span></a>` : ""}
       <div class="section-head"><h2 class="section-title">Academy</h2></div>
       <div class="chips" style="margin-bottom:12px">
         ${C.categories.map((c) => `<button class="chip ${c.id === active ? "active" : ""}" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}
@@ -1927,8 +1961,9 @@
       <div class="list">
         ${courses.map((c) => {
           const n = completed(c.id).length;
-          return `<a class="row" href="#/academy/${c.id}">${seal(c.deva)}
-            <span class="body"><h3>${esc(c.title)}</h3><p>${esc(c.subtitle)} · ${c.lessons.length} lessons${n ? ` · ${n} done` : ""}</p>
+          const mins = c.lessons.reduce((m, l) => m + lessonMins(l), 0);
+          return `<a class="row course-row" href="#/academy/${c.id}">${plate(c.art, "", "thumb")}
+            <span class="body"><h3>${esc(c.title)}</h3><p>${esc(c.subtitle)}</p><p class="course-meta">${c.lessons.length} lessons · ${mins} min${n ? ` · ${n === c.lessons.length ? "completed" : n + " done"}` : ""}</p>
             ${n ? `<div class="progress"><span style="width:${(n / c.lessons.length) * 100}%"></span></div>` : ""}</span>
             <span class="chev">›</span></a>`;
         }).join("") || `<p class="empty">No courses in this category yet.</p>`}
@@ -1947,17 +1982,55 @@
     const c = byId(C.courses, id);
     if (!c) return notFound();
     const done = completed(id);
+    const next = nextLesson(c);
+    const mins = c.lessons.reduce((m, l) => m + lessonMins(l), 0);
+    const cat = byId(C.categories, c.category);
     return `
-      <div class="detail-head">${seal(c.deva, "lg")}<div><div class="eyebrow">Academy · ${c.lessons.length} lessons</div><h2>${esc(c.title)}</h2><p>${esc(c.subtitle)}</p></div></div>
-      <div class="list">
+      ${plate(c.art, c.title, "course-hero")}
+      <div class="course-head">
+        <div class="eyebrow">${esc(cat ? cat.name : "Academy")} · ${c.lessons.length} lessons · ${mins} min</div>
+        <h2 class="page-title">${esc(c.title)}</h2>
+        <p class="page-sub">${esc(c.subtitle)}</p>
+        ${c.intro ? `<p class="lede">${esc(c.intro)}</p>` : ""}
+        ${done.length ? `<div class="progress course-progress"><span style="width:${(done.length / c.lessons.length) * 100}%"></span></div><p class="meta">${done.length} of ${c.lessons.length} lessons completed</p>` : ""}
+        <div class="btn-row" style="margin-top:12px"><a class="btn" href="${lessonHref(id, next == null ? 0 : next)}">${next == null ? "Read again" : done.length ? "Continue" : "Begin the course"}</a></div>
+      </div>
+      <div class="list lesson-list">
         ${c.lessons.map((l, i) => `
-          <details class="lesson ${done.includes(i) ? "done" : ""}" ${i === 0 && !done.length ? "open" : ""}>
-            <summary><span class="num">${done.includes(i) ? "✓" : i + 1}</span><h3>${esc(l.title)}</h3></summary>
-            <div class="body prose">${l.body}
-              <button class="btn ${done.includes(i) ? "ghost" : ""}" data-complete="${id}:${i}">${done.includes(i) ? "Completed ✓" : "Mark as complete"}</button>
-            </div>
-          </details>`).join("")}
+          <a class="row lesson-row ${done.includes(i) ? "done" : ""}" href="${lessonHref(id, i)}">
+            <span class="num">${done.includes(i) ? "✓" : i + 1}</span>
+            <span class="body"><h3>${esc(l.title)}</h3><p>${lessonMins(l)} min read</p></span>
+            <span class="chev">›</span></a>`).join("")}
       </div>`;
+  }
+
+  function lessonView(id, n) {
+    const c = byId(C.courses, id);
+    const i = n - 1;
+    const l = c && c.lessons[i];
+    if (!l) return notFound();
+    store.set("academy:last", { c: id, i });
+    const done = completed(id).includes(i);
+    const prev = c.lessons[i - 1], next = c.lessons[i + 1];
+    return `
+      <article class="lesson-page">
+        <a class="eyebrow course-link" href="#/academy/${id}">${esc(c.title)}</a>
+        <h2 class="lesson-title">${esc(l.title)}</h2>
+        <p class="meta lesson-meta">Lesson ${n} of ${c.lessons.length} · ${lessonMins(l)} min read${done ? " · Completed" : ""}</p>
+        ${plate(l.art, l.caption || l.title, "lesson-art")}
+        ${l.caption ? `<p class="caption">${esc(l.caption)}</p>` : ""}
+        <div class="prose lesson-body">${l.body}</div>
+        ${l.terms && l.terms.length ? `<div class="card terms"><div class="eyebrow">Key terms</div><dl>${l.terms.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl></div>` : ""}
+        ${l.practice ? `<div class="card practice"><div class="eyebrow">Try this</div><p>${esc(l.practice)}</p></div>` : ""}
+        ${l.links && l.links.length ? `<div class="lesson-links">${l.links.map(([label, href]) => `<a class="row" href="${href}"><span class="body"><h3>${esc(label)}</h3></span><span class="chev">›</span></a>`).join("")}</div>` : ""}
+        <div class="lesson-done">
+          <button class="btn ${done ? "ghost" : ""}" data-lesson-done="${id}:${i}">${done ? "Completed ✓" : next ? "Mark complete and continue" : "Complete the course"}</button>
+        </div>
+        <nav class="lesson-nav">
+          ${prev ? `<a href="${lessonHref(id, i - 1)}"><span class="meta">Previous</span><span>${esc(prev.title)}</span></a>` : `<span></span>`}
+          ${next ? `<a class="next" href="${lessonHref(id, i + 1)}"><span class="meta">Next</span><span>${esc(next.title)}</span></a>` : `<a class="next" href="#/academy/${id}"><span class="meta">Finished</span><span>Back to the course</span></a>`}
+        </nav>
+      </article>`;
   }
 
   function lifeEventView(id) {
@@ -2561,8 +2634,8 @@
       key: keyOf(p.name, p.about, deityOf(p.deity).name, typeOf(p.type).name, ...p.verses.map((v) => v[1] + " " + v[2])) + " " + p.verses.map((v) => v[0]).join(" ") }));
     C.festivals.forEach((f) => out.push({ group: "Festivals", href: `#/festival/${f.parent || f.id}`, title: f.name, where: f.when || "Festival", text: f.meaning,
       key: keyOf(f.name, f.summary, f.meaning, ...(f.traditions || []), ...(f.atHome || [])) + " " + (f.deva || "") }));
-    C.courses.forEach((c) => c.lessons.forEach((l) => out.push({ group: "Learn", href: `#/academy/${c.id}`, title: l.title, where: c.title, text: stripTags(l.body),
-      key: keyOf(c.title, l.title, stripTags(l.body)) })));
+    C.courses.forEach((c) => c.lessons.forEach((l, i) => out.push({ group: "Learn", href: lessonHref(c.id, i), title: l.title, where: c.title, text: stripTags(l.body),
+      key: keyOf(c.title, l.title, stripTags(l.body), ...(l.terms || []).flat()) })));
     C.lifeEvents.forEach((e) => out.push({ group: "Learn", href: `#/life/${e.id}`, title: e.name, where: e.sanskrit, text: e.meaning,
       key: keyOf(e.name, e.sanskrit, e.meaning, ...e.steps, e.withPriest) }));
     return (appEntries.cache = out);
@@ -2735,7 +2808,7 @@
         case "japa": await recordingsReady; html = japaView(query); break;
         case "aarti": await recordingsReady; html = aartiView(id); break;
         case "learn": html = learnView(); break;
-        case "academy": html = courseView(id); break;
+        case "academy": html = a ? lessonView(id, +a) : courseView(id); break;
         case "life": html = lifeEventView(id); break;
         case "read":
           if (!id) html = libraryView();
@@ -2947,19 +3020,21 @@
     } else if (t.dataset.calFilter) {
       store.set("calFilter", t.dataset.calFilter);
       route();
-    } else if (t.dataset.complete) {
-      const [cid, idx] = t.dataset.complete.split(":");
+    } else if (t.dataset.lessonDone) {
+      const [cid, idx] = t.dataset.lessonDone.split(":");
       const i = +idx;
       const done = completed(cid);
-      const next = done.includes(i) ? done.filter((x) => x !== i) : [...done, i];
-      store.set("progress:" + cid, next);
-      if (next.includes(i)) logPractice("lessons", `${cid}:${i}`); else unlogPractice("lessons", `${cid}:${i}`);
-      const openIdx = next.includes(i) ? i + 1 : i;
-      route().then(() => {
-        const lessons = view.querySelectorAll(".lesson");
-        lessons.forEach((d, k) => { d.open = k === openIdx; });
-        if (lessons[openIdx]) lessons[openIdx].scrollIntoView({ behavior: "smooth", block: "center" });
-      });
+      const c = byId(C.courses, cid);
+      if (done.includes(i)) {
+        store.set("progress:" + cid, done.filter((x) => x !== i));
+        unlogPractice("lessons", `${cid}:${i}`);
+        route();
+      } else {
+        store.set("progress:" + cid, [...done, i]);
+        logPractice("lessons", `${cid}:${i}`);
+        if (c.lessons[i + 1]) location.hash = lessonHref(cid, i + 1);
+        else { toast(`Course complete: ${c.title}`); location.hash = `#/academy/${cid}`; }
+      }
     } else if (t.dataset.fav) {
       const favs = store.get("favorites", []);
       const id = t.dataset.fav;

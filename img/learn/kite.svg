@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<radialGradient id="s"><stop offset="0" stop-color="#fff3cf" stop-opacity=".9"/><stop offset=".55" stop-color="#f5b04a" stop-opacity=".55"/><stop offset="1" stop-color="#f5b04a" stop-opacity=".18"/></radialGradient>
+<filter id="b" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="12"/></filter>
+<g id="k"><path d="M0-24L19 0L0 22L-19 0Z" fill="#d4b06a" fill-opacity=".14"/><path d="M0-24L19 0L0 0Z" fill="#d4b06a" fill-opacity=".3" stroke="none"/><path d="M0 22L-19 0L0 0Z" fill="#d4b06a" fill-opacity=".3" stroke="none"/><path d="M0-24V22M-19 0Q0-14 19 0" stroke-width="1.2"/><path d="M0 22L-6 31H6Z" fill="#d4b06a" fill-opacity=".4" stroke-width="1.2"/></g>
+</defs>
+<g fill="none" stroke="#d4b06a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<g stroke-opacity=".15"><circle cx="240" cy="170" r="76"/><circle cx="240" cy="170" r="96" stroke-width="1.2"/></g>
+<circle cx="240" cy="170" r="40" fill="#f5b04a" fill-opacity=".45" stroke="none" filter="url(#b)"/>
+<circle cx="240" cy="170" r="36" fill="url(#s)" stroke-width="1.6"/>
+<circle cx="240" cy="170" r="28" stroke-width="1.2" stroke-opacity=".5"/>
+<path d="M284 170L298 170M282.5 181.4L290.2 183.5M278.1 192L290.2 199M271.1 201.1L276.8 206.8M262 208.1L269 220.2M251.4 212.5L253.5 220.2M240 214L240 228M228.6 212.5L226.5 220.2M218 208.1L211 220.2M208.9 201.1L203.2 206.8M201.9 192L189.8 199M197.5 181.4L189.8 183.5M196 170L182 170M197.5 158.6L189.8 156.5M201.9 148L189.8 141M208.9 138.9L203.2 133.2M218 131.9L211 119.8M228.6 127.5L226.5 119.8M240 126L240 112M251.4 127.5L253.5 119.8M262 131.9L269 119.8M271.1 138.9L276.8 133.2M278.1 148L290.2 141M282.5 158.6L290.2 156.5" stroke-width="1.2" stroke-opacity=".75"/>
+<path d="M150 64C144 140 168 200 218 268M328 50C338 130 320 196 262 268M404 112C406 170 380 216 300 268" stroke="#f3ead9" stroke-opacity=".45" stroke-width="1"/>
+<use href="#k" transform="translate(150 62) rotate(-14) scale(1.15)"/>
+<use href="#k" transform="translate(328 48) rotate(10)"/>
+<use href="#k" transform="translate(404 110) rotate(24) scale(.72)"/>
+<g transform="translate(98 264) rotate(-7)">
+<path d="M-4.5 0V-112H4.5V0Z" fill="#d4b06a" fill-opacity=".2"/>
+<path d="M-5.5-18H5.5M-5.5-38H5.5M-5.5-58H5.5M-5.5-78H5.5M-5.5-96H5.5" stroke-width="1.6"/>
+<path d="M-2-4V-14M-2-23V-34M-2-43V-54M-2-63V-74M-2-83V-92" stroke="#f3ead9" stroke-opacity=".45" stroke-width="1"/>
+<path d="M0-112C-8-132-26-142-46-140M0-112C10-134 26-146 44-146M0-108C-14-118-30-118-44-108M0-108C14-120 30-122 42-114M0-114C-2-134 2-150 10-162" stroke-width="1.6"/>
+<path d="M-6-124C-16-134-28-138-40-138M6-126C16-136 28-142 40-143" stroke-width="1" stroke-opacity=".5"/>
+<path d="M-18-96C-8-92-4-84 0-78" stroke-width="1.4"/>
+</g>
+<ellipse cx="372" cy="254" rx="44" ry="8" fill="#d4b06a" fill-opacity=".12"/>
+<g fill="#d4b06a" fill-opacity=".22">
+<circle cx="356" cy="238" r="14"/><circle cx="388" cy="238" r="14"/><circle cx="372" cy="214" r="14"/>
+</g>
+<g stroke="#f3ead9" stroke-opacity=".8" stroke-width="1.6">
+<path d="M350 232l1.5 1M360 230l1 1.5M348 242l1.5-.5M358 244l1 1.4M364 236l.5 1.6M354 238l1.5.5M382 232l1.5 1M392 230l1 1.5M380 242l1.5-.5M390 244l1 1.4M396 236l.5 1.6M386 238l1.5.5M366 208l1.5 1M376 206l1 1.5M364 218l1.5-.5M374 220l1 1.4M380 212l.5 1.6M370 214l1.5.5"/>
+</g>
+</g>
+</svg>

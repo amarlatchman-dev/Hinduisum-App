@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<filter id="g" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="16"/></filter>
+<g id="lf"><path d="M0 0C-9-7-9-22 0-30C9-22 9-7 0 0Z"/><path d="M0-4V-25" fill="none" stroke-width="1" stroke-opacity=".7"/></g>
+<g id="bl"><use href="#lf" transform="rotate(-58) scale(.84)"/><use href="#lf" transform="rotate(58) scale(.84)"/><use href="#lf"/><path d="M0 1V10" fill="none"/></g>
+<path id="fp" d="M0 0C-5-4-5-10 0-12C5-10 5-4 0 0Z"/>
+</defs>
+<ellipse cx="240" cy="148" rx="44" ry="62" fill="#f3ead9" fill-opacity=".16" filter="url(#g)"/>
+<g fill="none" stroke="#d4b06a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M310 134L374 134M309 146L346 153M171 146L134 153M170 134L106 134M171 122L134 115M174 110L114 88M179 99L146 80M186 89L137 48M195 80L171 51M205 73L173 18M216 68L203 33M228 65L217 2M240 64L240 26M252 65L263 2M264 68L277 33M275 73L307 18M285 80L309 51M294 89L343 48M301 99L334 80M306 110L366 88M309 122L346 115" stroke-opacity=".2" stroke-width="1.4"/>
+<g stroke-opacity=".15"><circle cx="240" cy="150" r="122"/></g>
+<circle cx="240" cy="150" r="134" stroke-opacity=".2" stroke-width="2.2" stroke-dasharray="0 9"/>
+<!-- dhara patra (water pot) -->
+<path d="M229 2L234 28M251 2L246 28" stroke-width="1.4" stroke-dasharray="2 3.5"/>
+<path d="M228 30H252C258 36 256 50 240 55C224 50 222 36 228 30Z" fill="#d4b06a" fill-opacity=".2"/>
+<ellipse cx="240" cy="30" rx="12" ry="3" fill="#d4b06a" fill-opacity=".3" stroke-width="1.4"/>
+<path d="M240 58V72" stroke="#f3ead9" stroke-opacity=".75" stroke-width="1.4"/>
+<path d="M240 61l-1.6 3a1.6 1.6 0 0 0 3.2 0z" fill="#f3ead9" stroke="none"/>
+<!-- yoni base -->
+<path d="M184 226V234H296V226" fill="#d4b06a" fill-opacity=".14"/>
+<path d="M168 234H312L316 248H164Z" fill="#d4b06a" fill-opacity=".18"/>
+<path d="M172 241H308" stroke-width="1.2" stroke-opacity=".6"/>
+<path d="M166 198V208C166 220 202 226 240 226C276 226 302 221 310 216L360 210C364 209 364 205 361 203" fill="#d4b06a" fill-opacity=".22"/>
+<path d="M214 183C196 184 166 188 166 198C166 210 200 216 240 216C272 216 298 213 310 208L361 203C366 199 362 194 354 194L308 192C298 186 280 183 266 183" fill="#d4b06a" fill-opacity=".12"/>
+<path d="M300 200L352 199" stroke-width="1.2" stroke-opacity=".7"/>
+<path d="M364 214l-2 4a2 2 0 0 0 4 0z" fill="#f3ead9" fill-opacity=".8" stroke="none"/>
+<!-- lingam -->
+<path d="M214 196V132C214 101 266 101 266 132V196Q240 204 214 196Z" fill="#d4b06a" fill-opacity=".14"/>
+<path d="M221 188V134C221 122 226 114 232 110" stroke="#f3ead9" stroke-opacity=".4" stroke-width="1.4"/>
+<path d="M218 140Q240 144 262 140M217 148Q240 152 263 148M218 156Q240 160 262 156" stroke="#f3ead9" stroke-opacity=".85" stroke-width="2.2"/>
+<circle cx="240" cy="150" r="3.6" fill="#c0533f" stroke="none"/>
+<!-- bilva -->
+<g fill="#d4b06a" fill-opacity=".3" stroke-width="1.4">
+<use href="#bl" transform="translate(244 104) rotate(12)"/>
+<use href="#bl" transform="translate(196 199) rotate(-72) scale(.74)"/>
+</g>
+<!-- flower -->
+<g transform="translate(282 205)" fill="#f3ead9" fill-opacity=".55" stroke-width="1.2">
+<use href="#fp"/><use href="#fp" transform="rotate(72)"/><use href="#fp" transform="rotate(144)"/><use href="#fp" transform="rotate(216)"/><use href="#fp" transform="rotate(288)"/>
+<circle r="2.4" fill="#d4b06a" fill-opacity="1" stroke="none"/>
+</g>
+</g>
+</svg>

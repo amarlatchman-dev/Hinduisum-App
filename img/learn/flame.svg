@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" fill="none" stroke="#d4b06a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<defs>
+<radialGradient id="g" cx="240" cy="158" r="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f5b04a" stop-opacity=".42"/><stop offset=".45" stop-color="#f5b04a" stop-opacity=".12"/><stop offset="1" stop-color="#f5b04a" stop-opacity="0"/></radialGradient>
+<radialGradient id="f" cx=".5" cy=".86" r=".8" fx=".5" fy=".9"><stop offset="0" stop-color="#fff3cf"/><stop offset=".5" stop-color="#f5b04a"/><stop offset="1" stop-color="#d9652b"/></radialGradient>
+<linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4b06a" stop-opacity=".45"/><stop offset="1" stop-color="#d4b06a" stop-opacity=".12"/></linearGradient>
+</defs>
+<circle cx="240" cy="158" r="120" fill="url(#g)" stroke="none"/>
+<g stroke-opacity=".16" stroke-width="1.2"><circle cx="240" cy="150" r="78"/><circle cx="240" cy="150" r="98" stroke-dasharray="1 6"/><circle cx="240" cy="150" r="120" stroke-opacity=".1"/></g>
+<path d="M150 252h180M186 262h108" stroke-width="1.2" stroke-opacity=".25"/>
+<path d="M174 196c2 24 26 44 66 46 40-2 64-22 66-46" fill="#3a2f20"/>
+<path d="M222 240l-5 9h46l-5-9" fill="#31271c"/>
+<path d="M174 196c0-9 30-16 66-16s66 7 66 16c-2 8-38 17-66 24-28-7-64-16-66-24z" fill="#433624"/>
+<path d="M186 196c0-6 24-10 54-10s54 4 54 10c-4 6-32 12-54 17-22-5-50-11-54-17z" fill="url(#o)" stroke-width="1.2" stroke-opacity=".6"/>
+<path d="M186 214c14 9 32 14 54 16 22-2 40-7 54-16" stroke-width="1.2" stroke-opacity=".55"/>
+<g fill="#d4b06a" stroke="none" fill-opacity=".7"><circle cx="198" cy="225" r="1.8"/><circle cx="212" cy="231" r="1.8"/><circle cx="226" cy="234.5" r="1.8"/><circle cx="240" cy="235.5" r="1.8"/><circle cx="254" cy="234.5" r="1.8"/><circle cx="268" cy="231" r="1.8"/><circle cx="282" cy="225" r="1.8"/></g>
+<path d="M240 198v13" stroke-width="1.6"/>
+<path d="M240 76c6 30 24 60 24 88 0 24-11 38-24 38s-24-14-24-38c0-28 18-58 24-88z" fill="url(#f)" stroke="none"/>
+<path d="M240 128c3 16 11 30 11 44 0 14-5 22-11 22s-11-8-11-22c0-14 8-28 11-44z" fill="#fff3cf" stroke="none" fill-opacity=".9"/>
+</svg>

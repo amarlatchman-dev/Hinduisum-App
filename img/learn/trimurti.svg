@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+<defs>
+<path id="sp" d="M240 116Q246 102 240 90Q234 102 240 116Z"/>
+</defs>
+<g fill="none" stroke="#d4b06a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<g stroke-opacity=".15">
+<circle cx="126" cy="128" r="74"/><circle cx="240" cy="128" r="74"/><circle cx="350" cy="128" r="74"/>
+<ellipse cx="240" cy="150" rx="200" ry="122" stroke-width="1.2"/>
+</g>
+<ellipse cx="240" cy="150" rx="214" ry="134" stroke-opacity=".2" stroke-width="2.2" stroke-dasharray="0 9"/>
+<path d="M104 250H376" stroke-opacity=".45" stroke-width="1.2"/>
+<path d="M234 250L240 244L246 250L240 256Z" fill="#d4b06a" stroke="none" fill-opacity=".6"/>
+<!-- Brahma: lotus -->
+<path d="M124 176C121 200 127 224 124 250"/>
+<path d="M124 220C112 206 92 206 80 218C90 222 92 232 104 234C114 236 121 230 124 220Z" fill="#d4b06a" fill-opacity=".12"/>
+<path d="M85 219C98 218 112 219 123 221" stroke-width="1.2" stroke-opacity=".6"/>
+<g transform="translate(124 170)" fill="#d4b06a" fill-opacity=".12">
+<path d="M0 0C-15-20-13-48 0-66C13-48 15-20 0 0Z"/>
+<path d="M-2 0C-22-12-36-34-34-56C-18-48-6-28-2 0Z"/><path d="M2 0C22-12 36-34 34-56C18-48 6-28 2 0Z"/>
+<path d="M-4 2C-30 0-52-16-58-38C-38-36-18-22-4 2Z"/><path d="M4 2C30 0 52-16 58-38C38-36 18-22 4 2Z"/>
+<path d="M-6 4C-28 8-50 2-62-12C-42-16-22-10-6 4Z"/><path d="M6 4C28 8 50 2 62-12C42-16 22-10 6 4Z"/>
+<path d="M0-8V-54M-8-8C-16-22-22-34-26-46M8-8C16-22 22-34 26-46" fill="none" stroke-width="1.2" stroke-opacity=".6"/>
+
+</g>
+<!-- Vishnu: sudarshana chakra -->
+<path d="M240.0 78.0Q250.5 75.0 250.2 68.9L252.9 79.7Q263.9 79.6 265.1 73.5L265.0 84.7Q275.6 87.4 278.4 81.9L275.4 92.6Q284.9 98.0 289.0 93.4L283.3 103.0Q291.1 110.6 296.3 107.2L288.3 115.1Q293.9 124.5 299.7 122.5L290.0 128.0Q293.0 138.5 299.1 138.2L288.3 140.9Q288.4 151.9 294.5 153.1L283.3 153.0Q280.6 163.6 286.1 166.4L275.4 163.4Q270.0 172.9 274.6 177.0L265.0 171.3Q257.4 179.1 260.8 184.3L252.9 176.3Q243.5 181.9 245.5 187.7L240.0 178.0Q229.5 181.0 229.8 187.1L227.1 176.3Q216.1 176.4 214.9 182.5L215.0 171.3Q204.4 168.6 201.6 174.1L204.6 163.4Q195.1 158.0 191.0 162.6L196.7 153.0Q188.9 145.4 183.7 148.8L191.7 140.9Q186.1 131.5 180.3 133.5L190.0 128.0Q187.0 117.5 180.9 117.8L191.7 115.1Q191.6 104.1 185.5 102.9L196.7 103.0Q199.4 92.4 193.9 89.6L204.6 92.6Q210.0 83.1 205.4 79.0L215.0 84.7Q222.6 76.9 219.2 71.7L227.1 79.7Q236.5 74.1 234.5 68.3L240.0 78.0Z" fill="#d4b06a" fill-opacity=".1" stroke-width="1.6"/>
+<circle cx="240" cy="128" r="44" fill="#d4b06a" fill-opacity=".14"/>
+<circle cx="240" cy="128" r="38" stroke-width="1.2"/>
+<g fill="#d4b06a" fill-opacity=".22" stroke-width="1.2">
+<use href="#sp"/><use href="#sp" transform="rotate(45 240 128)"/><use href="#sp" transform="rotate(90 240 128)"/><use href="#sp" transform="rotate(135 240 128)"/>
+<use href="#sp" transform="rotate(180 240 128)"/><use href="#sp" transform="rotate(225 240 128)"/><use href="#sp" transform="rotate(270 240 128)"/><use href="#sp" transform="rotate(315 240 128)"/>
+</g>
+<circle cx="240" cy="128" r="11" fill="#d4b06a" fill-opacity=".25"/>
+<circle cx="240" cy="128" r="3.5" fill="#f3ead9" fill-opacity=".85" stroke="none"/>
+<path d="M240 190V216"/>
+<g fill="#d4b06a" fill-opacity=".14">
+<path d="M240 240C234 232 234 222 240 214C246 222 246 232 240 240Z"/>
+<path d="M240 240C228 238 220 232 216 222C228 222 236 230 240 240Z"/><path d="M240 240C252 238 260 232 264 222C252 222 244 230 240 240Z"/>
+</g>
+<!-- Shiva: trishula -->
+<g transform="translate(350 132)" fill="#d4b06a" fill-opacity=".14">
+<path d="M-6 0C-10-20-8-44 0-72C8-44 10-20 6 0Z"/>
+<path d="M0-8V-58" fill="none" stroke-width="1.2" stroke-opacity=".6"/>
+<path d="M-8-2C-26-2-42-12-44-32C-45-46-40-56-32-66C-34-52-33-42-28-34C-23-26-15-20-8-18Z"/>
+<path d="M8-2C26-2 42-12 44-32C45-46 40-56 32-66C34-52 33-42 28-34C23-26 15-20 8-18Z"/>
+<path d="M-10 0H10L7 8H-7Z" fill-opacity=".3"/>
+<ellipse cx="0" cy="15" rx="7" ry="5" fill-opacity=".3"/>
+<path d="M-3.5 20V112L0 118L3.5 112V20"/>
+</g>
+</g>
+</svg>

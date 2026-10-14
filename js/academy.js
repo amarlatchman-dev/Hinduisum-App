@@ -378,7 +378,7 @@ course({
     },
     {
       title: `Durga, the invincible`, art: `durga`,
-      caption: `Durga's many arms, each holding a gift from the gods.`,
+      caption: `Durga's lion, and the gifts of the gods held out like rays of the sun.`,
       body: `<p><strong>Durga</strong>, whose name means “the invincible” or “the one hard to reach,” is the warrior form of the Divine Mother. She rides a lion or tiger, has eight or ten arms, and holds weapons given to her by the gods: Shiva's trident, Vishnu's discus, Indra's thunderbolt, a bow and arrows, a sword, a conch and a lotus. Yet her face is calm and smiling.</p>
 <h3>The victory over Mahishasura</h3>
 <p>The Devi Mahatmya tells how the buffalo demon <strong>Mahishasura</strong> won a boon that no man or god could kill him. He conquered heaven and drove out the gods. Furious, the gods poured out their combined radiance, and from that light the Goddess was born, more powerful than all of them together. After a great battle, she defeated Mahishasura and restored order.</p>

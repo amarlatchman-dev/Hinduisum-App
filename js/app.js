@@ -303,7 +303,8 @@
   const recordingsReady = loadJSON("audio/index.json").then((r) => { recordings = r || {}; }).catch(() => {});
 
   const canSpeak = () => !!synth;
-  const hasAudio = (id) => !!recordings[id] || canSpeak();
+  const recordingFor = (id) => recordings[id] || null;
+  const hasAudio = (id) => !!recordingFor(id) || canSpeak();
 
   // Rank the device's voices so the most natural, gentle-sounding one is used by default.
   const NOVELTY = /espeak|fred|albert|zarvox|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|superstar|trinoids|whisper|wobble|ralph|kathy|grandpa|grandma|rocko|shelley|eddy|reed|sandy|flo/i;
@@ -368,7 +369,7 @@
 
   // One full chant of a prayer or mantra.
   function chantOnce(p, rate) {
-    if (recordings[p.id]) return playRecording(recordings[p.id]);
+    if (recordingFor(p.id)) return playRecording(recordingFor(p.id));
     return say(p.verses.map((v) => chantText(v, p)).join(", "), { rate });
   }
 
@@ -390,7 +391,12 @@
   }
 
   function keepAwake() {
-    if (navigator.wakeLock && !wakeLock) navigator.wakeLock.request("screen").then((l) => { wakeLock = l; }).catch(() => {});
+    if (navigator.wakeLock && !wakeLock) {
+      navigator.wakeLock.request("screen").then((l) => {
+        wakeLock = l;
+        l.addEventListener("release", () => { if (wakeLock === l) wakeLock = null; });
+      }).catch(() => {});
+    }
   }
 
   const PLAY_ICON = '<svg class="ico" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5z" fill="currentColor" stroke="none"/></svg>';
@@ -466,8 +472,9 @@
     btn.innerHTML = STOP_ICON + "Stop";
     keepAwake();
     Drone.start();
-    if (recordings[p.id]) {
-      await playRecording(recordings[p.id]);
+    logPractice("prayers", p.id);
+    if (recordingFor(p.id)) {
+      await playRecording(recordingFor(p.id));
     } else {
       const els = [...document.querySelectorAll("#stanzas .stanza")];
       for (let i = 0; i < p.verses.length; i++) {
@@ -493,6 +500,7 @@
     keepAwake();
     Drone.start();
     const els = [...document.querySelectorAll("#stanzas .stanza")];
+    logPractice("prayers", p.id);
     await say(p.name, { rate: 0.86, english: true });
     for (let i = 0; i < p.verses.length; i++) {
       if (token !== playToken) return;
@@ -648,6 +656,8 @@
           <p style="font-family:var(--deva);color:var(--gold);margin:12px 0 0;white-space:pre-line;line-height:1.85">${esc(first.verses[0][0].split("\n").slice(0, 2).join("\n"))}</p>
         </a>
       </div>
+
+      <div class="section">${practiceCard()}</div>
 
       ${continueReadingCards()}
 
@@ -940,6 +950,7 @@
         <div class="btn-row" style="margin-top:14px">
           <button class="btn ${isFav ? "" : "ghost"}" data-fav="${p.id}">${isFav ? "★ Saved" : "☆ Save"}</button>
           ${p.japa ? `<a class="btn ghost" href="#/japa?m=${p.id}">Chant on the mala</a>` : ""}
+          <button class="btn ghost" data-aarti-open="${p.id}">${p.type === "aarti" ? "Aarti mode" : "Full screen"}</button>
         </div>
       </div>
       ${hasAudio(p.id) ? `
@@ -1054,6 +1065,8 @@
       const st = japaState(id);
       st.count += 1;
       const full = st.count >= 108;
+      logPractice("japa", null, 1);
+      if (full) logPractice("malas", null, 1);
       if (full) {
         st.count = 0;
         st.malas += 1;
@@ -1100,6 +1113,383 @@
     card.querySelector("[data-scroll]").addEventListener("click", () => {
       document.getElementById("mantras").scrollIntoView({ behavior: "smooth" });
     });
+  }
+
+  /* ====================================================================== */
+  /* Aarti mode: big words, one verse at a time, for the whole family        */
+  /* ====================================================================== */
+  let aarti = null; // { p, seq, i, done }
+
+  // Verse order for singing. In an aarti the refrain comes back after every verse.
+  function aartiSeq(p) {
+    const r = p.verses.findIndex((v) => v[3] === "Refrain");
+    const repeat = r >= 0 && store.get("aarti:repeat", true);
+    const seq = [];
+    p.verses.forEach((v, i) => { seq.push(i); if (repeat && i > r) seq.push(r); });
+    return seq;
+  }
+
+  function aartiView(id) {
+    const p = prayer(id);
+    if (!p) return notFound();
+    const show = store.get("aartiShow", { dev: true, rom: true, en: true });
+    const hasRefrain = p.verses.some((v) => v[3] === "Refrain");
+    const opt = (key, label, on) => `<button class="chip ${on ? "active" : ""}" data-aopt="${key}">${label}</button>`;
+    return `
+      <div class="aarti ${["dev", "rom", "en"].filter((k) => !show[k]).map((k) => "hide-" + k).join(" ")}" id="aarti" data-id="${p.id}">
+        <div class="aarti-glow" aria-hidden="true"></div>
+        <header class="aarti-top">
+          <button class="aarti-icon" data-aarti="close" aria-label="Close">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+          <div class="aarti-title"><div class="eyebrow">${esc(typeOf(p.type).one)} · ${esc(deityOf(p.deity).name)}</div><h2>${esc(p.name)}</h2></div>
+          <button class="aarti-icon" data-aarti="opts" aria-label="Display options" aria-expanded="false">
+            <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+          </button>
+        </header>
+        <div class="aarti-opts" id="aartiOpts" hidden>
+          ${opt("dev", "देवनागरी", show.dev)}${opt("rom", "Roman", show.rom)}${opt("en", "Meaning", show.en)}
+          ${hasRefrain ? opt("repeat", "Repeat refrain", store.get("aarti:repeat", true)) : ""}
+          ${hasAudio(p.id) ? opt("drone", "Tanpura", Drone.on()) : ""}
+          <button class="chip" data-aopt="smaller" aria-label="Smaller text">A−</button>
+          <button class="chip" data-aopt="larger" aria-label="Larger text">A+</button>
+        </div>
+        <div class="diya" aria-hidden="true"><span class="halo"></span><span class="flame"></span><span class="wick"></span><span class="bowl"></span></div>
+        <div class="aarti-stage" id="aartiStage" aria-live="polite"></div>
+        <div class="aarti-foot">
+          <div class="aarti-progress" aria-hidden="true"><span id="aartiBar"></span></div>
+          <div class="aarti-controls">
+            <button class="aarti-icon lg" data-aarti="prev" aria-label="Previous verse"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+            ${hasAudio(p.id) ? `<button class="btn aarti-play" data-aarti="play">${PLAY_ICON}Chant</button>` : `<span class="aarti-hint">Tap or swipe to move on</span>`}
+            <button class="aarti-icon lg" data-aarti="next" aria-label="Next verse"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Shrink the text until the whole verse fits on the screen.
+  function fitAarti() {
+    const stage = document.getElementById("aartiStage");
+    const inner = stage && stage.firstElementChild;
+    if (!inner) return;
+    const scale = store.get("aarti:scale", 1);
+    let fs = Math.max(20, Math.min(64, Math.min(innerWidth / 12.5, innerHeight / 15) * scale));
+    stage.style.setProperty("--fs", fs + "px");
+    while (inner.scrollHeight > stage.clientHeight && fs > 13) {
+      fs -= 1.5;
+      stage.style.setProperty("--fs", fs + "px");
+    }
+  }
+
+  function paintAarti() {
+    const box = document.getElementById("aarti");
+    if (!box || !aarti) return;
+    const { p, seq, i } = aarti;
+    const stage = document.getElementById("aartiStage");
+    const bar = document.getElementById("aartiBar");
+    bar.style.width = (aarti.done ? 100 : (i / seq.length) * 100) + "%";
+    if (aarti.done) {
+      stage.innerHTML = `<div class="aarti-verse aarti-end">
+        <p class="dev">ॐ शान्तिः शान्तिः शान्तिः</p>
+        <p class="rom">Om Shanti, Shanti, Shanti</p>
+        <p class="en">Peace within, peace around, peace everywhere.</p>
+        <div class="btn-row"><button class="btn" data-aarti="again">Begin again</button><button class="btn ghost" data-aarti="close">Close</button></div>
+      </div>`;
+    } else {
+      const k = seq[i];
+      const v = p.verses[k];
+      // Labelled lines (refrain, doha) show their label; the rest are numbered among themselves.
+      const verseNo = p.verses.filter((x, n) => n <= k && !x[3]).length;
+      const total = p.verses.filter((x) => !x[3]).length;
+      const label = v[3] || (total > 1 ? `Verse ${verseNo} of ${total}` : "");
+      stage.innerHTML = `<div class="aarti-verse ${v[3] === "Refrain" ? "refrain" : ""}">
+        ${label ? `<div class="eyebrow">${esc(label)}</div>` : ""}
+        <p class="dev">${esc(v[0])}</p>
+        <p class="rom">${esc(v[1])}</p>
+        <p class="en">${esc(v[2])}</p>
+      </div>`;
+    }
+    fitAarti();
+  }
+
+  function aartiGo(delta) {
+    if (!aarti) return;
+    if (aarti.done) { if (delta < 0) { aarti.done = false; aarti.i = aarti.seq.length - 1; paintAarti(); } return; }
+    const n = aarti.i + delta;
+    if (n < 0) return;
+    if (n >= aarti.seq.length) {
+      aarti.done = true;
+      if (!aarti.logged) { aarti.logged = true; logPractice("aarti", aarti.p.id); }
+    } else aarti.i = n;
+    paintAarti();
+  }
+
+  async function aartiPlay(btn) {
+    if (btn.classList.contains("on")) { stopAudio(); keepAwake(); return; }
+    stopAudio();
+    keepAwake();
+    const token = playToken;
+    btn.classList.add("on");
+    btn.innerHTML = STOP_ICON + "Stop";
+    Drone.start();
+    const { p } = aarti;
+    if (aarti.done) { aarti.done = false; aarti.i = 0; paintAarti(); }
+    const rec = recordingFor(p.id);
+    if (rec) {
+      // A recording covers the whole prayer, so the verses stay under the family's control.
+      await playRecording(rec);
+    } else {
+      while (token === playToken && aarti && !aarti.done) {
+        await say(chantText(p.verses[aarti.seq[aarti.i]], p), { rate: 0.85 });
+        if (token !== playToken) return;
+        await pause(500);
+        if (token !== playToken) return;
+        aartiGo(1);
+      }
+    }
+    if (token === playToken) { stopAudio(); keepAwake(); }
+    if (btn.isConnected) { btn.classList.remove("on"); btn.innerHTML = PLAY_ICON + "Chant"; }
+  }
+
+  function closeAarti() {
+    const id = aarti && aarti.p.id;
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    if (navCount > 1) history.back();
+    else location.replace("#/puja/" + id);
+  }
+
+  function bindAarti() {
+    const box = document.getElementById("aarti");
+    if (!box) { aarti = null; return; }
+    const p = prayer(box.dataset.id);
+    aarti = { p, seq: aartiSeq(p), i: 0, done: false };
+    keepAwake();
+    paintAarti();
+    let x0 = null, y0 = 0, swiped = false;
+    const stage = document.getElementById("aartiStage");
+    stage.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; swiped = false; }, { passive: true });
+    stage.addEventListener("touchend", (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; aartiGo(dx < 0 ? 1 : -1); }
+      x0 = null;
+    });
+    stage.addEventListener("click", (e) => {
+      if (swiped) { swiped = false; return; }
+      if (e.target.closest("button") || aarti.done) return;
+      aartiGo(e.clientX < innerWidth * 0.3 ? -1 : 1);
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (!aarti || !document.getElementById("aarti") || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); aartiGo(1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); aartiGo(-1); }
+    else if (e.key === "Escape" && !document.fullscreenElement && !document.querySelector(".sheet-backdrop")) closeAarti();
+  });
+  window.addEventListener("resize", () => { if (aarti) fitAarti(); });
+
+  /* ====================================================================== */
+  /* Practice tracker                                                        */
+  /* Each day keeps what was done: mantras and malas chanted, sections read, */
+  /* prayers heard, aartis sung, lessons finished and personal check-ins.    */
+  /* ====================================================================== */
+  const COUNTS = ["japa", "malas"];
+  const CHECKINS = [["pray", "Prayed"], ["meditate", "Meditated"], ["fast", "Fasted"], ["temple", "Visited a temple"], ["seva", "Did seva"]];
+  const practiceLog = () => store.get("practice", {});
+
+  // Record one practice for today. List kinds count each key once a day.
+  function logPractice(kind, key, n = 1) {
+    const log = practiceLog();
+    const d = ymd(new Date());
+    const day = log[d] || (log[d] = {});
+    if (COUNTS.includes(kind)) day[kind] = (day[kind] || 0) + n;
+    else {
+      const list = day[kind] || (day[kind] = []);
+      if (list.includes(key)) return false;
+      list.push(key);
+    }
+    const keys = Object.keys(log).sort();
+    keys.slice(0, Math.max(0, keys.length - 800)).forEach((k) => delete log[k]);
+    store.set("practice", log);
+    return true;
+  }
+
+  function unlogPractice(kind, key) {
+    const log = practiceLog();
+    const day = log[ymd(new Date())];
+    if (!day || !day[kind]) return;
+    day[kind] = day[kind].filter((x) => x !== key);
+    store.set("practice", log);
+  }
+
+  const len = (a) => (a ? a.length : 0);
+  const dayPoints = (d) => !d ? 0 : (d.japa || 0) / 27 + len(d.read) * 2 + len(d.prayers) + len(d.aarti) * 2 + len(d.lessons) * 2 + len(d.done) * 2;
+  const dayLevel = (d) => { const x = dayPoints(d); return x <= 0 ? 0 : x < 2 ? 1 : x < 4 ? 2 : x < 8 ? 3 : 4; };
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const plural = (n, one, many) => `${n.toLocaleString()} ${n === 1 ? one : many || one + "s"}`;
+
+  function dayParts(d) {
+    if (!d) return [];
+    const out = [];
+    if (d.malas) out.push(plural(d.malas, "mala"));
+    if (d.japa) out.push(plural(d.japa, "mantra") + " chanted");
+    if (len(d.read)) out.push(plural(len(d.read), "reading"));
+    if (len(d.aarti)) out.push(plural(len(d.aarti), "aarti"));
+    if (len(d.prayers)) out.push(plural(len(d.prayers), "prayer") + " heard");
+    if (len(d.lessons)) out.push(plural(len(d.lessons), "lesson"));
+    (d.done || []).forEach((k) => { const c = CHECKINS.find((x) => x[0] === k); if (c) out.push(c[1].toLowerCase()); });
+    return out;
+  }
+
+  function practiceStats() {
+    const log = practiceLog();
+    const t = today();
+    const active = (date) => dayPoints(log[ymd(date)]) > 0;
+    let streak = 0;
+    let d = active(t) ? t : addDays(t, -1);
+    while (active(d)) { streak++; d = addDays(d, -1); }
+    const days = Object.keys(log).filter((k) => dayPoints(log[k]) > 0).sort();
+    let best = 0, run = 0, prev = null;
+    days.forEach((k) => {
+      const cur = parseYmd(k);
+      run = prev && Math.round((cur - prev) / 86400000) === 1 ? run + 1 : 1;
+      best = Math.max(best, run);
+      prev = cur;
+    });
+    const weekAgo = ymd(addDays(t, -6));
+    const total = (f, since) => Object.keys(log).filter((k) => !since || k >= since).reduce((a, k) => a + f(log[k]), 0);
+    const kinds = {
+      malas: (x) => x.malas || 0, japa: (x) => x.japa || 0, read: (x) => len(x.read),
+      aarti: (x) => len(x.aarti) + len(x.prayers), lessons: (x) => len(x.lessons)
+    };
+    const all = {}, week = {};
+    Object.entries(kinds).forEach(([k, f]) => { all[k] = total(f); week[k] = total(f, weekAgo); });
+    return { log, t, streak, best, days: days.length, todayDone: active(t), all, week };
+  }
+
+  // The last seven days as dots, today last.
+  function weekDots(st) {
+    return `<div class="week-dots">${[6, 5, 4, 3, 2, 1, 0].map((n) => {
+      const d = addDays(st.t, -n);
+      const on = dayPoints(st.log[ymd(d)]) > 0;
+      return `<span class="wd ${on ? "on" : ""} ${n === 0 ? "today" : ""}" title="${esc(longDate(d))}${on ? ": practised" : ""}"><i></i><b>${WEEKDAYS[d.getDay()][0]}</b></span>`;
+    }).join("")}</div>`;
+  }
+
+  function streakLine(st) {
+    if (st.todayDone) return st.streak > 1 ? "Today's practice is done. Well kept." : "Today's practice is done.";
+    if (st.streak) return "Chant, read or pray today to keep it going.";
+    return "Chant a mala, read a chapter or sing an aarti to begin.";
+  }
+
+  function practiceCard() {
+    const st = practiceStats();
+    return `<a class="card practice-card" href="#/practice">
+      <div class="pc-num"><strong>${st.streak}</strong><span>day${st.streak === 1 ? "" : "s"}</span></div>
+      <div class="pc-body"><div class="eyebrow">Your practice</div>${weekDots(st)}<p class="meta">${esc(streakLine(st))}</p></div>
+      <span class="chev">›</span></a>`;
+  }
+
+  function heatmap(st) {
+    const WEEKS = 12;
+    const start = addDays(st.t, -st.t.getDay() - (WEEKS - 1) * 7);
+    // The column holding the 1st of a month carries its name; the first column is named too unless a 1st is close by.
+    const firstIn = (w) => [...Array(7)].map((_, k) => addDays(start, w * 7 + k)).find((d) => d.getDate() === 1 && d <= st.t);
+    let cols = "", months = "";
+    for (let w = 0; w < WEEKS; w++) {
+      const top = addDays(start, w * 7);
+      const f = firstIn(w);
+      const label = f ? MON[f.getMonth()] : w === 0 && !firstIn(1) && !firstIn(2) ? MON[top.getMonth()] : "";
+      months += `<span>${label}</span>`;
+      cols += `<div class="hm-col">`;
+      for (let k = 0; k < 7; k++) {
+        const d = addDays(top, k);
+        if (d > st.t) { cols += `<span class="hm-cell future"></span>`; continue; }
+        const key = ymd(d);
+        const parts = dayParts(st.log[key]);
+        const desc = `${longDate(d)}: ${parts.length ? parts.join(", ") : "no practice logged"}`;
+        cols += `<button class="hm-cell l${dayLevel(st.log[key])} ${d - st.t === 0 ? "today" : ""}" data-hm="${esc(desc)}" aria-label="${esc(desc)}"></button>`;
+      }
+      cols += `</div>`;
+    }
+    return `<div class="card heatmap">
+      <div class="hm-months">${months}</div>
+      <div class="hm-body"><div class="hm-days"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div><div class="hm-grid">${cols}</div></div>
+      <div class="hm-foot"><p class="hm-readout" id="hmReadout">Tap a day to see what you did.</p>
+        <div class="hm-key" aria-hidden="true">Less<span class="hm-cell l0"></span><span class="hm-cell l1"></span><span class="hm-cell l2"></span><span class="hm-cell l3"></span><span class="hm-cell l4"></span>More</div></div>
+    </div>`;
+  }
+
+  function practiceView() {
+    const st = practiceStats();
+    const doneToday = (st.log[ymd(st.t)] || {}).done || [];
+    const tile = (value, label, week, sub) => `<div class="stat"><div class="stat-v">${value.toLocaleString()}</div><div class="stat-l">${label}</div><div class="stat-s">${week ? "+" + week.toLocaleString() + " this week" : sub || "&nbsp;"}</div></div>`;
+    const recent = Object.keys(st.log).filter((k) => dayPoints(st.log[k]) > 0).sort().reverse().slice(0, 7);
+    return `
+      <h2 class="page-title">Your practice</h2>
+      <p class="page-sub">A quiet record of your sadhana. It stays private, on this device.</p>
+      <div class="night practice-hero">
+        ${mandala()}
+        <div class="eyebrow">Current streak</div>
+        <div class="streak-num">${st.streak}<span>day${st.streak === 1 ? "" : "s"}</span></div>
+        <p class="meta">${esc(streakLine(st))}${st.best > 1 ? ` Best streak: ${st.best} days.` : ""}</p>
+        ${weekDots(st)}
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Today I…</h2></div>
+        <div class="chips wrap">${CHECKINS.map(([k, label]) => `<button class="chip ${doneToday.includes(k) ? "active" : ""}" data-checkin="${k}">${doneToday.includes(k) ? "✓ " : ""}${label}</button>`).join("")}</div>
+        <p class="meta" style="margin:10px 2px 0">Chanting, reading and aartis in the app are counted for you.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">All time</h2></div>
+        <div class="stats">
+          ${tile(st.all.malas, st.all.malas === 1 ? "Mala" : "Malas", st.week.malas, plural(st.all.japa, "mantra") + " chanted")}
+          ${tile(st.all.read, st.all.read === 1 ? "Reading" : "Readings", st.week.read, "Chapters and sections")}
+          ${tile(st.all.aarti, "Aartis and prayers", st.week.aarti, "")}
+          ${tile(st.days, st.days === 1 ? "Day of practice" : "Days of practice", 0, st.all.lessons ? plural(st.all.lessons, "lesson") + " finished" : "")}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Last 12 weeks</h2></div>
+        ${heatmap(st)}
+      </div>
+
+      ${recent.length ? `<div class="section">
+        <div class="section-head"><h2 class="section-title">Recent days</h2></div>
+        <div class="list">${recent.map((k) => `<div class="row static"><span class="body"><h3>${esc(longDate(parseYmd(k)))}</h3><p>${esc(dayParts(st.log[k]).join(" · "))}</p></span></div>`).join("")}</div>
+      </div>` : ""}
+
+      <div class="section">
+        <div class="list">
+          <a class="row" href="#/reminders">${seal("स्मर")}<span class="body"><h3>Reminders</h3><p>Festival alerts and a daily prayer nudge</p></span><span class="chev">›</span></a>
+          <a class="row" href="#/saved">${seal("ग्रन्थ")}<span class="body"><h3>Bookmarks and notes</h3><p>Verses you have saved while reading</p></span><span class="chev">›</span></a>
+          <a class="row" href="#/recordings">${seal("नाद")}<span class="body"><h3>Your recordings</h3><p>Chants recorded in your own voice</p></span><span class="chev">›</span></a>
+        </div>
+      </div>`;
+  }
+
+  function bindPractice() {
+    const out = document.getElementById("hmReadout");
+    if (!out) return;
+    const show = (e) => { const c = e.target.closest("[data-hm]"); if (c) out.textContent = c.dataset.hm; };
+    const grid = view.querySelector(".hm-grid");
+    grid.addEventListener("pointerover", show);
+    grid.addEventListener("focusin", show);
+    grid.addEventListener("click", show);
+  }
+
+  // A section counts as read once its end has been on screen and it has been open for twenty seconds.
+  function markIfRead() {
+    const st = readerState;
+    if (!st || st.counted || Date.now() - st.opened < 20000) return;
+    const r = view.querySelector(".reader");
+    if (!r || r.getBoundingClientRect().bottom > innerHeight + 60) return;
+    st.counted = true;
+    logPractice("read", `${st.bookId}|${st.part}|${st.sec}`);
   }
 
   /* ====================================================================== */
@@ -1443,6 +1833,7 @@
     });
     const bar = document.getElementById("readBar");
     if (bar) bar.style.width = frac * 100 + "%";
+    markIfRead();
   }
 
   function restoreReaderPos() {
@@ -1881,12 +2272,14 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { search: "Search", saved: "Scriptures", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { practice: "home", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
+  let navCount = 0;
 
   async function route() {
     const seq = ++routeSeq;
+    navCount++;
     if (readerState) saveReaderPos();
     readerState = null;
 
@@ -1900,7 +2293,9 @@
     if (section === "life" && !id) section = "learn";
 
     stopAudio();
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved"].includes(section);
+    aarti = null;
+    document.body.classList.toggle("immersive", section === "aarti");
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -1910,6 +2305,7 @@
         case "home": html = await homeView(); break;
         case "search": html = searchView(query); break;
         case "saved": html = savedView(query); break;
+        case "practice": html = practiceView(); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -1917,6 +2313,7 @@
         case "location": html = await locationView(); break;
         case "puja": if (id) await recordingsReady; html = id ? prayerView(id) : await pujaView(query); break;
         case "japa": await recordingsReady; html = japaView(query); break;
+        case "aarti": await recordingsReady; html = aartiView(id); break;
         case "learn": html = learnView(); break;
         case "academy": html = courseView(id); break;
         case "life": html = lifeEventView(id); break;
@@ -1945,11 +2342,19 @@
     if (anchor && document.getElementById(anchor)) document.getElementById(anchor).scrollIntoView();
     else window.scrollTo(0, 0);
     if (section === "japa") bindJapa();
+    if (section === "aarti") bindAarti();
+    if (section === "practice") bindPractice();
     if (section === "home") fillGitaToday();
     if (section === "puja" && !id) bindPrayerSearch(query);
     if (section === "search") bindSearch();
     fillProgressBars();
-    if (readerState) { applyMarks(); restoreReaderPos(); }
+    if (readerState) {
+      applyMarks();
+      restoreReaderPos();
+      readerState.opened = Date.now();
+      const st = readerState;
+      setTimeout(() => { if (readerState === st) markIfRead(); }, 20500);
+    }
   }
 
   function bindPrayerSearch(query) {
@@ -2007,6 +2412,72 @@
       shareCard({ eyebrow: "Bhagavad Gita · Verse of the day", deva: el.querySelector(".deva-text").textContent.trim(), text: el.querySelector("blockquote").textContent.replace(/^“|”$/g, ""), cite: `Bhagavad Gita ${ref[0]}.${ref[1]} · tr. Annie Besant` });
       return;
     }
+    if (t.dataset.aartiOpen) {
+      const el = document.documentElement;
+      if (el.requestFullscreen && matchMedia("(pointer: coarse)").matches) el.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      location.hash = "#/aarti/" + t.dataset.aartiOpen;
+      return;
+    }
+    if (t.dataset.aarti) {
+      const act = t.dataset.aarti;
+      if (act === "prev") aartiGo(-1);
+      else if (act === "next") aartiGo(1);
+      else if (act === "play") aartiPlay(t);
+      else if (act === "close") closeAarti();
+      else if (act === "again") { aarti.done = false; aarti.i = 0; paintAarti(); }
+      else if (act === "opts") {
+        const o = document.getElementById("aartiOpts");
+        o.hidden = !o.hidden;
+        t.setAttribute("aria-expanded", String(!o.hidden));
+        t.classList.toggle("active", !o.hidden);
+        fitAarti();
+      }
+      return;
+    }
+    if (t.dataset.aopt) {
+      const k = t.dataset.aopt;
+      const box = document.getElementById("aarti");
+      if (k === "dev" || k === "rom" || k === "en") {
+        const show = store.get("aartiShow", { dev: true, rom: true, en: true });
+        show[k] = !show[k];
+        if (!show.dev && !show.rom && !show.en) show.rom = true;
+        store.set("aartiShow", show);
+        ["dev", "rom", "en"].forEach((x) => box.classList.toggle("hide-" + x, !show[x]));
+        box.querySelectorAll("[data-aopt]").forEach((c) => { if (c.dataset.aopt in show) c.classList.toggle("active", !!show[c.dataset.aopt]); });
+      } else if (k === "repeat") {
+        const on = !store.get("aarti:repeat", true);
+        store.set("aarti:repeat", on);
+        t.classList.toggle("active", on);
+        // Stay on the same verse: find the last numbered verse reached, then step onto its refrain if one was showing.
+        const r = aarti.p.verses.findIndex((v) => v[3] === "Refrain");
+        const old = aarti.seq, cur = old[aarti.i];
+        let lastV = -1;
+        for (let n = aarti.i; n >= 0; n--) if (old[n] !== r) { lastV = old[n]; break; }
+        aarti.seq = aartiSeq(aarti.p);
+        let at = lastV >= 0 ? aarti.seq.indexOf(lastV) : 0;
+        if (cur === r && lastV >= 0 && aarti.seq[at + 1] === r) at += 1;
+        aarti.i = at;
+      } else if (k === "drone") {
+        const on = !Drone.on();
+        store.set("audio:drone", on);
+        t.classList.toggle("active", on);
+        if (!on) Drone.stop();
+        else if (document.querySelector('[data-aarti="play"].on')) Drone.start();
+      } else if (k === "smaller" || k === "larger") {
+        const sc = Math.min(1.6, Math.max(0.6, store.get("aarti:scale", 1) + (k === "larger" ? 0.1 : -0.1)));
+        store.set("aarti:scale", Math.round(sc * 100) / 100);
+      }
+      paintAarti();
+      return;
+    }
+    if (t.dataset.checkin) {
+      const k = t.dataset.checkin;
+      const day = practiceLog()[ymd(new Date())] || {};
+      if ((day.done || []).includes(k)) unlogPractice("done", k); else logPractice("done", k);
+      const y = scrollY;
+      route().then(() => scrollTo(0, y));
+      return;
+    }
     if ("searchEpics" in t.dataset) {
       store.set("search:epics", true);
       t.disabled = true;
@@ -2026,6 +2497,7 @@
       const done = completed(cid);
       const next = done.includes(i) ? done.filter((x) => x !== i) : [...done, i];
       store.set("progress:" + cid, next);
+      if (next.includes(i)) logPractice("lessons", `${cid}:${i}`); else unlogPractice("lessons", `${cid}:${i}`);
       const openIdx = next.includes(i) ? i + 1 : i;
       route().then(() => {
         const lessons = view.querySelectorAll(".lesson");
@@ -2109,7 +2581,10 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveReaderPos, 250);
   }, { passive: true });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) saveReaderPos(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) saveReaderPos();
+    else if (aarti) keepAwake();
+  });
 
   document.getElementById("searchBtn").addEventListener("click", () => { location.hash = "#/search"; });
 

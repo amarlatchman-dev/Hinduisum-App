@@ -905,8 +905,11 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
   box-shadow: 0 14px 34px rgba(22, 18, 14, 0.16);
 }
 .plate img { color: transparent; display: block; width: 100%; height: 100%; object-fit: cover; }
+.plate::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255, 236, 200, 0.08); }
+.plate.lesson-art img, .plate.rite-hero img, .plate.course-hero img { animation: plate-drift 40s ease-in-out infinite alternate; transform-origin: 50% 60%; }
+@keyframes plate-drift { from { transform: scale(1); } to { transform: scale(1.07); } }
+@media (prefers-reduced-motion: reduce) { .plate img { animation: none !important; } }
 .plate.thumb { flex: none; width: 74px; height: 74px; aspect-ratio: auto; border-radius: 16px; box-shadow: none; }
-.plate.thumb img, .plate.mini img { object-fit: cover; transform: scale(1.5); }
 .plate.mini { flex: none; width: 64px; height: 64px; aspect-ratio: auto; border-radius: 14px; box-shadow: none; border: 1px solid rgba(243, 234, 217, 0.12); }
 .course-row { align-items: flex-start; }
 .course-row .course-meta { color: var(--gold); font-size: 0.74rem; margin-top: 4px; }
@@ -967,7 +970,6 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .rite-strip::-webkit-scrollbar { display: none; }
 .rite-chip { flex: none; width: 132px; scroll-snap-align: start; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
 .rite-chip .plate.mini { width: 132px; height: 92px; border-radius: 16px; }
-.rite-chip .plate.mini img { transform: scale(1.15); }
 .rite-chip b { display: block; font-family: var(--display); font-weight: 600; font-size: 1.02rem; line-height: 1.2; }
 .rite-chip small { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
 

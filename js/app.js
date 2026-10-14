@@ -1926,8 +1926,9 @@
 
   const lessonWords = (l) => stripTags(l.body + " " + (l.practice || "")).split(/\s+/).length;
   const lessonMins = (l) => Math.max(2, Math.round(lessonWords(l) / 200));
-  const artSrc = (art) => /\.(jpe?g|png|webp|svg)$/i.test(art) ? art : `img/learn/${art}.svg`;
-  const plate = (art, alt, cls = "") => art ? `<figure class="plate ${cls}"><img src="${artSrc(art)}" alt="${esc(alt || "")}" loading="lazy" decoding="async"></figure>` : "";
+  const artSrc = (art) => /\.(jpe?g|png|webp|svg)$/i.test(art) ? art : `img/learn/${art}.webp`;
+  // While the paintings are being added, fall back to the older line drawing for any not yet painted.
+  const plate = (art, alt, cls = "") => art ? `<figure class="plate ${cls}"><img src="${artSrc(art)}" alt="${esc(alt || "")}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=this.src.replace(/\\.webp$/, '.svg')"></figure>` : "";
   const lessonHref = (cid, i) => `#/academy/${cid}/${i + 1}`;
 
   // The next lesson to open in a course: the first one not yet completed.

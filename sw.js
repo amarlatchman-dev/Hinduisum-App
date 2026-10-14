@@ -1,5 +1,5 @@
 // Offline support: cache the app shell, then serve cache-first and refresh in the background.
-const CACHE = "dharma-path-v5";
+const CACHE = "dharma-path-v6";
 const SHELL = [
   "./", "index.html", "css/styles.css", "js/content.js", "js/prayers.js", "js/app.js",
   "manifest.json", "icons/icon.svg", "texts/index.json", "texts/gita.json", "calendar/index.json", "audio/index.json"

@@ -304,11 +304,35 @@
 
   const canSpeak = () => !!synth;
   const hasAudio = (id) => !!recordings[id] || canSpeak();
-  function indicVoice() {
-    return voices.find((v) => /^hi([-_]|$)/i.test(v.lang)) ||
-      voices.find((v) => /^(mr|ne|sa)([-_]|$)/i.test(v.lang)) || null;
+
+  // Rank the device's voices so the most natural, gentle-sounding one is used by default.
+  const NOVELTY = /espeak|fred|albert|zarvox|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|superstar|trinoids|whisper|wobble|ralph|kathy|grandpa|grandma|rocko|shelley|eddy|reed|sandy|flo/i;
+  const WARM = /neerja|veena|aria|jenny|sonia|libby|natasha|samantha|karen|moira|tessa|serena|kate|ava|allison|susan|zira|swara|lekha|kalpana|heera|kiyara/i;
+  function voiceScore(v) {
+    const n = v.name || "";
+    let s = 0;
+    if (/natural|neural/i.test(n)) s += 6;
+    if (/premium|enhanced|wavenet|studio/i.test(n)) s += 5;
+    if (WARM.test(n)) s += 3;
+    if (/google/i.test(n)) s += 2;
+    if (/[-_]IN$/i.test(v.lang)) s += 2; // Indian English pronounces Sanskrit names best
+    if (/compact/i.test(n)) s -= 2;
+    if (NOVELTY.test(n)) s -= 20;
+    return s;
   }
-  const englishVoice = () => voices.find((v) => /^en[-_]IN/i.test(v.lang)) || null;
+  function voicePool(kind) {
+    const re = kind === "en" ? /^en([-_]|$)/i : /^hi([-_]|$)/i;
+    let pool = voices.filter((v) => re.test(v.lang));
+    if (kind === "hi" && !pool.length) pool = voices.filter((v) => /^(mr|ne|sa)([-_]|$)/i.test(v.lang));
+    return pool.sort((a, b) => voiceScore(b) - voiceScore(a));
+  }
+  function pickVoice(kind) {
+    const pool = voicePool(kind);
+    const chosen = store.get("voice:" + kind, "");
+    return (chosen && pool.find((v) => v.name === chosen)) || pool[0] || null;
+  }
+  const indicVoice = () => pickVoice("hi");
+  const englishVoice = () => pickVoice("en");
 
   // Speak one piece of text. Resolves when it finishes or is cancelled.
   function say(text, { rate = 0.85, english = false } = {}) {
@@ -320,7 +344,7 @@
       const v = english ? englishVoice() : indicVoice();
       if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = english ? "en-IN" : "hi-IN"; }
       u.rate = rate;
-      u.pitch = english ? 1 : 0.9;
+      u.pitch = english ? 0.95 : 0.9;
       u.onend = u.onerror = () => { utterances.splice(utterances.indexOf(u), 1); resolve(); };
       utterances.push(u);
       synth.speak(u);
@@ -359,6 +383,8 @@
     document.querySelectorAll("[data-listen], #chantAlong").forEach((b) => b.classList.remove("on"));
     const l = document.querySelector("[data-listen]");
     if (l) l.innerHTML = PLAY_ICON + "Listen";
+    const mb = document.querySelector("[data-meaning]");
+    if (mb) { mb.classList.remove("on"); mb.textContent = "Hear the meaning"; }
     const c = document.getElementById("chantAlong");
     if (c) c.innerHTML = PLAY_ICON + "Chant along";
   }
@@ -453,6 +479,58 @@
     }
     if (token === playToken) stopAudio();
   }
+
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  const sentences = (t) => (t.match(/[^.!?;:]+[.!?;:]*["”’)]*\s*/g) || [t]).map((x) => x.trim()).filter(Boolean);
+
+  // Read the English meaning slowly, sentence by sentence, with gentle pauses.
+  async function listenMeaning(p, btn) {
+    if (btn.classList.contains("on")) return stopAudio();
+    stopAudio();
+    const token = playToken;
+    btn.classList.add("on");
+    btn.innerHTML = STOP_ICON + "Stop";
+    keepAwake();
+    Drone.start();
+    const els = [...document.querySelectorAll("#stanzas .stanza")];
+    await say(p.name, { rate: 0.86, english: true });
+    for (let i = 0; i < p.verses.length; i++) {
+      if (token !== playToken) return;
+      els.forEach((el, k) => el.classList.toggle("playing", k === i));
+      if (els[i] && p.verses.length > 1) els[i].scrollIntoView({ behavior: "smooth", block: "center" });
+      await pause(650);
+      for (const line of sentences(p.verses[i][2])) {
+        if (token !== playToken) return;
+        await say(line, { rate: 0.86, english: true });
+        await pause(380);
+      }
+    }
+    if (token === playToken) stopAudio();
+  }
+
+  // Voice settings: lets people pick from the voices installed on their own device.
+  function voiceControls() {
+    if (!canSpeak()) return "";
+    return `<div class="card voice-panel" id="voicePanel" hidden>
+      <label class="eyebrow" for="voiceEn">Voice for meanings</label>
+      <div class="vrow"><select class="chip" id="voiceEn" data-voice-select="en"></select><button class="chip" data-voice-preview="en">Preview</button></div>
+      <label class="eyebrow" for="voiceHi">Voice for chanting</label>
+      <div class="vrow"><select class="chip" id="voiceHi" data-voice-select="hi"></select><button class="chip" data-voice-preview="hi">Preview</button></div>
+      <p class="meta" style="margin:4px 0 0">These voices come from your phone. Ones marked Natural, Enhanced or Premium sound the most lifelike, and you can download more in your phone's text-to-speech settings.</p>
+    </div>`;
+  }
+
+  function fillVoicePanel() {
+    view.querySelectorAll("[data-voice-select]").forEach((sel) => {
+      const kind = sel.dataset.voiceSelect;
+      const pool = voicePool(kind);
+      const chosen = store.get("voice:" + kind, "");
+      sel.innerHTML = `<option value="">${pool.length ? `Automatic · ${esc(pool[0].name)}` : "No voices found on this device"}</option>` +
+        pool.map((v) => `<option value="${esc(v.name)}" ${v.name === chosen ? "selected" : ""}>${esc(v.name)}</option>`).join("");
+    });
+  }
+
+  const PREVIEW = { en: "May all beings everywhere be happy, and may all be at peace.", hi: "ॐ नमः शिवाय" };
 
   /* ====================================================================== */
   /* Prayer helpers                                                          */
@@ -590,7 +668,8 @@
       </div>
 
       <div class="orn"><span></span></div>
-      <p class="footer-note">Dharma Path is free, private and always will be.</p>`;
+      <p class="footer-note">Dharma Path is free, private and always will be.</p>
+      <p class="credit">Made with devotion by Amar Latchman</p>`;
   }
 
   function fillGitaToday() {
@@ -865,7 +944,9 @@
         <button class="btn" data-listen="${p.id}">${PLAY_ICON}Listen</button>
         ${canSpeak() ? `<button class="btn ghost" data-meaning="${p.id}">Hear the meaning</button>` : ""}
         <button class="chip ${Drone.on() ? "active" : ""}" data-drone>Tanpura</button>
+        ${canSpeak() ? `<button class="chip" data-voice-toggle>Voice</button>` : ""}
       </div>
+      ${voiceControls()}
       <p class="meta" id="audioNote" style="margin:-4px 4px 14px">${esc(voiceNote(p))}</p>` : ""}
       <div class="chips wrap" style="margin:6px 0 12px">
         <button class="chip ${show.dev ? "active" : ""}" data-show="dev">देवनागरी</button>
@@ -925,8 +1006,10 @@
         <div class="btn-row" style="justify-content:center">
           ${hasAudio(m.id) ? `<button class="btn" id="chantAlong">${PLAY_ICON}Chant along</button>
           <button class="chip ${Drone.on() ? "active" : ""}" data-drone>Tanpura</button>` : ""}
+          ${canSpeak() ? `<button class="chip" data-voice-toggle>Voice</button>` : ""}
           <button class="btn ghost" id="japaReset">Start again</button>
         </div>
+        <div style="text-align:left">${voiceControls()}</div>
         ${hasAudio(m.id) ? `<p class="meta" id="audioNote" style="margin:12px 0 0">Chant along plays the mantra again and again and moves the counter with each repetition. ${esc(voiceNote(m))}</p>` : ""}
       </div>
       <p class="footer-note" style="margin-top:6px">Each mantra keeps its own count. Your phone vibrates gently when you finish a mala.</p>
@@ -1491,9 +1574,16 @@
       const note = document.getElementById("audioNote");
       if (note) setTimeout(() => { if (note.isConnected) note.textContent = voiceNote(p); }, 600);
     } else if (t.dataset.meaning) {
-      const p = prayer(t.dataset.meaning);
+      listenMeaning(prayer(t.dataset.meaning), t);
+    } else if ("voiceToggle" in t.dataset) {
+      const panel = document.getElementById("voicePanel");
+      panel.hidden = !panel.hidden;
+      t.classList.toggle("active", !panel.hidden);
+      if (!panel.hidden) fillVoicePanel();
+    } else if (t.dataset.voicePreview) {
+      const kind = t.dataset.voicePreview;
       stopAudio();
-      say(p.name + ". " + p.verses.map((v) => v[2]).join(" "), { rate: 0.95, english: true });
+      say(PREVIEW[kind], { rate: kind === "en" ? 0.86 : 0.85, english: kind === "en" });
     } else if ("drone" in t.dataset) {
       const on = !Drone.on();
       store.set("audio:drone", on);
@@ -1525,6 +1615,14 @@
     } else if (t.dataset.offline) {
       saveBookOffline(t.dataset.offline, t);
     }
+  });
+
+  view.addEventListener("change", (e) => {
+    const sel = e.target.closest("[data-voice-select]");
+    if (!sel) return;
+    store.set("voice:" + sel.dataset.voiceSelect, sel.value);
+    stopAudio();
+    say(PREVIEW[sel.dataset.voiceSelect], { rate: 0.86, english: sel.dataset.voiceSelect === "en" });
   });
 
   window.addEventListener("scroll", () => {

@@ -593,7 +593,7 @@
     const d0 = today();
     const w = C.wisdom[dayOfYear(d0) % C.wisdom.length];
     const ref = C.gitaDaily[dayOfYear(d0) % C.gitaDaily.length];
-    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [];
+    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [], tomorrow = "";
     try {
       await loadCalendar();
       const i = calIdx(d0);
@@ -603,6 +603,7 @@
         todayEvents = (cal.byDay.get(i) || []).map(obsInfo).filter(Boolean)
           .sort((a, b) => (a.kind === "festival" ? 0 : 1) - (b.kind === "festival" ? 0 : 1));
       }
+      tomorrow = tomorrowRows();
       if (!homeMonth) homeMonth = [d0.getFullYear(), d0.getMonth()];
       calHtml = `<div class="card" id="homeCal">${monthGrid(homeMonth[0], homeMonth[1], "home")}</div>`;
       const next = upcoming(i, 5, (e) => isFestival(e[1]) || e[1] === "ekadashi");
@@ -621,15 +622,15 @@
         ${hindu ? `<div class="hindu">${esc(hindu)}</div>` : ""}
       </div>
 
-      ${todayEvents.length ? `
+      ${todayEvents.length || tomorrow ? `
         <div class="section" style="margin-top:18px">
           <div class="list">${todayEvents.map((o) => `
             <a class="row" href="#/day/${ymd(d0)}">${seal(o.deva)}
-              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}
+              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}${tomorrow}
           </div>
         </div>` : ""}
 
-      <div class="hero-wrap" style="margin-top:${todayEvents.length ? 0 : 20}px">
+      <div class="hero-wrap" style="margin-top:${todayEvents.length || tomorrow ? 0 : 20}px">
         <a class="night verse-hero fade-in" id="gitaToday" href="#/read/gita/${ref[0]}?v=${ref[1]}">
           ${mandala()}
           <div class="eyebrow">Bhagavad Gita · Verse of the day</div>
@@ -1493,6 +1494,213 @@
   }
 
   /* ====================================================================== */
+  /* Reminders                                                               */
+  /* A calendar file gives exact alerts from the phone's own calendar app.  */
+  /* Where the browser allows it, the app can also show notices itself.     */
+  /* ====================================================================== */
+  const REMIND_TYPES = CAL_FILTERS.filter((f) => f.id !== "all");
+  const REMIND_NAMES = { festivals: "Festivals", ekadashi: "Ekadashi", moon: "Purnima and Amavasya", vrats: "Sankashti, Pradosh and Shivaratri" };
+  const remindPrefs = () => ({
+    types: ["festivals", "ekadashi"], eve: true, eveTime: "19:00", morn: false, mornTime: "06:00",
+    daily: false, dailyTime: "06:30", notify: false, ...store.get("reminders", {})
+  });
+  const toMin = (t) => { const [h, m] = String(t).split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+  const fmtHM = (t) => fmtTime(toMin(t));
+
+  // Selected observances between two calendar indexes, one entry per event.
+  function remindEvents(from, to, prefs) {
+    const tests = REMIND_TYPES.filter((f) => prefs.types.includes(f.id));
+    return cal.events.filter((e) => e[0] >= from && e[0] < to && tests.some((f) => f.test(e)))
+      .map((e) => ({ e, o: obsInfo(e) })).filter((x) => x.o);
+  }
+
+  // What tomorrow holds, for the Today page. Ekadashi gets the sunrise time, when the fast begins.
+  function tomorrowRows() {
+    if (!cal) return "";
+    const i = calIdx(today()) + 1;
+    if (!inCal(i)) return "";
+    const prefs = remindPrefs();
+    const list = remindEvents(i, i + 1, prefs.types.length ? prefs : { types: ["festivals", "ekadashi"] });
+    const hd = hinduDate(i);
+    return list.map(({ o }) => `
+      <a class="row tomorrow" href="#/day/${ymd(calDate(i))}">${seal(o.deva)}
+        <span class="body"><span class="eyebrow">Tomorrow</span><h3>${esc(o.name)}</h3><p>${o.id === "ekadashi" ? `The fast begins at sunrise, ${esc(hd.sunrise)}. ` : ""}${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("");
+  }
+
+  const icsText = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  // Lines longer than 75 bytes are folded, as the calendar format requires.
+  function icsFold(line) {
+    const out = [];
+    let cur = "", bytes = 0;
+    for (const ch of line) {
+      const b = new TextEncoder().encode(ch).length;
+      if (bytes + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; bytes = 0; }
+      cur += ch; bytes += b;
+    }
+    out.push(cur);
+    return out.join("\r\n ");
+  }
+  const icsDate = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  const icsOffset = (mins) => `${mins < 0 ? "-" : ""}PT${Math.floor(Math.abs(mins) / 60)}H${Math.abs(mins) % 60}M`;
+
+  async function downloadIcs() {
+    await loadCalendar();
+    const prefs = remindPrefs();
+    const t0 = calIdx(today());
+    const appUrl = location.href.split("#")[0];
+    const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Dharma Path//Reminders//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+      "X-WR-CALNAME:Dharma Path", `X-WR-CALDESC:${icsText("Hindu festivals and fasting days for " + cityName())}`];
+    const alarm = (trigger, text) => ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsText(text)}`, `TRIGGER:${trigger}`, "END:VALARM"];
+    const events = remindEvents(t0, Math.min(cal.days.length, t0 + 366), prefs);
+    events.forEach(({ e, o }) => {
+      const d = calDate(e[0]);
+      const hd = hinduDate(e[0]);
+      const desc = `${o.summary}${o.id === "ekadashi" ? ` The fast begins at sunrise (${hd.sunrise}).` : ""}\n${hd.line}. Sunrise ${hd.sunrise}, sunset ${hd.sunset} in ${cityName()}.\n\n${appUrl}#/day/${ymd(d)}`;
+      L.push("BEGIN:VEVENT", `UID:${ymd(d)}-${e[1]}@dharma-path`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${icsDate(d)}`, `DTEND;VALUE=DATE:${icsDate(addDays(d, 1))}`,
+        `SUMMARY:${icsText(o.name)}`, `DESCRIPTION:${icsText(desc)}`, "TRANSP:TRANSPARENT", "CATEGORIES:Dharma Path");
+      if (prefs.eve) L.push(...alarm(icsOffset(toMin(prefs.eveTime) - 1440), `Tomorrow: ${o.name}`));
+      if (prefs.morn) L.push(...alarm(icsOffset(toMin(prefs.mornTime)), `Today: ${o.name}`));
+      L.push("END:VEVENT");
+    });
+    if (prefs.daily) {
+      const d = addDays(today(), 1);
+      const [h, m] = prefs.dailyTime.split(":");
+      L.push("BEGIN:VEVENT", "UID:daily-prayer@dharma-path", `DTSTAMP:${stamp}`, `DTSTART:${icsDate(d)}T${pad(+h)}${pad(+m)}00`, "DURATION:PT15M",
+        "RRULE:FREQ=DAILY", "SUMMARY:Daily prayer", `DESCRIPTION:${icsText("A few quiet minutes for prayer, japa or reading.\n\n" + appUrl + "#/puja")}`,
+        "TRANSP:TRANSPARENT", ...alarm("PT0M", "Time for your daily prayer"), "END:VEVENT");
+    }
+    L.push("END:VCALENDAR");
+    const blob = new Blob([L.map(icsFold).join("\r\n") + "\r\n"], { type: "text/calendar;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dharma-path-reminders.ics";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(`${events.length} dates${prefs.daily ? " and a daily prayer" : ""} ready to add`);
+    return events.length;
+  }
+
+  /* Notices shown by the app itself. The service worker reads this list on a periodic background sync. */
+  const canNotify = () => "Notification" in window && "serviceWorker" in navigator;
+  const REMIND_URL = () => new URL("reminders.json", location.href).href;
+
+  async function syncReminderData() {
+    if (!canNotify() || !("caches" in window)) return;
+    const prefs = remindPrefs();
+    const c = await caches.open("dp-data");
+    const old = await c.match(REMIND_URL()).then((r) => r && r.json()).catch(() => null);
+    if (!prefs.notify) { await c.delete(REMIND_URL()); return; }
+    await loadCalendar();
+    const t0 = calIdx(today());
+    const events = remindEvents(t0, t0 + 45, prefs).map(({ e, o }) => ({
+      date: ymd(calDate(e[0])), id: e[1], title: o.name, body: o.summary, url: `#/day/${ymd(calDate(e[0]))}`
+    }));
+    const data = {
+      notify: true, eve: prefs.eve, morn: prefs.morn, daily: prefs.daily, dailyMin: toMin(prefs.dailyTime),
+      events, shown: (old && old.shown) || []
+    };
+    await c.put(REMIND_URL(), new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } }));
+  }
+
+  async function enableNotices() {
+    if (!canNotify()) return "unsupported";
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return perm;
+    const reg = await navigator.serviceWorker.ready;
+    let periodic = false;
+    if ("periodicSync" in reg) {
+      try {
+        const st = await navigator.permissions.query({ name: "periodic-background-sync" });
+        if (st.state === "granted") { await reg.periodicSync.register("dp-reminders", { minInterval: 6 * 3600 * 1000 }); periodic = true; }
+      } catch (e) { /* not available for this install */ }
+    }
+    store.set("reminders", { ...remindPrefs(), notify: true });
+    store.set("reminders:periodic", periodic);
+    await syncReminderData();
+    reg.showNotification("Reminders are on", { body: "Dharma Path will let you know about the days you chose.", icon: "icons/icon-192.png", badge: "icons/badge.png", tag: "dp-welcome" });
+    return "granted";
+  }
+
+  async function disableNotices() {
+    store.set("reminders", { ...remindPrefs(), notify: false });
+    try { const reg = await navigator.serviceWorker.ready; if (reg.periodicSync) await reg.periodicSync.unregister("dp-reminders"); } catch (e) { /* ignore */ }
+    await syncReminderData();
+  }
+
+  function noticeStatus(prefs) {
+    if (!canNotify()) return "This browser can't show notices. The calendar file above works everywhere.";
+    if (Notification.permission === "denied") return "Notices are blocked for this site. You can allow them in your browser's site settings.";
+    if (!prefs.notify || Notification.permission !== "granted") return "Get a notice from Dharma Path the evening before, without adding anything to your calendar. Works best when the app is installed on your home screen.";
+    return store.get("reminders:periodic", false)
+      ? "Notices are on. Your phone checks in a few times a day, so a notice may arrive a little early or late. For exact times, use the calendar file."
+      : "Notices are on while Dharma Path is open. To get them when the app is closed, install it on your home screen, or use the calendar file.";
+  }
+
+  async function remindersView() {
+    const prefs = remindPrefs();
+    let next = "";
+    try {
+      await loadCalendar();
+      const t0 = calIdx(today());
+      const soon = remindEvents(t0 + 1, t0 + 120, prefs).slice(0, 4);
+      next = soon.length
+        ? `<div class="list">${soon.map(({ e, o }) => eventRow(e)).join("")}</div>`
+        : `<div class="card empty">Choose at least one kind of day below.</div>`;
+    } catch (e) { next = `<div class="card empty">The calendar needs an internet connection the first time it opens.</div>`; }
+    const chip = (attr, on, label) => `<button class="chip ${on ? "active" : ""}" ${attr}>${on ? "✓ " : ""}${label}</button>`;
+    return `
+      <h2 class="page-title">Reminders</h2>
+      <p class="page-sub">Never miss a fast or a festival. Choose what matters to you, then add the reminders to your phone.</p>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Remind me about</h2></div>
+        <div class="chips wrap">${REMIND_TYPES.map((f) => chip(`data-rtype="${f.id}"`, prefs.types.includes(f.id), REMIND_NAMES[f.id])).join("")}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">When</h2></div>
+        <div class="card remind-times">
+          <label class="rt"><input type="checkbox" data-rpref="eve" ${prefs.eve ? "checked" : ""}><span>The evening before</span><input type="time" class="time-input" data-rtime="eveTime" value="${prefs.eveTime}"></label>
+          <label class="rt"><input type="checkbox" data-rpref="morn" ${prefs.morn ? "checked" : ""}><span>On the morning itself</span><input type="time" class="time-input" data-rtime="mornTime" value="${prefs.mornTime}"></label>
+          <label class="rt"><input type="checkbox" data-rpref="daily" ${prefs.daily ? "checked" : ""}><span>A daily prayer reminder</span><input type="time" class="time-input" data-rtime="dailyTime" value="${prefs.dailyTime}"></label>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Coming up</h2><a href="#/calendar">Calendar</a></div>
+        ${next}
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Get the reminders</h2></div>
+        <div class="card">
+          <div class="eyebrow">Recommended</div>
+          <h3 class="card-h">Add to your calendar</h3>
+          <p class="meta" style="margin:0">Your calendar app will alert you at the times above, even when Dharma Path is closed. It covers the next twelve months for ${esc(cityName() || "your city")}.</p>
+          <div class="btn-row"><button class="btn" data-ics>Download calendar file</button></div>
+          <p class="meta small-note">On iPhone, tap <b>Add all</b>. On Android, open the file with your calendar app, or import it at calendar.google.com under Settings, then Import. Download a new file whenever you change these choices.</p>
+        </div>
+        <div class="card">
+          <h3 class="card-h">Notices from Dharma Path</h3>
+          <p class="meta" style="margin:0" id="noticeStatus">${esc(noticeStatus(prefs))}</p>
+          ${canNotify() && Notification.permission !== "denied" ? `<div class="btn-row"><button class="btn ghost" data-notices="${prefs.notify && Notification.permission === "granted" ? "off" : "on"}">${prefs.notify && Notification.permission === "granted" ? "Turn off notices" : "Turn on notices"}</button></div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  // While the app is open, show tonight's or this morning's notice if the background check hasn't.
+  async function checkNoticesNow() {
+    const prefs = remindPrefs();
+    if (!prefs.notify || !canNotify() || Notification.permission !== "granted") return;
+    try {
+      await syncReminderData();
+      const reg = await navigator.serviceWorker.ready;
+      if (reg.active) reg.active.postMessage({ type: "dp-remind" });
+    } catch (e) { /* ignore */ }
+  }
+
+  /* ====================================================================== */
   /* Learn                                                                   */
   /* ====================================================================== */
   const completed = (courseId) => store.get("progress:" + courseId, []);
@@ -2272,8 +2480,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { practice: "home", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { practice: "home", reminders: "home", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -2295,7 +2503,7 @@
     stopAudio();
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -2306,6 +2514,7 @@
         case "search": html = searchView(query); break;
         case "saved": html = savedView(query); break;
         case "practice": html = practiceView(); break;
+        case "reminders": html = await remindersView(); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -2470,6 +2679,30 @@
       paintAarti();
       return;
     }
+    if (t.dataset.rtype) {
+      const prefs = remindPrefs();
+      const k = t.dataset.rtype;
+      prefs.types = prefs.types.includes(k) ? prefs.types.filter((x) => x !== k) : [...prefs.types, k];
+      store.set("reminders", prefs);
+      syncReminderData();
+      const y = scrollY;
+      route().then(() => scrollTo(0, y));
+      return;
+    }
+    if ("ics" in t.dataset) {
+      downloadIcs();
+      return;
+    }
+    if (t.dataset.notices) {
+      const on = t.dataset.notices === "on";
+      t.disabled = true;
+      (on ? enableNotices() : disableNotices()).then((res) => {
+        if (on && res !== "granted") toast(res === "unsupported" ? "Notices aren't supported here" : "Notices weren't allowed");
+        const y = scrollY;
+        route().then(() => scrollTo(0, y));
+      });
+      return;
+    }
     if (t.dataset.checkin) {
       const k = t.dataset.checkin;
       const day = practiceLog()[ymd(new Date())] || {};
@@ -2568,6 +2801,15 @@
   });
 
   view.addEventListener("change", (e) => {
+    const rp = e.target.closest("[data-rpref], [data-rtime]");
+    if (rp) {
+      const prefs = remindPrefs();
+      if (rp.dataset.rpref) prefs[rp.dataset.rpref] = rp.checked;
+      else if (rp.value) { prefs[rp.dataset.rtime] = rp.value; rp.closest(".rt").querySelector("[data-rpref]").checked = true; prefs[rp.dataset.rtime.replace("Time", "")] = true; }
+      store.set("reminders", prefs);
+      syncReminderData();
+      return;
+    }
     const sel = e.target.closest("[data-voice-select]");
     if (!sel) return;
     store.set("voice:" + sel.dataset.voiceSelect, sel.value);
@@ -2603,6 +2845,7 @@
   /* ---------- Boot ---------- */
   window.addEventListener("hashchange", route);
   route();
+  setTimeout(checkNoticesNow, 4000);
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     navigator.serviceWorker.register("sw.js").catch(() => {});

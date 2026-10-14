@@ -880,3 +880,19 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .hm-key .hm-cell:first-of-type { margin-left: 4px; }
 .hm-key .hm-cell:last-of-type { margin-right: 4px; }
 .row.static { cursor: default; }
+
+/* ---------- Reminders ---------- */
+.remind-times { padding: 4px 18px; }
+.rt { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.rt:first-child { border-top: 0; }
+.rt span { flex: 1; font-size: 0.92rem; }
+.rt input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--gold); margin: 0; flex: none; }
+.time-input {
+  font: inherit; font-size: 0.86rem; font-variant-numeric: tabular-nums;
+  color: var(--ink); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px;
+  padding: 6px 8px; min-width: 0; color-scheme: inherit;
+}
+.time-input:focus { outline: none; border-color: var(--gold); }
+.card-h { font-family: var(--display); font-weight: 600; font-size: 1.3rem; margin: 4px 0 6px; }
+.small-note { font-size: 0.76rem; margin: 12px 0 0; }
+.row.tomorrow .eyebrow { color: var(--kumkum); }

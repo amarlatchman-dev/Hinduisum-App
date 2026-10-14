@@ -12,6 +12,8 @@ and fine grain, then writes a 1200 x 750 WebP.
 python3 build.py <workDir> <outDir> [id ...]
 ```
 
+With no ids it builds every painting. To refresh the app's images, point `outDir` at `img/learn`.
+
 Needs Python 3 with numpy, scipy and Pillow, plus Node with Playwright. Point
 `PLAYWRIGHT` at the playwright module and `CHROME` at a Chromium binary if they are
 not on the default paths.
@@ -26,7 +28,12 @@ not on the default paths.
 | `arch.py` | Temples (`nagara`, `shikhara_front`), `chhatri`, riverside buildings and `skyline`, ghat `steps`, `umbrella`, `boat`, lamp pillar, rocks, floating `leaf_lamp`. |
 | `objects.py` | Lotus flowers, buds and leaves, the gold Om, still-life pieces (`dark_room`, `stone_wall`, `arch_niche`, `ledge`), `marigold` and `garland`, petals, `clay_diya`, `brass_lamp`, `bells`, and `reflect_since` for things floating on water. |
 | `figures.py` | Human silhouettes: pilgrim, seated meditator, priest raising an aarti lamp, sitter, rower. |
-| `scenes.py`, `scenes_*.py` | The compositions. Each one is registered with `@scene`; the id is the function name with `_` changed to `-`. |
+| `scenes.py` | The `@scene` registry and four reference paintings: `om`, `ghats`, `pilgrim` and `flame`. The id is the function name with `_` changed to `-`. |
+| `scenes_land.py` | Landscapes, rivers and seas, temples and the avatar stories set on water. Adds the `sea` and `foliage` effects. |
+| `scenes_divine.py` | The gods through their emblems, sacred geometry and the cosmos. Adds the `nebula`, `starfield`, `addglow` and `beam` effects. |
+| `scenes_still.py` | Still lifes of sacred objects. A small numpy 3D renderer (the `still3d` effect) shades the hero objects, so these are the slowest to build, at about a minute each. |
+| `scenes_festive.py` | Festivals, home rituals and the rites of passage. Adds the `powder` effect for Holi colour. |
+| `scenes_story.py` | People, animals and stories: sages, devotees, the temple elephant, the chariot. |
 | `compose.py`, `finish.py`, `render.js`, `build.py` | The pipeline. |
 
 ## Style

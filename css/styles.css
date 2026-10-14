@@ -669,3 +669,11 @@ details.lesson .body { padding: 0 18px 18px 58px; }
 .voice-panel .vrow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; min-width: 0; }
 .voice-panel select.chip { flex: 1 1 0; width: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .credit { text-align: center; color: var(--muted); font-size: 0.66rem; letter-spacing: 0.08em; opacity: 0.8; margin: 6px 0 0; }
+
+/* ---------- Scripture extras ---------- */
+.reader .para.intro { font-family: var(--sans); font-size: 0.86em; line-height: 1.65; color: var(--ink-2); }
+.reader .para.intro:last-of-type { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.reader .vhead { margin: 26px 0 0; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.reader .vnote { margin: 12px 0 0; padding-left: 14px; border-left: 2px solid var(--line-strong); }
+.reader .vnote p { margin: 0 0 8px; font-family: var(--sans); font-size: 0.82em; line-height: 1.65; color: var(--ink-2); }
+.reader.hide-notes .vnote { display: none; }

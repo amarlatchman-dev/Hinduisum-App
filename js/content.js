@@ -96,6 +96,15 @@ window.CONTENT = {
   /* ------------------------------------------------------------------ */
   /* Scripture library (texts are in /texts, built by scripts/build_texts.py) */
   /* ------------------------------------------------------------------ */
+  bookCategories: [
+    { id: "gita", name: "Bhagavad Gita" },
+    { id: "veda", name: "The Vedas" },
+    { id: "upanishad", name: "Upanishads" },
+    { id: "itihasa", name: "The epics" },
+    { id: "purana", name: "Puranas" },
+    { id: "darshana", name: "Yoga and philosophy" }
+  ],
+
   books: [
     {
       id: "gita",
@@ -105,6 +114,8 @@ window.CONTENT = {
       partLabel: "Chapter",
       sectionLabel: null,
       verses: true,
+      sanskrit: true,
+      category: "gita",
       glyph: "🪷",
       gradient: "g1",
       translation: "English by Annie Besant (1922). Sanskrit with transliteration.",
@@ -118,6 +129,8 @@ window.CONTENT = {
       partLabel: "Kanda",
       sectionLabel: "Sarga",
       verses: true,
+      sanskrit: true,
+      category: "itihasa",
       glyph: "🏹",
       gradient: "g3",
       translation: "English by Manmatha Nath Dutt (1891–94), verse by verse with the Sanskrit critical edition. Verses that could not be matched reliably are omitted.",
@@ -131,10 +144,73 @@ window.CONTENT = {
       partLabel: "Parva",
       sectionLabel: "Section",
       verses: false,
+      category: "itihasa",
       glyph: "🐚",
       gradient: "g2",
       translation: "Complete English prose translation by Kisari Mohan Ganguli (1883–96), as scanned and proofed by sacred-texts.com.",
       about: "Attributed to Vyasa, the Mahabharata follows the rivalry of the Pandavas and Kauravas, culminating in the war at Kurukshetra. It is among the longest poems ever composed and contains the Bhagavad Gita."
+    },
+    {
+      id: "rigveda",
+      title: "Rig Veda",
+      sanskritTitle: "ऋग्वेद",
+      tagline: "Ten great hymns · Sanskrit with English",
+      partLabel: "Selection",
+      sectionLabel: "Hymn",
+      verses: true,
+      sanskrit: true,
+      singlePart: true,
+      category: "veda",
+      translation: "Sanskrit from the Vedic Heritage Portal, via the open DharmicData project. English translation by Dharma Path.",
+      about: "The oldest scripture of Hinduism, composed more than 3,000 years ago: 1,028 hymns to the divine powers of fire, dawn, sky and the cosmos. This selection gathers ten of its most beloved hymns, including the Gayatri, the Purusha Sukta and the Hymn of Creation."
+    },
+    {
+      id: "samaveda",
+      title: "Sama Veda",
+      sanskritTitle: "सामवेद",
+      tagline: "The Veda of chant · 1,794 verses",
+      partLabel: "Book",
+      sectionLabel: "Chapter",
+      verses: true,
+      category: "veda",
+      translation: "English verse translation by Ralph T. H. Griffith (1895), public domain.",
+      about: "The Veda of melody. Most of its verses come from the Rig Veda, arranged to be sung by the priests during the Soma sacrifice; Indian classical music traces its roots to these chants. Krishna says in the Gita: “Among the Vedas, I am the Sama Veda.”"
+    },
+    {
+      id: "upanishads",
+      title: "Upanishads",
+      sanskritTitle: "उपनिषद्",
+      tagline: "Isha, Katha and Kena · with commentary",
+      partLabel: "Upanishad",
+      sectionLabel: "Part",
+      verses: true,
+      category: "upanishad",
+      translation: "English translation with commentary by Swami Paramananda (1919), public domain.",
+      about: "The philosophical heart of the Vedas, teaching the oneness of the Self (Atman) and the Absolute (Brahman). These are three of the best loved: the Isha; the Katha, with the young Nachiketas questioning Death himself; and the Kena."
+    },
+    {
+      id: "vishnu",
+      title: "Vishnu Purana",
+      sanskritTitle: "विष्णुपुराण",
+      tagline: "Creation, the ages and the life of Krishna · 6 books",
+      partLabel: "Book",
+      sectionLabel: "Chapter",
+      verses: false,
+      category: "purana",
+      translation: "English prose translation by Manmatha Nath Dutt, based on H. H. Wilson's translation, public domain. Footnote markers have been removed.",
+      about: "One of the eighteen great Puranas, told by the sage Parashara to his disciple Maitreya: the creation of the world, the cycles of time, the stories of Dhruva and Prahlada, the great royal dynasties and the life of Krishna."
+    },
+    {
+      id: "yoga",
+      title: "Yoga Sutras of Patanjali",
+      sanskritTitle: "योगसूत्र",
+      tagline: "The classic guide to meditation · 4 books",
+      partLabel: "Book",
+      sectionLabel: "Book",
+      verses: true,
+      category: "darshana",
+      translation: "English translation with commentary by Charles Johnston (1912), public domain.",
+      about: "Patanjali's concise aphorisms (sutras) on stilling the mind, the eight limbs of yoga and the path to freedom. Johnston adds a short commentary after each sutra."
     }
   ],
 

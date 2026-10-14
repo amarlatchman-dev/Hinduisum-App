@@ -660,7 +660,7 @@
       <div class="section">
         <div class="section-head"><h2 class="section-title">Explore</h2></div>
         <div class="tiles">
-          <a class="tile" href="#/read"><span class="dv">ग्रन्थ</span><div><h3>Scriptures</h3><p>Gita, Ramayana, Mahabharata</p></div></a>
+          <a class="tile" href="#/read"><span class="dv">ग्रन्थ</span><div><h3>Scriptures</h3><p>Gita, Vedas, Upanishads and epics</p></div></a>
           <a class="tile" href="#/learn"><span class="dv">शिक्षा</span><div><h3>Academy</h3><p>${C.courses.length} short courses</p></div></a>
           <a class="tile" href="#/learn#rites"><span class="dv">संस्कार</span><div><h3>Rites of passage</h3><p>Step-by-step guidance</p></div></a>
           <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Chant a mantra on a mala of 108 beads</p></div></a>
@@ -1198,7 +1198,9 @@
   function posLabel(book, pos) {
     if (!pos) return "";
     if (book.id === "gita") return `Chapter ${pos.part}${pos.ref ? `, verse ${pos.ref}` : ""}`;
-    return `${book.partLabel} ${pos.part} · ${pos.title || book.sectionLabel + " " + pos.sec}`;
+    if (book.singlePart) return pos.title || `${book.sectionLabel} ${pos.sec}`;
+    if (pos.single && pos.partName) return pos.partName;
+    return `${pos.partName || book.partLabel + " " + pos.part} · ${pos.title || book.sectionLabel + " " + pos.sec}`;
   }
 
   function continueReadingCards() {
@@ -1227,29 +1229,39 @@
   }
 
   function libraryView() {
+    const bookRow = (b) => {
+      const pos = getPos(b.id);
+      return `<a class="row" href="${pos ? readerHref(b.id, pos.part, pos.sec) : `#/read/${b.id}`}">${seal(b.sanskritTitle)}
+        <span class="body"><h3>${esc(b.title)}</h3><p>${esc(pos ? "Continue · " + posLabel(b, pos) : b.tagline)}</p>
+        ${pos ? `<div class="progress"><span data-progress="${b.id}" style="width:0"></span></div>` : ""}</span>
+        <span class="chev">›</span></a>`;
+    };
+    const gita = byId(C.books, "gita");
+    const gpos = getPos("gita");
     return `
       <h2 class="page-title">Scriptures</h2>
-      <p class="page-sub">Read the great texts at your own pace. Your place in each book is saved on this device.</p>
-      ${C.books.map((b) => {
-        const pos = getPos(b.id);
-        return `<div class="card book">
-          <a class="night cover" href="#/read/${b.id}">
-            ${mandala()}
-            <div class="dv">${b.sanskritTitle}</div>
-            <h3>${esc(b.title)}</h3>
-            <p>${esc(b.tagline)}</p>
-          </a>
-          <div class="foot">
-            ${pos ? `<div class="meta" style="display:flex;justify-content:space-between;gap:10px"><span>${esc(posLabel(b, pos))}</span><span data-progress-label="${b.id}"></span></div>
-              <div class="progress"><span data-progress="${b.id}" style="width:0"></span></div>` : `<div class="meta">${esc(b.translation)}</div>`}
-            <div class="btn-row" style="margin-top:14px">
-              <a class="btn" href="${pos ? readerHref(b.id, pos.part, pos.sec) : readerHref(b.id, 1, 1)}">${pos ? "Continue reading" : "Begin reading"}</a>
-              <a class="btn ghost" href="#/read/${b.id}">Contents</a>
-            </div>
+      <p class="page-sub">The great texts of Hinduism, from the Vedas to the Puranas. Your place in each book is saved on this device.</p>
+      <div class="card book">
+        <a class="night cover" href="#/read/gita">
+          ${mandala()}
+          <div class="dv">${gita.sanskritTitle}</div>
+          <h3>${esc(gita.title)}</h3>
+          <p>${esc(gita.tagline)}</p>
+        </a>
+        <div class="foot">
+          ${gpos ? `<div class="meta" style="display:flex;justify-content:space-between;gap:10px"><span>${esc(posLabel(gita, gpos))}</span><span data-progress-label="gita"></span></div>
+            <div class="progress"><span data-progress="gita" style="width:0"></span></div>` : `<div class="meta">${esc(gita.translation)}</div>`}
+          <div class="btn-row" style="margin-top:14px">
+            <a class="btn" href="${gpos ? readerHref("gita", gpos.part, gpos.sec) : readerHref("gita", 1, 1)}">${gpos ? "Continue reading" : "Begin reading"}</a>
+            <a class="btn ghost" href="#/read/gita">Contents</a>
           </div>
-        </div>`;
+        </div>
+      </div>
+      ${C.bookCategories.filter((c) => c.id !== "gita").map((c) => {
+        const books = C.books.filter((b) => b.category === c.id);
+        return books.length ? `<div class="section-head" style="margin-top:22px"><h2 class="section-title">${esc(c.name)}</h2></div><div class="list">${books.map(bookRow).join("")}</div>` : "";
       }).join("")}
-      <div class="list"><a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
+      <div class="list" style="margin-top:22px"><a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
   }
 
   function aboutTextsView() {
@@ -1265,8 +1277,13 @@
           <li>Ramayana Sanskrit: critical-edition e-text (M. Tokunaga, rev. J. Smith). English: M. N. Dutt (1891–94), aligned in the Itihāsa corpus (Aralikatte et al., 2021).</li>
           <li>Mahabharata: K. M. Ganguli (1883–96). Scanned at sacred-texts.com; proofed at Distributed Proofing (Juliet Sutherland, project manager) and by Mantra Caitanya; additional proofing and formatting at sacred-texts.com by J. B. Hare.</li>
           <li>Verse pairings for the Gita and Ramayana were compiled by the open-source Katha project.</li>
+          <li>Rig Veda Sanskrit: Vedic Heritage Portal, via the DharmicData project (Open Database License). English translation of the selected hymns: Dharma Path.</li>
+          <li>Sama Veda: Ralph T. H. Griffith, <em>The Hymns of the Sama-Veda</em>, 1895, via the DharmicData project.</li>
+          <li>Upanishads: Swami Paramananda, <em>The Upanishads</em>, 1919 (Project Gutenberg #3283).</li>
+          <li>Vishnu Purana: Manmatha Nath Dutt, after H. H. Wilson (Project Gutenberg #66208), as prepared by the open-source Tattvika (Kathaveda) project.</li>
+          <li>Yoga Sutras: Charles Johnston, <em>The Yoga Sutras of Patanjali</em>, 1912 (Project Gutenberg #2526).</li>
         </ul>
-        <p class="meta">These translations are over a century old and use archaic English (“thou”, “doth”). All texts are in the public domain.</p>
+        <p class="meta">Most of these translations are a century or more old and use archaic English (“thou”, “doth”). Apart from the Rig Veda selection's English, which is new, they are in the public domain.</p>
       </div>`;
   }
 
@@ -1274,25 +1291,36 @@
     const book = byId(C.books, bookId);
     if (!book) return notFound();
     const index = await loadIndex();
+    const parts = index[bookId].parts;
     const pos = getPos(bookId);
+    let rows;
+    if (parts.length === 1 && bookId !== "gita") {
+      const sections = await loadSections(bookId, 1);
+      rows = sections.map((sec, i) => `
+          <a class="row" href="${readerHref(bookId, 1, i + 1)}">
+            <span class="dateblock"><span class="d" style="font-size:${String(sec.short || i + 1).length > 3 ? "1.05rem" : "1.7rem"}">${esc(sec.short || i + 1)}</span></span>
+            <span class="body"><h3>${esc(sec.label)}</h3><p>${esc(sec.name ? sec.name + " · " : "")}${(sec.verses || sec.paras).length} ${sec.verses ? "verses" : "paragraphs"}</p></span>
+            ${pos && pos.sec === i + 1 ? `<span class="tag gold">Reading</span>` : `<span class="chev">›</span>`}
+          </a>`).join("");
+    } else {
+      rows = parts.map((p) => `
+          <a class="row" href="${bookId === "gita" || p.count === 1 ? readerHref(bookId, p.n, 1) : `#/read/${bookId}/${p.n}`}">
+            <span class="dateblock"><span class="d">${p.n}</span></span>
+            <span class="body"><h3>${esc(p.name)}</h3><p>${esc(p.sub || "")}${p.count > 1 || bookId === "gita" ? `${p.sub ? " · " : ""}${p.count} ${bookId === "gita" ? "verses" : (book.sectionLabel.toLowerCase() + "s")}` : ""}</p></span>
+            ${pos && pos.part === p.n ? `<span class="tag gold">Reading</span>` : `<span class="chev">›</span>`}
+          </a>`).join("");
+    }
     return `
       <div class="night book-hero fade-in">
         ${mandala()}
-        <div class="eyebrow">${esc(book.partLabel)}s</div>
+        <div class="eyebrow">${esc(byId(C.bookCategories, book.category).name)}</div>
         <div style="font-family:var(--deva);font-size:1.5rem;color:var(--night-gold);margin-top:10px">${book.sanskritTitle}</div>
         <h2 style="font-family:var(--display);font-weight:600;font-size:2rem;margin:4px 0 2px">${esc(book.title)}</h2>
         <p class="meta" style="margin:0">${esc(book.tagline)}</p>
         ${pos ? `<div class="btn-row"><a class="btn gold" href="${readerHref(bookId, pos.part, pos.sec)}">Continue · ${esc(posLabel(book, pos))}</a></div>` : ""}
       </div>
-      <p class="meta" style="margin:0 4px 14px">${esc(book.translation)}</p>
-      <div class="list">
-        ${index[bookId].parts.map((p) => `
-          <a class="row" href="${bookId === "gita" ? readerHref("gita", p.n, 1) : `#/read/${bookId}/${p.n}`}">
-            <span class="dateblock"><span class="d">${p.n}</span></span>
-            <span class="body"><h3>${esc(p.name)}</h3><p>${esc(p.sub ? p.sub + " · " : "")}${p.count} ${bookId === "gita" ? "verses" : (book.sectionLabel.toLowerCase() + "s")}</p></span>
-            ${pos && pos.part === p.n ? `<span class="tag gold">Reading</span>` : `<span class="chev">›</span>`}
-          </a>`).join("")}
-      </div>
+      <div class="card"><p style="margin:0;color:var(--ink-2)">${esc(book.about)}</p><p class="meta" style="margin:10px 0 0">${esc(book.translation)}</p></div>
+      <div class="list">${rows}</div>
       <button class="btn ghost" data-offline="${bookId}">Save the whole book for offline reading</button>
       <p class="meta" id="offlineStatus" style="margin:10px 4px"></p>`;
   }
@@ -1309,18 +1337,19 @@
       <div class="section-grid">
         ${sections.map((s, i) => {
           const here = pos && pos.part === part && pos.sec === i + 1;
-          const label = bookId === "ramayana" ? s.n : (s.label.replace(/^Section /, "") || i + 1);
+          const label = s.short || (bookId === "ramayana" ? s.n : (s.label.replace(/^Section /, "") || i + 1));
           return `<a class="sec-tile ${here ? "here" : ""}" href="${readerHref(bookId, part, i + 1)}" title="${esc(s.name || s.label)}">${esc(label)}</a>`;
         }).join("")}
       </div>`;
   }
 
   function renderVerse(v, prefix, showSa) {
-    const [n, sa, tr, en] = v;
-    return `<div class="verse" id="v-${n}" data-ref="${n}">
-      <div class="vnum">${prefix}${n}</div>
-      ${showSa && sa ? `<div class="sanskrit">${esc(sa)}</div><p class="translit">${esc(tr)}</p>` : ""}
-      <p class="vtext">${esc(en)}</p>
+    const o = Array.isArray(v) ? { n: v[0], sa: v[1], tr: v[2], en: v[3], ref: prefix + v[0] } : v;
+    return `${o.head ? `<div class="vhead" data-i="${-1000 - o.n}">${esc(o.head)}</div>` : ""}<div class="verse" id="v-${o.n}" data-ref="${o.n}">
+      <div class="vnum">${esc(o.ref || prefix + o.n)}</div>
+      ${showSa && o.sa ? `<div class="sanskrit">${esc(o.sa)}</div><p class="translit">${esc(o.tr || "")}</p>` : ""}
+      <p class="vtext">${esc(o.en)}</p>
+      ${o.note ? `<div class="vnote">${o.note.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
     </div>`;
   }
 
@@ -1339,15 +1368,25 @@
 
     const showSa = store.get("read:sanskrit", true);
     const title = sectionTitle(book, part, sec, s);
-    const subtitle = bookId === "gita" ? `${s.label} · ${index.gita.parts[part - 1].sub}` : bookId === "ramayana" ? `${meta.name}${s.name ? " · " + s.name : ""}` : meta.name;
+    const subtitle = bookId === "gita" ? `${s.label} · ${index.gita.parts[part - 1].sub}`
+      : meta.name === title ? (meta.sub || book.title) : `${meta.name}${s.name ? " · " + s.name : ""}`;
     const parts = index[bookId].parts;
     const prev = sec > 1 ? [part, sec - 1] : part > 1 ? [part - 1, parts[part - 2].count] : null;
     const next = sec < sections.length ? [part, sec + 1] : part < parts.length ? [part + 1, 1] : null;
-    const navLabel = (pq) => bookId === "gita" ? `Chapter ${pq[0]}` : pq[0] === part ? `${book.sectionLabel} ${pq[1]}` : `${book.partLabel} ${pq[0]}`;
-    const state = { bookId, part, sec, title, target: query.get("v") };
-    const body = s.verses
+    const navLabel = (pq) => {
+      if (bookId === "gita") return `Chapter ${pq[0]}`;
+      if (pq[0] !== part) return parts[pq[0] - 1].name.length < 22 ? parts[pq[0] - 1].name : `${book.partLabel} ${pq[0]}`;
+      const t = sections[pq[1] - 1];
+      return `${book.sectionLabel} ${t.short || t.n || pq[1]}`;
+    };
+    const showNotes = store.get("read:notes", true);
+    const hasNotes = !!(s.verses && s.verses.some((v) => v.note));
+    const contentsHref = bookId === "gita" || book.singlePart || meta.count === 1 ? `#/read/${bookId}` : `#/read/${bookId}/${part}`;
+    const state = { bookId, part, sec, title, target: query.get("v"), partName: meta.name, single: meta.count === 1 };
+    const intro = (s.intro || []).map((p, k) => `<p class="para intro" data-i="${-1 - k}">${esc(p)}</p>`).join("");
+    const body = intro + (s.verses
       ? s.verses.map((v) => renderVerse(v, bookId === "gita" ? `${part}.` : "", showSa)).join("")
-      : s.paras.map(renderPara).join("");
+      : s.paras.map(renderPara).join(""));
 
     return { state, html: `
       <div class="reader-head">
@@ -1358,11 +1397,12 @@
         <div class="reader-tools">
           <button class="chip" data-font="-1" aria-label="Smaller text">A−</button>
           <button class="chip" data-font="1" aria-label="Larger text">A+</button>
-          ${book.verses ? `<button class="chip ${showSa ? "active" : ""}" data-sanskrit>संस्कृत</button>` : ""}
-          <a class="chip" href="${bookId === "gita" ? "#/read/gita" : `#/read/${bookId}/${part}`}">Contents</a>
+          ${book.sanskrit ? `<button class="chip ${showSa ? "active" : ""}" data-sanskrit>संस्कृत</button>` : ""}
+          ${hasNotes ? `<button class="chip ${showNotes ? "active" : ""}" data-notes>Commentary</button>` : ""}
+          <a class="chip" href="${contentsHref}">Contents</a>
         </div>
       </div>
-      <article class="reader" style="--read-scale:${store.get("read:font", 1)}">${body}</article>
+      <article class="reader ${showNotes ? "" : "hide-notes"}" style="--read-scale:${store.get("read:font", 1)}">${body}</article>
       <nav class="reader-nav">
         ${prev ? `<a class="btn ghost" href="${readerHref(bookId, prev[0], prev[1])}">‹ ${esc(navLabel(prev))}</a>` : "<span></span>"}
         ${next ? `<a class="btn" href="${readerHref(bookId, next[0], next[1])}">${esc(navLabel(next))} ›</a>` : `<span class="meta">The end</span>`}
@@ -1391,6 +1431,7 @@
     const frac = max > 0 ? Math.min(1, scrollY / max) : 0;
     store.set(posKey(readerState.bookId), {
       part: readerState.part, sec: readerState.sec, title: readerState.title,
+      partName: readerState.partName, single: readerState.single,
       ref: el.dataset.ref ? +el.dataset.ref : null,
       i: el.dataset.i ? +el.dataset.i : null,
       frac, t: Date.now()
@@ -1607,6 +1648,13 @@
       store.set("read:font", Math.round(scale * 100) / 100);
       const anchor = currentItem();
       view.querySelector(".reader").style.setProperty("--read-scale", scale);
+      if (anchor) anchor.scrollIntoView();
+    } else if ("notes" in t.dataset) {
+      const on = !store.get("read:notes", true);
+      store.set("read:notes", on);
+      t.classList.toggle("active", on);
+      const anchor = currentItem();
+      view.querySelector(".reader").classList.toggle("hide-notes", !on);
       if (anchor) anchor.scrollIntoView();
     } else if ("sanskrit" in t.dataset) {
       saveReaderPos();

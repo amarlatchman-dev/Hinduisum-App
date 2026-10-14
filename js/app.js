@@ -621,13 +621,16 @@
           </div>
         </div>` : ""}
 
-      <a class="night verse-hero fade-in" id="gitaToday" href="#/read/gita/${ref[0]}?v=${ref[1]}" style="margin-top:${todayEvents.length ? 0 : 20}px">
-        ${mandala()}
-        <div class="eyebrow">Bhagavad Gita · Verse of the day</div>
-        <div class="deva-text">&nbsp;</div>
-        <blockquote>Loading today's verse…</blockquote>
-        <div class="cite">Chapter ${ref[0]} · Verse ${ref[1]}</div>
-      </a>
+      <div class="hero-wrap" style="margin-top:${todayEvents.length ? 0 : 20}px">
+        <a class="night verse-hero fade-in" id="gitaToday" href="#/read/gita/${ref[0]}?v=${ref[1]}">
+          ${mandala()}
+          <div class="eyebrow">Bhagavad Gita · Verse of the day</div>
+          <div class="deva-text">&nbsp;</div>
+          <blockquote>Loading today's verse…</blockquote>
+          <div class="cite">Chapter ${ref[0]} · Verse ${ref[1]}</div>
+        </a>
+        <button class="hero-share" data-share-gita aria-label="Share today's verse as an image"><svg class="ico" viewBox="0 0 24 24"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg></button>
+      </div>
 
       <div class="section">
         <div class="section-head"><h2 class="section-title">Sacred calendar</h2><a href="#/calendar">Full calendar</a></div>
@@ -1261,7 +1264,9 @@
         const books = C.books.filter((b) => b.category === c.id);
         return books.length ? `<div class="section-head" style="margin-top:22px"><h2 class="section-title">${esc(c.name)}</h2></div><div class="list">${books.map(bookRow).join("")}</div>` : "";
       }).join("")}
-      <div class="list" style="margin-top:22px"><a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
+      <div class="list" style="margin-top:22px">
+        <a class="row" href="#/saved">${seal("चिह्न")}<span class="body"><h3>Bookmarks and notes</h3><p>${Object.keys(getMarks()).length} saved · tap any verse while reading</p></span><span class="chev">›</span></a>
+        <a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
   }
 
   function aboutTextsView() {
@@ -1382,7 +1387,7 @@
     const showNotes = store.get("read:notes", true);
     const hasNotes = !!(s.verses && s.verses.some((v) => v.note));
     const contentsHref = bookId === "gita" || book.singlePart || meta.count === 1 ? `#/read/${bookId}` : `#/read/${bookId}/${part}`;
-    const state = { bookId, part, sec, title, target: query.get("v"), partName: meta.name, single: meta.count === 1 };
+    const state = { bookId, part, sec, title, target: query.get("v"), targetP: query.get("p"), partName: meta.name, single: meta.count === 1 };
     const intro = (s.intro || []).map((p, k) => `<p class="para intro" data-i="${-1 - k}">${esc(p)}</p>`).join("");
     const body = intro + (s.verses
       ? s.verses.map((v) => renderVerse(v, bookId === "gita" ? `${part}.` : "", showSa)).join("")
@@ -1443,8 +1448,8 @@
   function restoreReaderPos() {
     const st = readerState;
     let el = null;
-    if (st.target) {
-      el = document.getElementById("v-" + st.target);
+    if (st.target || st.targetP != null) {
+      el = st.target ? document.getElementById("v-" + st.target) : view.querySelector(`.reader [data-i="${st.targetP}"]`);
       if (el) el.classList.add("highlight");
     } else {
       const pos = getPos(st.bookId);
@@ -1483,10 +1488,401 @@
   }
 
   /* ====================================================================== */
+  /* Toasts, sheets, sharing                                                 */
+  /* ====================================================================== */
+  function toast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  function closeSheet() {
+    const b = document.querySelector(".sheet-backdrop");
+    if (!b) return;
+    b.classList.remove("open");
+    setTimeout(() => b.remove(), 220);
+  }
+
+  // A bottom sheet with a preview and a column of actions.
+  function openSheet({ eyebrow, preview, deva, actions, note }) {
+    closeSheet();
+    const wrap = document.createElement("div");
+    wrap.className = "sheet-backdrop";
+    wrap.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(eyebrow || "Options")}">
+      <div class="grip"></div>
+      ${eyebrow ? `<div class="eyebrow">${esc(eyebrow)}</div>` : ""}
+      ${deva ? `<p class="sheet-deva">${esc(deva)}</p>` : ""}
+      ${preview ? `<p class="sheet-preview">${esc(preview)}</p>` : ""}
+      ${note !== undefined ? `<textarea class="sheet-note" id="sheetNote" rows="3" placeholder="Write a note or reflection…">${esc(note || "")}</textarea>` : ""}
+      <div class="sheet-actions">${actions.map((a) => `<button class="${a.primary ? "btn" : "btn ghost"}" data-sheet="${a.id}">${a.label}</button>`).join("")}</div>
+    </div>`;
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => wrap.classList.add("open"));
+    return new Promise((resolve) => {
+      wrap.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-sheet]");
+        if (b) { const n = document.getElementById("sheetNote"); resolve({ id: b.dataset.sheet, note: n ? n.value.trim() : undefined }); closeSheet(); }
+        else if (e.target === wrap) { resolve(null); closeSheet(); }
+      });
+    });
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); toast("Copied"); }
+    catch (e) {
+      const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast("Copied"); } catch (e2) { toast("Couldn't copy on this device"); }
+      ta.remove();
+    }
+  }
+
+  function wrapLines(ctx, text, width) {
+    const out = [];
+    String(text).split("\n").forEach((para) => {
+      let line = "";
+      para.split(/\s+/).forEach((w) => {
+        const t = line ? line + " " + w : w;
+        if (ctx.measureText(t).width > width && line) { out.push(line); line = w; } else line = t;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  // Draw a verse onto a 1080 × 1350 card in the app's night style, then share or save it.
+  async function shareCard({ eyebrow, deva, text, cite }) {
+    toast("Preparing image…");
+    const fonts = ['500 italic 56px "Cormorant Garamond"', '600 56px "Cormorant Garamond"', '500 44px "Noto Serif Devanagari"', '600 26px "Inter"'];
+    try { await Promise.all(fonts.map((f) => document.fonts.load(f, f.includes("Devanagari") ? "ॐ अ" : "A"))); } catch (e) { /* fall back to system fonts */ }
+    const W = 1080, H = 1350, pad = 96;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const g = cv.getContext("2d");
+    const bg = g.createLinearGradient(0, 0, W * 0.4, H);
+    bg.addColorStop(0, "#2a2219"); bg.addColorStop(1, "#120e0b");
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const glow = g.createRadialGradient(W * 0.85, 0, 0, W * 0.85, 0, W);
+    glow.addColorStop(0, "rgba(212,176,106,0.22)"); glow.addColorStop(1, "rgba(212,176,106,0)");
+    g.fillStyle = glow; g.fillRect(0, 0, W, H);
+    const glow2 = g.createRadialGradient(0, H, 0, 0, H, W * 0.9);
+    glow2.addColorStop(0, "rgba(142,43,32,0.28)"); glow2.addColorStop(1, "rgba(142,43,32,0)");
+    g.fillStyle = glow2; g.fillRect(0, 0, W, H);
+    // Line mandala
+    g.save(); g.translate(W - 120, 150); g.strokeStyle = "rgba(212,176,106,0.16)"; g.lineWidth = 1.6;
+    for (let i = 0; i < 16; i++) { g.save(); g.rotate((i * Math.PI) / 8); g.beginPath(); g.ellipse(0, -170, 38, 125, 0, 0, Math.PI * 2); g.stroke(); g.restore(); }
+    [330, 310, 70, 30].forEach((r) => { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.stroke(); });
+    g.restore();
+    // Eyebrow
+    g.fillStyle = "#d4b06a"; g.font = '600 26px "Inter", sans-serif';
+    if ("letterSpacing" in g) g.letterSpacing = "6px";
+    g.fillText(String(eyebrow || "").toUpperCase(), pad, 190);
+    if ("letterSpacing" in g) g.letterSpacing = "0px";
+    const maxW = W - pad * 2;
+    let dl = [];
+    if (deva) { g.font = '500 42px "Noto Serif Devanagari", serif'; dl = wrapLines(g, deva, maxW).slice(0, 6); }
+    const devaH = dl.length ? dl.length * 74 + 30 : 0;
+    // Fit the English to the remaining space, then centre the whole block between the eyebrow and the citation.
+    const top = 240, bottom = H - 220;
+    let size = 64, lines;
+    do {
+      g.font = `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`;
+      lines = wrapLines(g, `“${text}”`, maxW);
+      if (devaH + lines.length * size * 1.3 <= bottom - top) break;
+      size -= 3;
+    } while (size > 30);
+    let y = top + Math.max(0, (bottom - top - devaH - lines.length * size * 1.3) / 2);
+    g.textBaseline = "top";
+    if (dl.length) {
+      g.font = '500 42px "Noto Serif Devanagari", serif'; g.fillStyle = "#d4b06a";
+      dl.forEach((l) => { g.fillText(l, pad, y); y += 74; });
+      y += 30;
+    }
+    g.font = `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`;
+    g.fillStyle = "#f3ead9";
+    lines.forEach((l) => { g.fillText(l, pad, y); y += size * 1.3; });
+    g.textBaseline = "alphabetic";
+    // Citation and mark
+    g.font = '500 30px "Inter", sans-serif'; g.fillStyle = "#b8a88f";
+    g.fillText(cite || "", pad, H - 150);
+    g.strokeStyle = "rgba(212,176,106,0.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(pad, H - 112); g.lineTo(W - pad, H - 112); g.stroke();
+    g.fillStyle = "#d4b06a"; g.font = '500 34px "Noto Serif Devanagari", serif'; g.fillText("ॐ", pad, H - 62);
+    g.font = '600 34px "Cormorant Garamond", Georgia, serif'; g.fillText("Dharma Path", pad + 50, H - 64);
+    const blob = await new Promise((r) => cv.toBlob(r, "image/png"));
+    const file = new File([blob], "dharma-path-verse.png", { type: "image/png" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: cite || "Dharma Path", text: `${text} (${cite})` });
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("Image saved");
+  }
+
+  /* ====================================================================== */
+  /* Bookmarks, highlights and notes                                         */
+  /* ====================================================================== */
+  const getMarks = () => store.get("marks", {});
+  const markHref = (m) => readerHref(m.book, m.part, m.sec) + (m.kind === "v" ? `?v=${m.num}` : `?p=${m.num}`);
+
+  function itemInfo(el) {
+    const st = readerState;
+    const isVerse = el.classList.contains("verse");
+    const num = isVerse ? el.dataset.ref : el.dataset.i;
+    const book = byId(C.books, st.bookId);
+    const ref = isVerse ? el.querySelector(".vnum").textContent : "";
+    return {
+      id: `${st.bookId}|${st.part}|${st.sec}|${isVerse ? "v" : "p"}${num}`,
+      book: st.bookId, part: st.part, sec: st.sec, kind: isVerse ? "v" : "p", num,
+      where: `${st.single || book.singlePart || st.bookId === "gita" ? st.title : (st.partName || "") + " · " + st.title}${ref ? " · " + ref : ""}`,
+      text: (isVerse ? el.querySelector(".vtext").textContent : el.textContent).trim(),
+      deva: isVerse && el.querySelector(".sanskrit") ? el.querySelector(".sanskrit").textContent.trim() : "",
+      bookTitle: book.title
+    };
+  }
+
+  function applyMarks() {
+    if (!readerState) return;
+    view.querySelectorAll(".reader .mnote").forEach((n) => n.remove());
+    view.querySelectorAll(".reader .is-hl, .reader .is-bm").forEach((n) => n.classList.remove("is-hl", "is-bm"));
+    const st = readerState;
+    Object.values(getMarks()).forEach((m) => {
+      if (m.book !== st.bookId || m.part !== st.part || m.sec !== st.sec) return;
+      const el = m.kind === "v" ? document.getElementById("v-" + m.num) : view.querySelector(`.reader .para[data-i="${m.num}"]`);
+      if (!el) return;
+      el.classList.toggle("is-hl", !!m.hl);
+      el.classList.toggle("is-bm", !!m.bm);
+      if (m.note) {
+        const n = document.createElement(m.kind === "v" ? "div" : "aside");
+        n.className = "mnote";
+        n.textContent = m.note;
+        if (m.kind === "v") el.appendChild(n);
+        else { n.dataset.i = m.num; el.after(n); }
+      }
+    });
+  }
+
+  async function itemSheet(el) {
+    const info = itemInfo(el);
+    const marks = getMarks();
+    const m = marks[info.id] || {};
+    const res = await openSheet({
+      eyebrow: `${info.bookTitle} · ${info.where}`,
+      deva: info.deva,
+      preview: info.text.length > 280 ? info.text.slice(0, 280) + "…" : info.text,
+      note: m.note || "",
+      actions: [
+        { id: "note", label: "Save note", primary: true },
+        { id: "bm", label: m.bm ? "Remove bookmark" : "Bookmark" },
+        { id: "hl", label: m.hl ? "Remove highlight" : "Highlight" },
+        { id: "share", label: "Share as image" },
+        { id: "copy", label: "Copy text" }
+      ]
+    });
+    if (!res) return;
+    const next = { ...m, ...info, text: info.text.slice(0, 600), t: Date.now() };
+    if (res.id === "share") return shareCard({ eyebrow: info.bookTitle, deva: info.deva, text: info.text.length > 520 ? info.text.slice(0, 520) + "…" : info.text, cite: `${info.bookTitle} · ${info.where}` });
+    if (res.id === "copy") return copyText(`${info.deva ? info.deva + "\n\n" : ""}${info.text}\n\n${info.bookTitle} · ${info.where}`);
+    if (res.id === "bm") { next.bm = !m.bm; toast(next.bm ? "Bookmarked" : "Bookmark removed"); }
+    if (res.id === "hl") { next.hl = !m.hl; toast(next.hl ? "Highlighted" : "Highlight removed"); }
+    if (res.id === "note") { next.note = res.note || ""; toast(next.note ? "Note saved" : m.note ? "Note removed" : "Nothing to save"); }
+    if (res.id !== "note" && res.note !== undefined && res.note !== (m.note || "")) next.note = res.note;
+    if (next.bm || next.hl || next.note) marks[info.id] = next; else delete marks[info.id];
+    store.set("marks", marks);
+    applyMarks();
+  }
+
+  async function stanzaSheet(el) {
+    const p = prayer(location.hash.split("/")[2]);
+    if (!p) return;
+    const i = [...el.parentNode.querySelectorAll(".stanza")].indexOf(el);
+    const v = p.verses[i];
+    const res = await openSheet({
+      eyebrow: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}`, deva: v[0], preview: v[2],
+      actions: [{ id: "share", label: "Share as image", primary: true }, { id: "copy", label: "Copy text" }, { id: "close", label: "Close" }]
+    });
+    if (!res) return;
+    if (res.id === "share") shareCard({ eyebrow: `${typeOf(p.type).one} · ${deityOf(p.deity).name}`, deva: v[0], text: v[2], cite: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}` });
+    if (res.id === "copy") copyText(`${v[0]}\n\n${v[1]}\n\n${v[2]}\n\n${p.name}`);
+  }
+
+  function savedView(query) {
+    const f = query.get("f") || "all";
+    const all = Object.values(getMarks()).sort((a, b) => b.t - a.t);
+    const list = all.filter((m) => f === "all" || (f === "bm" && m.bm) || (f === "hl" && m.hl) || (f === "note" && m.note));
+    const tabs = [["all", "All"], ["bm", "Bookmarks"], ["hl", "Highlights"], ["note", "Notes"]];
+    return `
+      <h2 class="page-title">Bookmarks and notes</h2>
+      <p class="page-sub">Tap any verse or paragraph while reading to bookmark it, highlight it or write a note.</p>
+      <div class="chips" style="margin-bottom:12px">${tabs.map(([id, name]) => `<a class="chip ${f === id ? "active" : ""}" href="#/saved${id === "all" ? "" : "?f=" + id}">${name}</a>`).join("")}</div>
+      ${list.length ? `<div class="list">${list.map((m) => {
+        const book = byId(C.books, m.book);
+        return `<a class="row saved-row" href="${markHref(m)}">${seal(book ? book.sanskritTitle : "ॐ")}
+          <span class="body"><h3>${esc(m.bookTitle)}</h3><p class="where">${esc(m.where)}${m.bm ? " · Bookmark" : ""}${m.hl ? " · Highlight" : ""}</p>
+          <p class="snip ${m.hl ? "hl-snip" : ""}">${esc(m.text.length > 180 ? m.text.slice(0, 180) + "…" : m.text)}</p>
+          ${m.note ? `<p class="note-snip">${esc(m.note)}</p>` : ""}</span><span class="chev">›</span></a>`;
+      }).join("")}</div>` : `<div class="card empty">${all.length ? "Nothing here yet." : "Nothing saved yet. Open any scripture and tap a verse to begin."}</div>`}`;
+  }
+
+  /* ====================================================================== */
+  /* Search                                                                  */
+  /* ====================================================================== */
+  // Fold scholarly spellings into everyday ones so "Kṛṣṇa", "Krishna" and "KRISHNA" all match.
+  const fold = (t) => String(t || "").normalize("NFC")
+    .replace(/[ṛṝ]/g, "ri").replace(/[ṚṜ]/g, "Ri").replace(/[śṣç]/g, "sh").replace(/[ŚṢÇ]/g, "Sh")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const keyOf = (...parts) => fold(parts.join(" ")).toLowerCase();
+  const stripTags = (h) => String(h).replace(/<[^>]+>/g, " ");
+  const SMALL_BOOKS = ["gita", "rigveda", "samaveda", "upanishads", "yoga", "vishnu"];
+  const LARGE_BOOKS = ["ramayana", "mahabharata"];
+  const searchBooks = {};
+  const searchJobs = {};
+  let searchToken = 0;
+
+  function appEntries() {
+    if (appEntries.cache) return appEntries.cache;
+    const out = [];
+    P.forEach((p) => out.push({ group: "Prayers", href: `#/puja/${p.id}`, title: p.name, where: prayerSub(p), text: p.verses.map((v) => v[2]).join(" "),
+      key: keyOf(p.name, p.about, deityOf(p.deity).name, typeOf(p.type).name, ...p.verses.map((v) => v[1] + " " + v[2])) + " " + p.verses.map((v) => v[0]).join(" ") }));
+    C.festivals.forEach((f) => out.push({ group: "Festivals", href: `#/festival/${f.parent || f.id}`, title: f.name, where: f.when || "Festival", text: f.meaning,
+      key: keyOf(f.name, f.summary, f.meaning, ...(f.traditions || []), ...(f.atHome || [])) + " " + (f.deva || "") }));
+    C.courses.forEach((c) => c.lessons.forEach((l) => out.push({ group: "Learn", href: `#/academy/${c.id}`, title: l.title, where: c.title, text: stripTags(l.body),
+      key: keyOf(c.title, l.title, stripTags(l.body)) })));
+    C.lifeEvents.forEach((e) => out.push({ group: "Learn", href: `#/life/${e.id}`, title: e.name, where: e.sanskrit, text: e.meaning,
+      key: keyOf(e.name, e.sanskrit, e.meaning, ...e.steps, e.withPriest) }));
+    return (appEntries.cache = out);
+  }
+
+  function indexBook(bookId) {
+    if (searchBooks[bookId]) return Promise.resolve(searchBooks[bookId]);
+    if (searchJobs[bookId]) return searchJobs[bookId];
+    searchJobs[bookId] = (async () => {
+      const book = byId(C.books, bookId);
+      const index = await loadIndex();
+      const entries = [];
+      for (const part of index[bookId].parts) {
+        const sections = await loadSections(bookId, part.n);
+        sections.forEach((sec, si) => {
+          const n = si + 1;
+          const where = bookId === "gita" ? `Chapter ${part.n}` : book.singlePart ? sectionTitle(book, part.n, n, sec) : `${part.name} · ${sectionTitle(book, part.n, n, sec)}`;
+          const base = readerHref(bookId, part.n, n);
+          if (sec.verses) {
+            sec.verses.forEach((v) => {
+              const o = Array.isArray(v) ? { n: v[0], sa: v[1], en: v[3], ref: bookId === "gita" ? `${part.n}.${v[0]}` : `Verse ${v[0]}` } : v;
+              entries.push({ href: `${base}?v=${o.n}`, title: book.title, where: `${where} · ${o.ref || o.n}`, text: o.en || "",
+                key: keyOf(o.en, ...(o.note || [])) + " " + (o.sa || "") });
+            });
+          } else {
+            sec.paras.forEach((t, i) => entries.push({ href: `${base}?p=${i}`, title: book.title, where, text: t, key: keyOf(t) }));
+          }
+        });
+      }
+      searchBooks[bookId] = entries;
+      delete searchJobs[bookId];
+      return entries;
+    })();
+    searchJobs[bookId].catch(() => delete searchJobs[bookId]);
+    return searchJobs[bookId];
+  }
+
+  const termsOf = (q) => keyOf(q).split(/\s+/).filter((t) => t.length >= 2 || /[ऀ-ॿ]/.test(t));
+  const matches = (e, terms) => terms.every((t) => e.key.includes(t));
+  const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  function snippet(text, terms, len = 170) {
+    const f = fold(text);
+    const low = f.toLowerCase();
+    let at = -1;
+    for (const t of terms) { at = low.indexOf(t); if (at >= 0) break; }
+    const start = Math.max(0, at - 60);
+    let html = esc(f.slice(start, start + len));
+    terms.forEach((t) => { if (!/[ऀ-ॿ]/.test(t)) html = html.replace(new RegExp(escRe(esc(t)), "gi"), (m) => `<mark>${m}</mark>`); });
+    return (start > 0 ? "…" : "") + html + (start + len < f.length ? "…" : "");
+  }
+
+  function resultGroup(name, items, terms, id) {
+    if (!items.length) return "";
+    const shown = items.slice(0, 6);
+    const row = (e) => `<a class="row" href="${e.href}"><span class="body"><h3>${esc(e.title)}</h3><p class="where">${esc(e.where)}</p><p class="snip">${snippet(e.text, terms)}</p></span><span class="chev">›</span></a>`;
+    return `<div class="section-head" style="margin-top:20px"><h2 class="section-title">${esc(name)}</h2><span class="meta">${items.length >= 200 ? "200+" : items.length} ${items.length === 1 ? "result" : "results"}</span></div>
+      <div class="list" id="grp-${id}">${shown.map(row).join("")}
+      ${items.length > shown.length ? `<button class="row more" data-more="${id}">Show ${Math.min(items.length, 200) - shown.length} more</button>` : ""}</div>
+      <template id="tpl-${id}">${items.slice(6, 200).map(row).join("")}</template>`;
+  }
+
+  async function runSearch(q) {
+    const token = ++searchToken;
+    const out = document.getElementById("searchResults");
+    if (!out) return;
+    const terms = termsOf(q);
+    if (!terms.length) { out.innerHTML = searchSuggestions(); return; }
+    const app = appEntries().filter((e) => matches(e, terms));
+    const groups = ["Prayers", "Festivals", "Learn"].map((g) => resultGroup(g, app.filter((e) => e.group === g), terms, g.toLowerCase())).join("");
+    out.innerHTML = groups + `<div id="scriptureResults"><p class="meta" style="margin:20px 4px">Searching the scriptures…</p></div>`;
+    const epics = store.get("search:epics", false);
+    const books = SMALL_BOOKS.concat(epics ? LARGE_BOOKS : []);
+    let html = "", found = app.length;
+    for (const id of books) {
+      let entries;
+      try { entries = await indexBook(id); } catch (e) { continue; }
+      if (token !== searchToken) return;
+      const hits = [];
+      for (const e of entries) { if (matches(e, terms)) { hits.push(e); if (hits.length >= 200) break; } }
+      found += hits.length;
+      html += resultGroup(byId(C.books, id).title, hits, terms, "b-" + id);
+      const box = document.getElementById("scriptureResults");
+      if (box) box.innerHTML = html + `<p class="meta" style="margin:20px 4px">Searching the scriptures…</p>`;
+    }
+    const box = document.getElementById("scriptureResults");
+    if (!box || token !== searchToken) return;
+    box.innerHTML = html + (epics ? "" : `
+      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Ramayana and Mahabharata are very large. Searching them downloads about 23 MB the first time, then works offline.</p>
+      <button class="btn ghost" data-search-epics>Also search the Ramayana and Mahabharata</button></div>`) +
+      (found ? "" : `<div class="card empty">Nothing found for “${esc(q)}”. Try a shorter word or a different spelling.</div>`);
+  }
+
+  function searchSuggestions() {
+    const ideas = ["Krishna", "Hanuman", "Om Namah Shivaya", "Diwali", "karma", "Nachiketas", "peace", "Gayatri", "Ekadashi", "meditation"];
+    return `<p class="meta" style="margin:16px 4px 10px">Try searching for</p>
+      <div class="chips wrap">${ideas.map((t) => `<button class="chip" data-suggest="${esc(t)}">${esc(t)}</button>`).join("")}</div>`;
+  }
+
+  function searchView(query) {
+    return `
+      <h2 class="page-title">Search</h2>
+      <div class="search-wrap">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+        <input class="search" id="globalSearch" type="search" placeholder="Prayers, festivals and scriptures" value="${esc(query.get("q") || "")}" autocomplete="off" enterkeyhint="search">
+      </div>
+      <div id="searchResults"></div>`;
+  }
+
+  function bindSearch() {
+    const input = document.getElementById("globalSearch");
+    let timer = null;
+    const go = () => {
+      const q = input.value.trim();
+      history.replaceState(null, "", "#/search" + (q ? "?q=" + encodeURIComponent(q) : ""));
+      runSearch(q);
+    };
+    input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(go, 250); });
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(timer); input.blur(); go(); } });
+    if (!input.value) input.focus();
+    runSearch(input.value.trim());
+  }
+
+  /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { search: "Search", saved: "Scriptures", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
 
   async function route() {
@@ -1504,7 +1900,7 @@
     if (section === "life" && !id) section = "learn";
 
     stopAudio();
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -1512,6 +1908,8 @@
     try {
       switch (section) {
         case "home": html = await homeView(); break;
+        case "search": html = searchView(query); break;
+        case "saved": html = savedView(query); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -1549,8 +1947,9 @@
     if (section === "japa") bindJapa();
     if (section === "home") fillGitaToday();
     if (section === "puja" && !id) bindPrayerSearch(query);
+    if (section === "search") bindSearch();
     fillProgressBars();
-    if (readerState) restoreReaderPos();
+    if (readerState) { applyMarks(); restoreReaderPos(); }
   }
 
   function bindPrayerSearch(query) {
@@ -1566,6 +1965,12 @@
   /* Interactions                                                            */
   /* ====================================================================== */
   view.addEventListener("click", (e) => {
+    if (readerState && !e.target.closest("a, button, textarea") && !String(getSelection())) {
+      const item = e.target.closest(".reader .verse, .reader .para:not(.intro)");
+      if (item) { itemSheet(item); return; }
+    }
+    const stanza = !e.target.closest("a, button") && !String(getSelection()) && e.target.closest("#stanzas .stanza");
+    if (stanza) { stanzaSheet(stanza); return; }
     const link = e.target.closest("a[data-home-month], a[data-city]");
     if (link) {
       e.preventDefault();
@@ -1584,6 +1989,31 @@
 
     const t = e.target.closest("button");
     if (!t) return;
+    if (t.dataset.more) {
+      const tpl = document.getElementById("tpl-" + t.dataset.more);
+      t.insertAdjacentHTML("beforebegin", tpl.innerHTML);
+      t.remove();
+      return;
+    }
+    if (t.dataset.suggest) {
+      const input = document.getElementById("globalSearch");
+      input.value = t.dataset.suggest;
+      input.dispatchEvent(new Event("input"));
+      return;
+    }
+    if ("shareGita" in t.dataset) {
+      const el = document.getElementById("gitaToday");
+      const ref = C.gitaDaily[dayOfYear(today()) % C.gitaDaily.length];
+      shareCard({ eyebrow: "Bhagavad Gita · Verse of the day", deva: el.querySelector(".deva-text").textContent.trim(), text: el.querySelector("blockquote").textContent.replace(/^“|”$/g, ""), cite: `Bhagavad Gita ${ref[0]}.${ref[1]} · tr. Annie Besant` });
+      return;
+    }
+    if ("searchEpics" in t.dataset) {
+      store.set("search:epics", true);
+      t.disabled = true;
+      t.textContent = "Searching…";
+      runSearch(document.getElementById("globalSearch").value.trim());
+      return;
+    }
     if (t.dataset.filter) {
       store.set("academyFilter", t.dataset.filter);
       route();
@@ -1680,6 +2110,8 @@
     saveTimer = setTimeout(saveReaderPos, 250);
   }, { passive: true });
   document.addEventListener("visibilitychange", () => { if (document.hidden) saveReaderPos(); });
+
+  document.getElementById("searchBtn").addEventListener("click", () => { location.hash = "#/search"; });
 
   backBtn.addEventListener("click", () => {
     if (history.length > 1) history.back();

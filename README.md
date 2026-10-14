@@ -6,11 +6,17 @@ A free, open guide to Hinduism for modern life: a Hindu calendar with real dates
 
 | Tab | What it offers |
 | --- | --- |
-| **Today** | The Hindu date (tithi, month, Vikram Samvat), a Bhagavad Gita verse of the day, a month calendar with upcoming festivals, a prayer suggested for the time of day, books in progress and a daily reflection |
+| **Today** | The Hindu date (tithi, month, Vikram Samvat), what is observed today and tomorrow, a Bhagavad Gita verse of the day (shareable as an image), a month calendar with upcoming festivals, a prayer suggested for the time of day, your practice streak, books in progress and a daily reflection |
 | **Calendar** | Month view of festivals and vrats (Ekadashi, Purnima, Amavasya, Sankashti, Pradosh, Shivaratri) for 2026–2028, a page for every day with its meaning and prayers, festival guides, and a choice of 18 cities |
-| **Puja** | 70 prayers grouped as mantras, shlokas, stotras, aartis, chalisas and bhajans, filterable by deity and by moment (waking, meals, study, travel, sleep…). Suggestions change with the time of day, weekday and today's festival. Every prayer can be heard chanted, verse by verse, and the 108-bead japa counter has a "chant along" mode that chants the mantra and counts each repetition, with an optional tanpura drone |
-| **Read** | The Bhagavad Gita, Rig Veda (selected hymns), Sama Veda, Upanishads, Ramayana, Mahabharata, Vishnu Purana and Yoga Sutras, with Sanskrit where available. Your place in each book is saved automatically |
+| **Puja** | 70 prayers grouped as mantras, shlokas, stotras, aartis, chalisas and bhajans, filterable by deity and by moment (waking, meals, study, travel, sleep…). Suggestions change with the time of day, weekday and today's festival. Every prayer can be heard chanted, verse by verse, and the 108-bead japa counter has a "chant along" mode that chants the mantra and counts each repetition, with an optional tanpura drone. **Aarti mode** shows one verse at a time in large type on a dark screen for the whole family, repeats the refrain after each verse and can turn the pages itself while it chants. Any prayer can be **recorded in your own voice**, and that recording then plays instead of the device voice |
+| **Read** | The Bhagavad Gita, Rig Veda (selected hymns), Sama Veda, Upanishads, Ramayana, Mahabharata, Vishnu Purana and Yoga Sutras, with Sanskrit where available. Your place in each book is saved automatically. Tap any verse to bookmark it, highlight it, write a note, copy it or share it as an image |
 | **Learn** | Short courses on philosophy, deities, scripture, practice and temples, and step-by-step guides to the samskaras (naming, wedding, housewarming, last rites and more) |
+
+Across the app:
+
+- **Search** (top bar) finds prayers, festivals, lessons and words in every scripture. Spellings with or without diacritics both match, so "Krishna" finds "Kṛṣṇa". The Ramayana and Mahabharata are searched on request because of their size.
+- **Your practice** keeps a private record of mantras and malas chanted, chapters read, aartis sung and lessons finished, with a daily streak, a 12-week view and simple check-ins (prayed, meditated, fasted…).
+- **Reminders** cover festivals, Ekadashi, moon days and vrats, the evening before or the same morning, plus an optional daily prayer reminder. They can be added to the phone's own calendar as an `.ics` file for exact alerts, and on browsers that allow it the app can show its own notices.
 
 It also has dark mode and works offline as an installable PWA. It needs no account, sends no tracking, and saves progress only on the user's own device.
 
@@ -41,13 +47,13 @@ Content lives in two files. To add more, append an object to the relevant array:
   - `courses`, `lifeEvents`: Academy courses and rites of passage
 - [`js/prayers.js`](js/prayers.js): prayers, each with a type, deity, moments and verses (`[devanagari, romanisation, english, label?]`)
 
-When you change files, increase `CACHE` in `sw.js` (for example `dharma-path-v4`) so installed apps pick up the update.
+When you change files, increase `CACHE` in `sw.js` (for example `dharma-path-v9`) so installed apps pick up the update.
 
 ## Audio
 
 Prayers are chanted by the phone's built-in Hindi voice (Web Speech API), reading the Devanagari. Phones without a Hindi voice hear the romanised words read in English. The tanpura drone is synthesised in the browser with the Web Audio API, so it needs no audio files.
 
-Real recordings take priority: add an MP3 to `audio/` and list it in `audio/index.json`. See [`audio/README.md`](audio/README.md).
+Recordings take priority. Anyone can record a prayer in the app (stored on their device in IndexedDB) and share the file. To publish a recording for everyone, add it to `audio/` and list it in `audio/index.json`. See [`audio/README.md`](audio/README.md). The order is: the person's own recording, then a published one, then the device voice.
 
 ## Calendar
 

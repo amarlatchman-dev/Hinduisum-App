@@ -300,10 +300,15 @@
     if (synth.addEventListener) synth.addEventListener("voiceschanged", loadVoices);
     else synth.onvoiceschanged = loadVoices;
   }
-  const recordingsReady = loadJSON("audio/index.json").then((r) => { recordings = r || {}; }).catch(() => {});
+  let mine = {}; // recordings made on this device: id -> { url, type, dur, t }
+  const recordingsReady = Promise.all([
+    loadJSON("audio/index.json").then((r) => { recordings = r || {}; }).catch(() => {}),
+    loadMine()
+  ]);
 
   const canSpeak = () => !!synth;
-  const recordingFor = (id) => recordings[id] || null;
+  // Your own recording comes first, then one published with the app, then the device voice.
+  const recordingFor = (id) => (mine[id] && mine[id].url) || recordings[id] || null;
   const hasAudio = (id) => !!recordingFor(id) || canSpeak();
 
   // Rank the device's voices so the most natural, gentle-sounding one is used by default.
@@ -403,6 +408,7 @@
   const STOP_ICON = '<svg class="ico" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg>';
 
   function voiceNote(p) {
+    if (mine[p.id]) return "Playing your own recording.";
     if (recordings[p.id]) return "Recorded chant.";
     if (!canSpeak()) return "Audio isn't supported in this browser.";
     if (voices.length && !indicVoice()) return "No Hindi voice was found on this device, so the words are read with an English voice. For a better pronunciation, add Hindi in your phone's text-to-speech settings.";
@@ -897,6 +903,8 @@
       <div class="tiles" style="margin:16px 0 4px">
         <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Mantra chanting with a mala counter</p></div></a>
         <a class="tile" href="${href({ fav: "1" })}" data-favs><span class="dv">प्रिय</span><div><h3>Favourites</h3><p>${favs.length} saved</p></div></a>
+        <a class="tile" href="#/puja#browse?t=aarti"><span class="dv">आरती</span><div><h3>Aarti mode</h3><p>Big words for the whole family to sing</p></div></a>
+        <a class="tile" href="#/recordings"><span class="dv">नाद</span><div><h3>Your recordings</h3><p>Chants in your own voice</p></div></a>
       </div>
 
       <div class="section" id="browse">
@@ -963,6 +971,7 @@
       </div>
       ${voiceControls()}
       <p class="meta" id="audioNote" style="margin:-4px 4px 14px">${esc(voiceNote(p))}</p>` : ""}
+      ${canRecord() ? `<div class="card recorder" id="recorder" data-id="${p.id}">${recorderHtml(p.id)}</div>` : ""}
       <div class="chips wrap" style="margin:6px 0 12px">
         <button class="chip ${show.dev ? "active" : ""}" data-show="dev">देवनागरी</button>
         <button class="chip ${show.rom ? "active" : ""}" data-show="rom">Roman</button>
@@ -1698,6 +1707,206 @@
       const reg = await navigator.serviceWorker.ready;
       if (reg.active) reg.active.postMessage({ type: "dp-remind" });
     } catch (e) { /* ignore */ }
+  }
+
+  /* ====================================================================== */
+  /* Record your own chant                                                   */
+  /* Recordings stay on this device in IndexedDB and can be shared as files. */
+  /* ====================================================================== */
+  function idb() {
+    if (!idb.p) {
+      idb.p = new Promise((resolve, reject) => {
+        const r = indexedDB.open("dharma-path", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("recordings", { keyPath: "id" });
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+      });
+    }
+    return idb.p;
+  }
+
+  async function idbRun(mode, fn) {
+    const db = await idb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("recordings", mode);
+      const req = fn(tx.objectStore("recordings"));
+      tx.oncomplete = () => resolve(req && req.result);
+      tx.onerror = tx.onabort = () => reject(tx.error);
+    });
+  }
+
+  async function loadMine() {
+    try {
+      const all = await idbRun("readonly", (st) => st.getAll());
+      (all || []).forEach((r) => { mine[r.id] = { url: URL.createObjectURL(r.blob), type: r.blob.type, size: r.blob.size, dur: r.dur, t: r.t }; });
+    } catch (e) { /* storage unavailable, for example in a private window */ }
+  }
+
+  async function saveMine(id, blob, dur) {
+    const t = Date.now();
+    await idbRun("readwrite", (st) => st.put({ id, blob, dur, t }));
+    if (mine[id]) URL.revokeObjectURL(mine[id].url);
+    mine[id] = { url: URL.createObjectURL(blob), type: blob.type, size: blob.size, dur, t };
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  }
+
+  async function deleteMine(id) {
+    await idbRun("readwrite", (st) => st.delete(id));
+    if (mine[id]) URL.revokeObjectURL(mine[id].url);
+    delete mine[id];
+  }
+
+  const canRecord = () => !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.indexedDB);
+  const fmtDur = (sec) => `${Math.floor(sec / 60)}:${pad(Math.floor(sec % 60))}`;
+  const extFor = (type) => /mp4|aac|m4a/.test(type) ? ".m4a" : /ogg/.test(type) ? ".ogg" : /mpeg|mp3/.test(type) ? ".mp3" : ".webm";
+  const MAX_REC = 20 * 60;
+  let rec = null; // the recording in progress
+
+  function recorderHtml(id) {
+    const p = prayer(id);
+    if (rec && rec.id === id) {
+      return `<div class="rec-live"><span class="rec-dot" aria-hidden="true"></span><div><div class="eyebrow">Recording</div><strong id="recTime">${fmtDur((Date.now() - rec.t0) / 1000)}</strong></div></div>
+        <p class="meta" style="margin:10px 0 0">${p.japa ? "Chant one repetition, then stop. Chant along on the mala repeats it for you." : "Chant at your own pace. Stop when you have finished."}</p>
+        <div class="btn-row"><button class="btn" data-rec="stop">${STOP_ICON}Stop and save</button><button class="btn ghost" data-rec="cancel">Cancel</button></div>`;
+    }
+    const m = mine[id];
+    if (m) {
+      return `<div class="eyebrow">Your recording</div>
+        <audio controls preload="metadata" src="${m.url}"></audio>
+        <p class="meta" style="margin:8px 0 0">${fmtDur(m.dur)} · recorded ${esc(new Date(m.t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))}. It plays whenever you tap Listen, even offline.</p>
+        <div class="btn-row"><button class="btn ghost" data-rec="share">Share or send</button><button class="btn ghost" data-rec="start">Record again</button><button class="btn ghost danger" data-rec="delete">Delete</button></div>`;
+    }
+    return `<div class="eyebrow">Your own voice</div>
+      <h3 class="card-h">Record this ${esc(typeOf(p.type).one.toLowerCase())}</h3>
+      <p class="meta" style="margin:0">Record it yourself, or ask a parent, grandparent or priest. The recording plays here instead of the device voice.${p.japa ? " For the mala, record a single repetition." : ""}</p>
+      <div class="btn-row"><button class="btn ghost" data-rec="start"><span class="rec-dot sm" aria-hidden="true"></span>Record</button></div>`;
+  }
+
+  function paintRecorder() {
+    const box = document.getElementById("recorder");
+    if (box) box.innerHTML = recorderHtml(box.dataset.id);
+    const note = document.getElementById("audioNote");
+    if (note && box) note.textContent = voiceNote(prayer(box.dataset.id));
+  }
+
+  async function startRecording(id) {
+    if (rec) return;
+    stopAudio();
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    } catch (e) {
+      toast(e && e.name === "NotAllowedError" ? "Microphone access wasn't allowed" : "No microphone was found");
+      return;
+    }
+    const type = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus"].find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+    let mr;
+    try { mr = new MediaRecorder(stream, type ? { mimeType: type, audioBitsPerSecond: 96000 } : undefined); }
+    catch (e) { mr = new MediaRecorder(stream); }
+    rec = { id, mr, stream, chunks: [], t0: Date.now(), keep: true };
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) rec && rec.chunks.push(e.data); };
+    mr.onstop = () => finishRecording();
+    mr.start(1000);
+    keepAwake();
+    rec.timer = setInterval(() => {
+      const el = document.getElementById("recTime");
+      const sec = (Date.now() - rec.t0) / 1000;
+      if (el) el.textContent = fmtDur(sec);
+      if (sec >= MAX_REC) stopRecording(true);
+    }, 500);
+    paintRecorder();
+  }
+
+  function stopRecording(keep) {
+    if (!rec || rec.mr.state === "inactive") return;
+    rec.keep = keep;
+    rec.mr.stop();
+  }
+
+  async function finishRecording() {
+    const r = rec;
+    if (!r) return;
+    clearInterval(r.timer);
+    r.stream.getTracks().forEach((t) => t.stop());
+    const dur = (Date.now() - r.t0) / 1000;
+    const blob = new Blob(r.chunks, { type: (r.mr.mimeType || "audio/webm").split(";")[0] });
+    rec = null;
+    if (wakeLock && !aarti) { wakeLock.release().catch(() => {}); wakeLock = null; }
+    if (r.keep) {
+      if (dur < 1 || !blob.size) toast("That was too short to keep");
+      else {
+        try { await saveMine(r.id, blob, dur); toast("Saved. Tap Listen to hear it"); }
+        catch (e) { toast("Couldn't save the recording on this device"); }
+      }
+    }
+    paintRecorder();
+    if (location.hash.startsWith("#/recordings")) route();
+  }
+
+  async function shareMine(id) {
+    const m = mine[id];
+    const p = prayer(id);
+    if (!m) return;
+    const blob = await fetch(m.url).then((r) => r.blob());
+    const file = new File([blob], `${id}${extFor(m.type)}`, { type: m.type || "audio/webm" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: p.name, text: `${p.name}, recorded for Dharma Path` });
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a");
+    a.href = m.url; a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast("Recording saved to your downloads");
+  }
+
+  async function confirmDelete(id) {
+    const p = prayer(id);
+    const res = await openSheet({
+      eyebrow: "Delete recording", preview: `Delete your recording of ${p.name}? This can't be undone.`,
+      actions: [{ id: "delete", label: "Delete recording", primary: true }, { id: "keep", label: "Keep it" }]
+    });
+    if (!res || res.id !== "delete") return false;
+    await deleteMine(id);
+    toast("Recording deleted");
+    return true;
+  }
+
+  // Chrome writes recordings without a duration, which leaves the player's timeline blank until it is read once.
+  document.addEventListener("loadedmetadata", (e) => {
+    const a = e.target;
+    if (a.tagName !== "AUDIO" || a.duration !== Infinity) return;
+    a.addEventListener("timeupdate", function reset() { a.removeEventListener("timeupdate", reset); a.currentTime = 0; });
+    a.currentTime = 1e101;
+  }, true);
+
+  function recordingsView() {
+    const ids = Object.keys(mine).filter((id) => prayer(id)).sort((a, b) => mine[b].t - mine[a].t);
+    const published = Object.keys(recordings).filter((id) => prayer(id));
+    return `
+      <h2 class="page-title">Your recordings</h2>
+      <p class="page-sub">Chants recorded in your own voice, or by family or a priest. They stay on this device and play instead of the device voice.</p>
+      ${ids.length ? `<div class="list">${ids.map((id) => {
+        const p = prayer(id), m = mine[id];
+        return `<div class="row rec-row">${seal(deityOf(p.deity).deva)}
+          <span class="body"><a href="#/puja/${id}"><h3>${esc(p.name)}</h3></a><p>${esc(typeOf(p.type).one)} · ${fmtDur(m.dur)}</p>
+            <audio controls preload="metadata" src="${m.url}"></audio>
+            <span class="rec-actions"><button class="chip" data-rec-share="${id}">Share or send</button><button class="chip" data-rec-delete="${id}">Delete</button></span>
+          </span></div>`;
+      }).join("")}</div>` : `<div class="card empty">${canRecord() ? "No recordings yet. Open any prayer or mantra and tap <b>Record</b>." : "This browser can't record audio. Try Chrome on Android or Safari on iPhone."}</div>`}
+
+      <div class="section">
+        <div class="card">
+          <div class="eyebrow">For everyone</div>
+          <h3 class="card-h">Offer a recording to Dharma Path</h3>
+          <p class="meta" style="margin:0 0 10px">A clear recording by a priest, a teacher or a devoted family member is a gift to everyone who uses the app. Tap <b>Share or send</b> and send the file to Amar Latchman, who made Dharma Path. Once it's added, everyone will hear it.</p>
+          <p class="meta" style="margin:0">For the best sound, record in a quiet room with the phone a hand's width away. Only share recordings you made yourself or have permission to share.</p>
+        </div>
+      </div>
+
+      ${published.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Recorded for everyone</h2></div>
+        <div class="list">${published.map((id) => prayerRow(prayer(id))).join("")}</div></div>` : ""}`;
   }
 
   /* ====================================================================== */
@@ -2480,8 +2689,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { practice: "home", reminders: "home", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { practice: "home", reminders: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -2501,9 +2710,10 @@
     if (section === "life" && !id) section = "learn";
 
     stopAudio();
+    if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -2515,6 +2725,7 @@
         case "saved": html = savedView(query); break;
         case "practice": html = practiceView(); break;
         case "reminders": html = await remindersView(); break;
+        case "recordings": await recordingsReady; html = recordingsView(); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -2679,6 +2890,18 @@
       paintAarti();
       return;
     }
+    if (t.dataset.rec) {
+      const id = document.getElementById("recorder").dataset.id;
+      const act = t.dataset.rec;
+      if (act === "start") startRecording(id);
+      else if (act === "stop") stopRecording(true);
+      else if (act === "cancel") stopRecording(false);
+      else if (act === "share") shareMine(id);
+      else if (act === "delete") confirmDelete(id).then((done) => { if (done) paintRecorder(); });
+      return;
+    }
+    if (t.dataset.recShare) { shareMine(t.dataset.recShare); return; }
+    if (t.dataset.recDelete) { confirmDelete(t.dataset.recDelete).then((done) => { if (done) route(); }); return; }
     if (t.dataset.rtype) {
       const prefs = remindPrefs();
       const k = t.dataset.rtype;

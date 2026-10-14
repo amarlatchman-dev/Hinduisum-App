@@ -896,3 +896,16 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .card-h { font-family: var(--display); font-weight: 600; font-size: 1.3rem; margin: 4px 0 6px; }
 .small-note { font-size: 0.76rem; margin: 12px 0 0; }
 .row.tomorrow .eyebrow { color: var(--kumkum); }
+
+/* ---------- Your recordings ---------- */
+.recorder audio, .rec-row audio { width: 100%; height: 40px; margin-top: 8px; display: block; }
+.rec-live { display: flex; align-items: center; gap: 14px; }
+.rec-live strong { font-size: 1.8rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.rec-dot { width: 16px; height: 16px; border-radius: 50%; background: #c8402e; flex: none; box-shadow: 0 0 0 0 rgba(200, 64, 46, 0.5); animation: recpulse 1.4s ease-out infinite; }
+.rec-dot.sm { width: 10px; height: 10px; animation: none; box-shadow: none; }
+@keyframes recpulse { 0% { box-shadow: 0 0 0 0 rgba(200, 64, 46, 0.5); } 100% { box-shadow: 0 0 0 14px rgba(200, 64, 46, 0); } }
+.btn.ghost.danger { color: var(--kumkum); }
+.rec-row { align-items: flex-start; }
+.rec-row .body a { text-decoration: none; color: inherit; }
+.rec-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }

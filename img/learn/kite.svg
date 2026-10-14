@@ -14,14 +14,16 @@
 <use href="#k" transform="translate(150 62) rotate(-14) scale(1.15)"/>
 <use href="#k" transform="translate(328 48) rotate(10)"/>
 <use href="#k" transform="translate(404 110) rotate(24) scale(.72)"/>
-<g transform="translate(98 264) rotate(-7)">
-<path d="M-4.5 0V-112H4.5V0Z" fill="#d4b06a" fill-opacity=".2"/>
-<path d="M-5.5-18H5.5M-5.5-38H5.5M-5.5-58H5.5M-5.5-78H5.5M-5.5-96H5.5" stroke-width="1.6"/>
-<path d="M-2-4V-14M-2-23V-34M-2-43V-54M-2-63V-74M-2-83V-92" stroke="#f3ead9" stroke-opacity=".45" stroke-width="1"/>
-<path d="M0-112C-8-132-26-142-46-140M0-112C10-134 26-146 44-146M0-108C-14-118-30-118-44-108M0-108C14-120 30-122 42-114M0-114C-2-134 2-150 10-162" stroke-width="1.6"/>
-<path d="M-6-124C-16-134-28-138-40-138M6-126C16-136 28-142 40-143" stroke-width="1" stroke-opacity=".5"/>
-<path d="M-18-96C-8-92-4-84 0-78" stroke-width="1.4"/>
-</g>
+<g transform="translate(92 266) rotate(-9)"><path d="M-5 0V-112H5V0Z" fill="#d4b06a" fill-opacity=".22"/>
+<path d="M-6.5-22H6.5M-6.5-44H6.5M-6.5-66H6.5M-6.5-88H6.5M-6.5-108H6.5" stroke-width="2"/>
+<path d="M-5-25H5M-5-47H5M-5-69H5M-5-91H5" stroke-width="1" stroke-opacity=".6"/>
+<path d="M-2-5V-17M-2-29V-39M-2-51V-61M-2-73V-83M-2-95V-104" stroke="#f3ead9" stroke-opacity=".45" stroke-width="1"/>
+<path d="M0-112C-6-128-20-136-40-132M0-112C6-130 22-138 42-130M0-114C-2-134 0-150 6-166M-5-108C-20-112-34-106-44-90M5-108C20-114 34-108 44-92M-5-88C-18-92-28-86-34-72" stroke-width="1.4"/></g>
+<g transform="translate(104 266) rotate(11) scale(.9)"><path d="M-5 0V-112H5V0Z" fill="#d4b06a" fill-opacity=".22"/>
+<path d="M-6.5-22H6.5M-6.5-44H6.5M-6.5-66H6.5M-6.5-88H6.5M-6.5-108H6.5" stroke-width="2"/>
+<path d="M-5-25H5M-5-47H5M-5-69H5M-5-91H5" stroke-width="1" stroke-opacity=".6"/>
+<path d="M-2-5V-17M-2-29V-39M-2-51V-61M-2-73V-83M-2-95V-104" stroke="#f3ead9" stroke-opacity=".45" stroke-width="1"/>
+<path d="M0-112C-6-128-20-136-40-132M0-112C6-130 22-138 42-130M0-114C-2-134 0-150 6-166M-5-108C-20-112-34-106-44-90M5-108C20-114 34-108 44-92M-5-88C-18-92-28-86-34-72" stroke-width="1.4"/></g>
 <ellipse cx="372" cy="254" rx="44" ry="8" fill="#d4b06a" fill-opacity=".12"/>
 <g fill="#d4b06a" fill-opacity=".22">
 <circle cx="356" cy="238" r="14"/><circle cx="388" cy="238" r="14"/><circle cx="372" cy="214" r="14"/>

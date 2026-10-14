@@ -682,7 +682,7 @@
         <div class="tiles">
           <a class="tile" href="#/read"><span class="dv">ग्रन्थ</span><div><h3>Scriptures</h3><p>Gita, Vedas, Upanishads and epics</p></div></a>
           <a class="tile" href="#/learn"><span class="dv">शिक्षा</span><div><h3>Academy</h3><p>${C.courses.length} illustrated courses</p></div></a>
-          <a class="tile" href="#/learn#rites"><span class="dv">संस्कार</span><div><h3>Rites of passage</h3><p>Step-by-step guidance</p></div></a>
+          <a class="tile" href="#/rites"><span class="dv">संस्कार</span><div><h3>Rites of passage</h3><p>${C.lifeEvents.length} sacred milestones of life</p></div></a>
           <a class="tile" href="#/japa"><span class="dv">जप</span><div><h3>Japa · Chanting</h3><p>Chant a mantra on a mala of 108 beads</p></div></a>
         </div>
       </div>
@@ -1948,12 +1948,13 @@
     const total = C.courses.reduce((n, c) => n + c.lessons.length, 0);
     return `
       <h2 class="page-title">Learn</h2>
-      <p class="page-sub">${C.courses.length} illustrated courses and ${total} lessons on Hindu thought and practice, and guides to the sacred rites of life.</p>
+      <p class="page-sub">${C.courses.length} illustrated courses and ${total} lessons on Hindu thought and practice, and ${C.lifeEvents.length} guides to the sacred rites of life.</p>
       ${lc && li != null ? `
         <a class="night continue-lesson" href="${lessonHref(lc.id, li)}">
           ${plate(lc.lessons[li].art, "", "mini")}
           <span class="body"><span class="eyebrow">Continue learning</span><h3>${esc(lc.lessons[li].title)}</h3><span class="meta">${esc(lc.title)} · Lesson ${li + 1} of ${lc.lessons.length}</span></span>
           <span class="chev">›</span></a>` : ""}
+      ${ritesFeature()}
       <div class="section-head"><h2 class="section-title">Academy</h2></div>
       <div class="chips" style="margin-bottom:12px">
         ${C.categories.map((c) => `<button class="chip ${c.id === active ? "active" : ""}" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}
@@ -1967,14 +1968,6 @@
             ${n ? `<div class="progress"><span style="width:${(n / c.lessons.length) * 100}%"></span></div>` : ""}</span>
             <span class="chev">›</span></a>`;
         }).join("") || `<p class="empty">No courses in this category yet.</p>`}
-      </div>
-
-      <div class="section" id="rites">
-        <div class="section-head"><h2 class="section-title">Rites of passage</h2></div>
-        <p class="lede">The samskaras mark each stage of life. Follow the steps yourself, or use them to prepare for a ceremony with a priest.</p>
-        <div class="list">
-          ${C.lifeEvents.map((e) => `<a class="row" href="#/life/${e.id}">${seal(e.deva)}<span class="body"><h3>${esc(e.name)}</h3><p>${esc(e.sanskrit)} · ${esc(e.summary)}</p></span><span class="chev">›</span></a>`).join("")}
-        </div>
       </div>`;
   }
 
@@ -2033,15 +2026,113 @@
       </article>`;
   }
 
-  function lifeEventView(id) {
-    const e = byId(C.lifeEvents, id);
-    if (!e) return notFound();
+  /* ---------- Rites of passage ---------- */
+  const riteHref = (r) => `#/life/${r.id}`;
+  const riteStage = (r) => byId(C.riteStages, r.stage);
+
+  // A highlighted card on the Learn page, with a strip of the rites in order of life.
+  function ritesFeature() {
     return `
-      <div class="detail-head">${seal(e.deva, "lg")}<div><div class="eyebrow">Rite of passage</div><h2>${esc(e.name)}</h2><p>${esc(e.sanskrit)}</p></div></div>
-      <div class="card prose"><h3>About this rite</h3><p>${esc(e.meaning)}</p></div>
-      <div class="card prose"><h3>Step by step</h3><ol class="steps">${e.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></div>
-      <div class="card prose"><h3>With a priest</h3><p>${esc(e.withPriest)}</p></div>
-      <p class="footer-note">Customs vary by region and family. Where your family's tradition differs, follow it.</p>`;
+      <div class="section rites-feature" id="rites">
+        <a class="night rites-hero-card" href="#/rites">
+          ${mandala()}
+          <div class="eyebrow">Samskaras · Rites of passage</div>
+          <h3>Sacred milestones, from before birth to beyond</h3>
+          <p>${C.lifeEvents.length} illustrated guides with the meaning, what you'll need, every step, regional customs and prayers.</p>
+          <span class="rhc-cta">Explore the journey of life ›</span>
+        </a>
+        <div class="rite-strip" role="list">
+          ${C.lifeEvents.map((r) => `<a class="rite-chip" role="listitem" href="${riteHref(r)}">${plate(r.art, "", "mini")}<span><b>${esc(r.name)}</b><small>${esc(riteStage(r).name)}</small></span></a>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function ritesView() {
+    return `
+      <div class="night rites-top">
+        ${mandala()}
+        <div class="eyebrow">Samskaras</div>
+        <h2>Rites of passage</h2>
+        <p>From before birth to beyond death, Hindu life is marked by sacred ceremonies called samskaras. Each one blesses a new stage of life, and together they shape the person we become.</p>
+        <div class="rt-stats"><span><b>${C.lifeEvents.length}</b> rites</span><span><b>${C.riteStages.length}</b> stages of life</span></div>
+      </div>
+      <p class="lede">The scriptures traditionally speak of sixteen samskaras, though the lists differ, and every region and family has its own customs. These guides follow the journey of a life. Use them to understand a ceremony, to prepare for one with a priest, or to hold a simple version at home.</p>
+      <div class="journey">
+        ${C.riteStages.map((st) => {
+          const list = C.lifeEvents.filter((r) => r.stage === st.id);
+          return `<section class="stage">
+            <div class="stage-head"><span class="stage-dv">${esc(st.deva)}</span><div><h3>${esc(st.name)}</h3><p>${esc(st.text)}</p></div></div>
+            ${list.map((r) => `
+              <a class="rite-node" href="${riteHref(r)}">
+                ${plate(r.art, "", "thumb")}
+                <span class="body"><span class="when">${esc(r.when)}</span><h4>${esc(r.name)}</h4><p><span class="dv">${esc(r.deva)}</span> ${esc(r.sanskrit)}</p></span>
+                <span class="chev">›</span>
+              </a>`).join("")}
+          </section>`;
+        }).join("")}
+      </div>
+      <p class="footer-note">Customs vary by region, community and family. Where your family's tradition differs, follow it, and ask your priest.</p>`;
+  }
+
+  function riteSteps(steps, offset = 0) {
+    return `<ol class="rite-steps">${steps.map(([t, d], i) => `<li><span class="n">${i + 1 + offset}</span><div><h4>${esc(t)}</h4><p>${esc(d)}</p></div></li>`).join("")}</ol>`;
+  }
+
+  function lifeEventView(id) {
+    const r = byId(C.lifeEvents, id);
+    if (!r) return notFound();
+    const i = C.lifeEvents.indexOf(r);
+    const prev = C.lifeEvents[i - 1], next = C.lifeEvents[i + 1];
+    const st = riteStage(r);
+    const checked = store.get("rite:need:" + r.id, []);
+    const prayers = (r.prayers || []).map(prayer).filter(Boolean);
+    const glance = [["When", r.when], ["Where", r.where], ["Led by", r.who], ["Takes", r.length]].filter((x) => x[1]);
+    return `
+      <article class="rite-page">
+        ${plate(r.art, r.name, "rite-hero")}
+        <a class="eyebrow course-link" href="#/rites">Rites of passage · ${esc(st.name)}</a>
+        <h2 class="lesson-title">${esc(r.name)}</h2>
+        <p class="rite-sanskrit"><span class="dv">${esc(r.deva)}</span> ${esc(r.sanskrit)}</p>
+        <p class="rite-summary">${esc(r.summary)}</p>
+
+        <div class="glance">${glance.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>
+
+        <div class="section"><div class="section-head"><h2 class="section-title">The meaning</h2></div>
+          <div class="prose lesson-body">${r.intro}</div>
+        </div>
+
+        ${r.verse ? `<div class="night rite-verse">${mandala()}<p class="v-dev">${esc(r.verse[0])}</p><p class="v-rom">${esc(r.verse[1])}</p><p class="v-en">“${esc(r.verse[2])}”</p><p class="meta">${esc(r.verse[3])}</p></div>` : ""}
+
+        ${r.need && r.need.length ? `<div class="section"><div class="section-head"><h2 class="section-title">What you'll need</h2><span class="meta" id="needCount">${checked.length} of ${r.need.length} ready</span></div>
+          <div class="card need-list">${r.need.map((n, k) => `<label class="need"><input type="checkbox" data-need="${r.id}:${k}" ${checked.includes(k) ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
+          <p class="meta" style="margin:-4px 4px 0">Tick items off as you prepare. Your list is saved on this device.</p>
+        </div>` : ""}
+
+        <div class="section"><div class="section-head"><h2 class="section-title">Step by step</h2></div>
+          ${r.phases ? r.phases.map((ph, k) => {
+            const before = r.phases.slice(0, k).reduce((n, p) => n + p.steps.length, 0);
+            return `<h3 class="phase">${esc(ph.title)}</h3>${riteSteps(ph.steps, before)}`;
+          }).join("") : riteSteps(r.steps)}
+        </div>
+
+        ${r.customs && r.customs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Across regions</h2></div>
+          <div class="list customs">${r.customs.map(([where, what]) => `<div class="row static"><span class="body"><h3>${esc(where)}</h3><p>${esc(what)}</p></span></div>`).join("")}</div>
+        </div>` : ""}
+
+        <div class="rite-notes">
+          ${r.withPriest ? `<div class="card"><div class="eyebrow">With a priest</div><p>${esc(r.withPriest)}</p></div>` : ""}
+          ${r.abroad ? `<div class="card"><div class="eyebrow">For families abroad</div><p>${esc(r.abroad)}</p></div>` : ""}
+        </div>
+
+        ${prayers.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Prayers for this rite</h2></div><div class="list">${prayers.map(prayerRow).join("")}</div></div>` : ""}
+        ${r.links && r.links.length ? `<div class="lesson-links">${r.links.map(([label, href]) => `<a class="row" href="${href}"><span class="body"><h3>${esc(label)}</h3></span><span class="chev">›</span></a>`).join("")}</div>` : ""}
+
+        <nav class="lesson-nav">
+          ${prev ? `<a href="${riteHref(prev)}"><span class="meta">Before this</span><span>${esc(prev.name)}</span></a>` : `<a href="#/rites"><span class="meta">The journey</span><span>All rites</span></a>`}
+          ${next ? `<a class="next" href="${riteHref(next)}"><span class="meta">Next in life</span><span>${esc(next.name)}</span></a>` : `<a class="next" href="#/rites"><span class="meta">The journey</span><span>All rites</span></a>`}
+        </nav>
+        <p class="footer-note">Customs vary by region and family. Where your family's tradition differs, follow it.</p>
+      </article>`;
   }
 
   /* ====================================================================== */
@@ -2636,8 +2727,11 @@
       key: keyOf(f.name, f.summary, f.meaning, ...(f.traditions || []), ...(f.atHome || [])) + " " + (f.deva || "") }));
     C.courses.forEach((c) => c.lessons.forEach((l, i) => out.push({ group: "Learn", href: lessonHref(c.id, i), title: l.title, where: c.title, text: stripTags(l.body),
       key: keyOf(c.title, l.title, stripTags(l.body), ...(l.terms || []).flat()) })));
-    C.lifeEvents.forEach((e) => out.push({ group: "Learn", href: `#/life/${e.id}`, title: e.name, where: e.sanskrit, text: e.meaning,
-      key: keyOf(e.name, e.sanskrit, e.meaning, ...e.steps, e.withPriest) }));
+    C.lifeEvents.forEach((e) => {
+      const steps = (e.phases ? e.phases.flatMap((p) => p.steps) : e.steps).flat();
+      out.push({ group: "Rites of passage", href: `#/life/${e.id}`, title: e.name, where: e.sanskrit, text: stripTags(e.intro),
+        key: keyOf(e.name, e.sanskrit, e.summary, stripTags(e.intro), ...steps, ...(e.customs || []).flat(), e.withPriest) + " " + e.deva });
+    });
     return (appEntries.cache = out);
   }
 
@@ -2705,7 +2799,7 @@
     const terms = termsOf(q);
     if (!terms.length) { out.innerHTML = searchSuggestions(); return; }
     const app = appEntries().filter((e) => matches(e, terms));
-    const groups = ["Prayers", "Festivals", "Learn"].map((g) => resultGroup(g, app.filter((e) => e.group === g), terms, g.toLowerCase())).join("");
+    const groups = ["Prayers", "Festivals", "Rites of passage", "Learn"].map((g) => resultGroup(g, app.filter((e) => e.group === g), terms, g.toLowerCase().replace(/\W+/g, "-"))).join("");
     out.innerHTML = groups + `<div id="scriptureResults"><p class="meta" style="margin:20px 4px">Searching the scriptures…</p></div>`;
     const epics = store.get("search:epics", false);
     const books = SMALL_BOOKS.concat(epics ? LARGE_BOOKS : []);
@@ -2762,8 +2856,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { practice: "home", reminders: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { rites: "learn", practice: "home", reminders: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -2786,7 +2880,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -2810,6 +2904,7 @@
         case "learn": html = learnView(); break;
         case "academy": html = a ? lessonView(id, +a) : courseView(id); break;
         case "life": html = lifeEventView(id); break;
+        case "rites": html = ritesView(); break;
         case "read":
           if (!id) html = libraryView();
           else if (id === "about") html = aboutTextsView();
@@ -3099,6 +3194,16 @@
   });
 
   view.addEventListener("change", (e) => {
+    const nd = e.target.closest("[data-need]");
+    if (nd) {
+      const [rid, k] = nd.dataset.need.split(":");
+      const list = store.get("rite:need:" + rid, []).filter((x) => x !== +k);
+      if (nd.checked) list.push(+k);
+      store.set("rite:need:" + rid, list);
+      const c = document.getElementById("needCount");
+      if (c) c.textContent = `${list.length} of ${view.querySelectorAll("[data-need]").length} ready`;
+      return;
+    }
     const rp = e.target.closest("[data-rpref], [data-rtime]");
     if (rp) {
       const prefs = remindPrefs();
@@ -3146,6 +3251,16 @@
   setTimeout(checkNoticesNow, 4000);
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    // When a new version takes over, reload once so the update shows straight away,
+    // unless something is in progress that a reload would interrupt.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || reloading) return;
+      if (rec || aarti || document.querySelector("[data-listen].on, #chantAlong.on")) { toast("An update is ready. It will show next time you open the app."); return; }
+      reloading = true;
+      location.reload();
+    });
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 })();

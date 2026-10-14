@@ -926,7 +926,7 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .lesson-row.done .num { background: var(--gold); border-color: var(--gold); color: var(--surface); }
 .lesson-row h3 { font-size: 1.08rem; }
 .lesson-page { padding-top: 6px; }
-.lesson-page .course-link { text-decoration: none; display: inline-block; }
+.lesson-page .course-link, .rite-page .course-link { text-decoration: none; display: inline-block; }
 .lesson-title { font-family: var(--display); font-weight: 600; font-size: 2.15rem; line-height: 1.08; margin: 8px 0 6px; letter-spacing: -0.01em; }
 .lesson-meta { margin: 0 0 18px; }
 .lesson-art { margin: 0 0 8px; }
@@ -956,3 +956,73 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 @media (min-width: 640px) {
   .lesson-title { font-size: 2.5rem; }
 }
+
+/* ---------- Rites of passage ---------- */
+.rites-feature { margin-top: 4px; }
+.rites-hero-card { padding: 24px 22px 20px; margin-bottom: 12px; }
+.rites-hero-card h3 { font-family: var(--display); font-weight: 600; font-size: 1.65rem; line-height: 1.15; margin: 8px 0 8px; max-width: 16em; }
+.rites-hero-card p { margin: 0 0 14px; color: var(--night-muted); font-size: 0.9rem; max-width: 30em; }
+.rhc-cta { color: var(--night-gold); font-weight: 600; font-size: 0.86rem; }
+.rite-strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; margin: 0 -2px 14px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.rite-strip::-webkit-scrollbar { display: none; }
+.rite-chip { flex: none; width: 132px; scroll-snap-align: start; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; }
+.rite-chip .plate.mini { width: 132px; height: 92px; border-radius: 16px; }
+.rite-chip .plate.mini img { transform: scale(1.15); }
+.rite-chip b { display: block; font-family: var(--display); font-weight: 600; font-size: 1.02rem; line-height: 1.2; }
+.rite-chip small { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+
+.rites-top { padding: 26px 22px 22px; margin-top: 8px; }
+.rites-top h2 { font-family: var(--display); font-weight: 600; font-size: 2.3rem; line-height: 1.05; margin: 8px 0 10px; }
+.rites-top p { margin: 0; color: var(--night-muted); max-width: 32em; }
+.rt-stats { display: flex; gap: 18px; margin-top: 16px; font-size: 0.8rem; color: var(--night-muted); }
+.rt-stats b { font-family: var(--display); font-size: 1.6rem; color: var(--night-gold); margin-right: 6px; font-weight: 600; }
+
+.journey { position: relative; margin: 8px 0 10px; padding-left: 26px; }
+.journey::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 30px; width: 2px; border-radius: 2px; background: linear-gradient(var(--gold), var(--gold-soft)); opacity: 0.6; }
+.stage { margin-bottom: 18px; }
+.stage-head { display: flex; align-items: center; gap: 12px; margin: 0 0 10px -26px; position: relative; }
+.stage-dv { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px var(--bg); font-size: 0; }
+.stage-head h3 { font-family: var(--display); font-weight: 600; font-size: 1.45rem; line-height: 1.1; margin: 0; }
+.stage-head p { margin: 2px 0 0; color: var(--muted); font-size: 0.82rem; }
+.rite-node { position: relative; display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 10px; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.rite-node::before { content: ""; position: absolute; left: -21px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--bg); border: 2px solid var(--gold); }
+.rite-node .plate.thumb { width: 70px; height: 70px; }
+.rite-node .body { flex: 1; min-width: 0; }
+.rite-node .when { display: block; color: var(--gold); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; }
+.rite-node h4 { margin: 2px 0 2px; font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.15; }
+.rite-node p { margin: 0; color: var(--muted); font-size: 0.8rem; }
+.rite-node .dv, .rite-sanskrit .dv { font-family: var(--deva); color: var(--gold); }
+.rite-node .chev { color: var(--muted); }
+
+.rite-page { padding-top: 4px; }
+.rite-hero { margin: 4px 0 18px; }
+.rite-sanskrit { margin: 0 0 10px; color: var(--ink-2); font-size: 0.92rem; }
+.rite-sanskrit .dv { font-size: 1.05rem; margin-right: 6px; }
+.rite-summary { font-family: var(--display); font-size: 1.3rem; line-height: 1.4; margin: 0 0 18px; color: var(--ink); }
+.glance { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 8px; }
+.glance div { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.glance span { display: block; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.glance b { display: block; font-weight: 500; font-size: 0.86rem; line-height: 1.4; margin-top: 3px; color: var(--ink); }
+.rite-verse { text-align: center; padding: 24px 20px; margin: 4px 0 6px; }
+.rite-verse .v-dev { font-family: var(--deva); color: var(--night-gold); font-size: 1.15rem; line-height: 1.8; margin: 0; }
+.rite-verse .v-rom { font-style: italic; color: var(--night-muted); font-size: 0.86rem; margin: 6px 0 10px; }
+.rite-verse .v-en { font-family: var(--display); font-size: 1.3rem; line-height: 1.35; margin: 0 0 8px; }
+.rite-verse .meta { margin: 0; }
+.need-list { padding: 4px 16px; }
+.need { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); cursor: pointer; font-size: 0.92rem; line-height: 1.45; }
+.need:first-child { border-top: 0; }
+.need input { flex: none; width: 19px; height: 19px; margin: 1px 0 0; accent-color: var(--gold); }
+.need input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--gold); }
+.phase { font-family: var(--display); font-weight: 600; font-size: 1.25rem; margin: 6px 0 10px; color: var(--gold); }
+.rite-steps { list-style: none; margin: 0 0 16px; padding: 0; position: relative; }
+.rite-steps::before { content: ""; position: absolute; left: 15px; top: 16px; bottom: 16px; width: 1px; background: var(--line-strong); }
+.rite-steps li { position: relative; display: flex; gap: 14px; padding: 0 0 16px; }
+.rite-steps .n { flex: none; position: relative; width: 31px; height: 31px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--gold); color: var(--gold); font-weight: 600; font-size: 0.82rem; }
+.rite-steps h4 { margin: 4px 0 3px; font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
+.rite-steps p { margin: 0; color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; }
+.customs .row h3 { font-size: 1.02rem; }
+.customs .row p { color: var(--ink-2); }
+.rite-notes { display: grid; gap: 12px; margin: 6px 0 4px; }
+.rite-notes .card { margin: 0; }
+.rite-notes p { margin: 8px 0 0; color: var(--ink-2); font-size: 0.92rem; }
+@media (min-width: 560px) { .rite-notes { grid-template-columns: 1fr 1fr; } }

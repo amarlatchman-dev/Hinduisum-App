@@ -1,13 +1,14 @@
 // Offline support: cache the app shell, then serve cache-first and refresh in the background.
-const CACHE = "dharma-path-v9";
+const CACHE = "dharma-path-v10";
 const DATA = "dp-data"; // reminder settings written by the app; kept across updates
 const SHELL = [
-  "./", "index.html", "css/styles.css", "js/content.js", "js/academy.js", "js/prayers.js", "js/app.js",
+  "./", "index.html", "css/styles.css", "js/content.js", "js/academy.js", "js/rites.js", "js/prayers.js", "js/app.js",
   "manifest.json", "icons/icon.svg", "icons/icon-192.png", "texts/index.json", "texts/gita.json", "calendar/index.json", "audio/index.json"
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Fetch fresh copies, bypassing the browser cache, so an update is never built from stale files.
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {

@@ -1,1 +1,224 @@
-{}
+{
+ "shiva": [
+  "audio/shiva/1.mp3"
+ ],
+ "gayatri": [
+  "audio/gayatri/1.mp3"
+ ],
+ "ya-devi": [
+  "audio/ya-devi/1.mp3",
+  "audio/ya-devi/2.mp3",
+  "audio/ya-devi/3.mp3",
+  "audio/ya-devi/4.mp3"
+ ],
+ "mahamrityunjaya": [
+  "audio/mahamrityunjaya/1.mp3"
+ ],
+ "ganesh-mantra": [
+  "audio/ganesh-mantra/1.mp3"
+ ],
+ "vasudeva": [
+  "audio/vasudeva/1.mp3"
+ ],
+ "narayana": [
+  "audio/narayana/1.mp3"
+ ],
+ "hare-krishna": [
+  "audio/hare-krishna/1.mp3"
+ ],
+ "rama-mantra": [
+  "audio/rama-mantra/1.mp3"
+ ],
+ "hanuman-mantra": [
+  "audio/hanuman-mantra/1.mp3"
+ ],
+ "durga-mantra": [
+  "audio/durga-mantra/1.mp3"
+ ],
+ "lakshmi-mantra": [
+  "audio/lakshmi-mantra/1.mp3"
+ ],
+ "saraswati-mantra": [
+  "audio/saraswati-mantra/1.mp3"
+ ],
+ "surya-mantra": [
+  "audio/surya-mantra/1.mp3"
+ ],
+ "lokah": [
+  "audio/lokah/1.mp3"
+ ],
+ "morning": [
+  "audio/morning/1.mp3"
+ ],
+ "bhumi": [
+  "audio/bhumi/1.mp3"
+ ],
+ "ganga-snana": [
+  "audio/ganga-snana/1.mp3"
+ ],
+ "ganesha": [
+  "audio/ganesha/1.mp3"
+ ],
+ "shuklambaradharam": [
+  "audio/shuklambaradharam/1.mp3"
+ ],
+ "saraswati": [
+  "audio/saraswati/1.mp3"
+ ],
+ "ya-kundendu": [
+  "audio/ya-kundendu/1.mp3"
+ ],
+ "guru": [
+  "audio/guru/1.mp3"
+ ],
+ "shantakaram": [
+  "audio/shantakaram/1.mp3"
+ ],
+ "vanamali": [
+  "audio/vanamali/1.mp3"
+ ],
+ "krishna-vande": [
+  "audio/krishna-vande/1.mp3"
+ ],
+ "ramaya": [
+  "audio/ramaya/1.mp3"
+ ],
+ "rama-rameti": [
+  "audio/rama-rameti/1.mp3"
+ ],
+ "manojavam": [
+  "audio/manojavam/1.mp3"
+ ],
+ "ramaskandam": [
+  "audio/ramaskandam/1.mp3"
+ ],
+ "karpura-gauram": [
+  "audio/karpura-gauram/1.mp3"
+ ],
+ "kara-charana": [
+  "audio/kara-charana/1.mp3"
+ ],
+ "sarva-mangala": [
+  "audio/sarva-mangala/1.mp3"
+ ],
+ "mahalakshmi": [
+  "audio/mahalakshmi/1.mp3"
+ ],
+ "annapurna": [
+  "audio/annapurna/1.mp3"
+ ],
+ "brahmarpanam": [
+  "audio/brahmarpanam/1.mp3",
+  "audio/brahmarpanam/2.mp3"
+ ],
+ "deepa-jyoti": [
+  "audio/deepa-jyoti/1.mp3",
+  "audio/deepa-jyoti/2.mp3"
+ ],
+ "japa-kusuma": [
+  "audio/japa-kusuma/1.mp3"
+ ],
+ "navagraha": [
+  "audio/navagraha/1.mp3"
+ ],
+ "tvameva": [
+  "audio/tvameva/1.mp3"
+ ],
+ "sarve-bhavantu": [
+  "audio/sarve-bhavantu/1.mp3"
+ ],
+ "asato-ma": [
+  "audio/asato-ma/1.mp3"
+ ],
+ "sahana": [
+  "audio/sahana/1.mp3"
+ ],
+ "purnamadah": [
+  "audio/purnamadah/1.mp3"
+ ],
+ "dyauh-shanti": [
+  "audio/dyauh-shanti/1.mp3"
+ ],
+ "shiva-panchakshara": [
+  "audio/shiva-panchakshara/1.mp3",
+  "audio/shiva-panchakshara/2.mp3",
+  "audio/shiva-panchakshara/3.mp3",
+  "audio/shiva-panchakshara/4.mp3",
+  "audio/shiva-panchakshara/5.mp3",
+  "audio/shiva-panchakshara/6.mp3"
+ ],
+ "rudrashtakam": [
+  "audio/rudrashtakam/1.mp3",
+  "audio/rudrashtakam/2.mp3",
+  "audio/rudrashtakam/3.mp3",
+  "audio/rudrashtakam/4.mp3",
+  "audio/rudrashtakam/5.mp3",
+  "audio/rudrashtakam/6.mp3",
+  "audio/rudrashtakam/7.mp3",
+  "audio/rudrashtakam/8.mp3",
+  "audio/rudrashtakam/9.mp3"
+ ],
+ "nirvana-shatakam": [
+  "audio/nirvana-shatakam/1.mp3",
+  "audio/nirvana-shatakam/2.mp3",
+  "audio/nirvana-shatakam/3.mp3",
+  "audio/nirvana-shatakam/4.mp3",
+  "audio/nirvana-shatakam/5.mp3",
+  "audio/nirvana-shatakam/6.mp3"
+ ],
+ "madhurashtakam": [
+  "audio/madhurashtakam/1.mp3",
+  "audio/madhurashtakam/2.mp3",
+  "audio/madhurashtakam/3.mp3",
+  "audio/madhurashtakam/4.mp3",
+  "audio/madhurashtakam/5.mp3",
+  "audio/madhurashtakam/6.mp3",
+  "audio/madhurashtakam/7.mp3",
+  "audio/madhurashtakam/8.mp3"
+ ],
+ "bhavani-ashtakam": [
+  "audio/bhavani-ashtakam/1.mp3",
+  "audio/bhavani-ashtakam/2.mp3",
+  "audio/bhavani-ashtakam/3.mp3",
+  "audio/bhavani-ashtakam/4.mp3",
+  "audio/bhavani-ashtakam/5.mp3",
+  "audio/bhavani-ashtakam/6.mp3",
+  "audio/bhavani-ashtakam/7.mp3",
+  "audio/bhavani-ashtakam/8.mp3"
+ ],
+ "jagdish": [
+  "audio/jagdish/1.mp3",
+  "audio/jagdish/2.mp3",
+  "audio/jagdish/3.mp3",
+  "audio/jagdish/4.mp3",
+  "audio/jagdish/5.mp3",
+  "audio/jagdish/6.mp3",
+  "audio/jagdish/7.mp3",
+  "audio/jagdish/8.mp3",
+  "audio/jagdish/9.mp3"
+ ],
+ "ganesh-aarti": [
+  "audio/ganesh-aarti/1.mp3",
+  "audio/ganesh-aarti/2.mp3",
+  "audio/ganesh-aarti/3.mp3",
+  "audio/ganesh-aarti/4.mp3",
+  "audio/ganesh-aarti/5.mp3"
+ ],
+ "shiv-aarti": [
+  "audio/shiv-aarti/1.mp3",
+  "audio/shiv-aarti/2.mp3",
+  "audio/shiv-aarti/3.mp3",
+  "audio/shiv-aarti/4.mp3",
+  "audio/shiv-aarti/5.mp3",
+  "audio/shiv-aarti/6.mp3",
+  "audio/shiv-aarti/7.mp3",
+  "audio/shiv-aarti/8.mp3"
+ ],
+ "kunj-bihari": [
+  "audio/kunj-bihari/1.mp3",
+  "audio/kunj-bihari/2.mp3",
+  "audio/kunj-bihari/3.mp3",
+  "audio/kunj-bihari/4.mp3",
+  "audio/kunj-bihari/5.mp3"
+ ]
+}

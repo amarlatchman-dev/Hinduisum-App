@@ -309,6 +309,8 @@
   const canSpeak = () => !!synth;
   // Your own recording comes first, then one published with the app, then the device voice.
   const recordingFor = (id) => (mine[id] && mine[id].url) || recordings[id] || null;
+  // Published chants come verse by verse (a list of clips); your own recording is one file.
+  const verseClips = (id) => (!(mine[id] && mine[id].url) && Array.isArray(recordings[id]) ? recordings[id] : null);
   const hasAudio = (id) => !!recordingFor(id) || canSpeak();
 
   // Rank the device's voices so the most natural, gentle-sounding one is used by default.
@@ -373,7 +375,13 @@
   }
 
   // One full chant of a prayer or mantra.
-  function chantOnce(p, rate) {
+  async function chantOnce(p, rate) {
+    const clips = verseClips(p.id);
+    if (clips) {
+      const token = playToken;
+      for (const c of clips) { if (token !== playToken) return; await playRecording(c); }
+      return;
+    }
     if (recordingFor(p.id)) return playRecording(recordingFor(p.id));
     return say(p.verses.map((v) => chantText(v, p)).join(", "), { rate });
   }
@@ -409,6 +417,7 @@
 
   function voiceNote(p) {
     if (mine[p.id]) return "Playing your own recording.";
+    if (verseClips(p.id)) return "Chanted verse by verse in a recorded voice.";
     if (recordings[p.id]) return "Recorded chant.";
     if (!canSpeak()) return "Audio isn't supported in this browser.";
     if (voices.length && !indicVoice()) return "No Hindi voice was found on this device, so the words are read with an English voice. For a better pronunciation, add Hindi in your phone's text-to-speech settings.";
@@ -479,7 +488,8 @@
     keepAwake();
     Drone.start();
     logPractice("prayers", p.id);
-    if (recordingFor(p.id)) {
+    const clips = verseClips(p.id);
+    if (recordingFor(p.id) && !clips) {
       await playRecording(recordingFor(p.id));
     } else {
       const els = [...document.querySelectorAll("#stanzas .stanza")];
@@ -487,7 +497,8 @@
         if (token !== playToken) return;
         els.forEach((el, k) => el.classList.toggle("playing", k === i));
         if (els[i] && p.verses.length > 1) els[i].scrollIntoView({ behavior: "smooth", block: "center" });
-        await say(chantText(p.verses[i], p), { rate: 0.85 });
+        if (clips && clips[i]) { await playRecording(clips[i]); if (i < p.verses.length - 1) await pause(350); }
+        else await say(chantText(p.verses[i], p), { rate: 0.85 });
       }
     }
     if (token === playToken) stopAudio();
@@ -1245,12 +1256,15 @@
     const { p } = aarti;
     if (aarti.done) { aarti.done = false; aarti.i = 0; paintAarti(); }
     const rec = recordingFor(p.id);
-    if (rec) {
+    const clips = verseClips(p.id);
+    if (rec && !clips) {
       // A recording covers the whole prayer, so the verses stay under the family's control.
       await playRecording(rec);
     } else {
       while (token === playToken && aarti && !aarti.done) {
-        await say(chantText(p.verses[aarti.seq[aarti.i]], p), { rate: 0.85 });
+        const vi = aarti.seq[aarti.i];
+        if (clips && clips[vi]) await playRecording(clips[vi]);
+        else await say(chantText(p.verses[vi], p), { rate: 0.85 });
         if (token !== playToken) return;
         await pause(500);
         if (token !== playToken) return;
@@ -2324,7 +2338,7 @@
     return `${o.head ? `<div class="vhead" data-i="${-1000 - o.n}">${esc(o.head)}</div>` : ""}<div class="verse" id="v-${o.n}" data-ref="${o.n}">
       ${o.ref === "" ? "" : `<div class="vnum">${esc(o.ref || prefix + o.n)}</div>`}
       ${showSa && o.sa ? `<div class="sanskrit">${esc(o.sa)}</div><p class="translit">${esc(o.tr || "")}</p>` : ""}
-      <p class="vtext">${esc(o.en)}</p>
+      ${o.en ? `<p class="vtext">${esc(o.en)}</p>` : ""}
       ${o.note ? `<div class="vnote">${o.note.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
     </div>`;
   }
@@ -2342,7 +2356,7 @@
     const s = sections && sections[sec - 1];
     if (!s) return notFound();
 
-    const showSa = store.get("read:sanskrit", true);
+    const showSa = book.sanskritOnly || store.get("read:sanskrit", true);
     const title = sectionTitle(book, part, sec, s);
     const subtitle = bookId === "gita" ? `${s.label} · ${index.gita.parts[part - 1].sub}`
       : meta.name === title ? (meta.sub || book.title) : `${meta.name}${s.name ? " · " + s.name : ""}`;
@@ -2373,7 +2387,7 @@
         <div class="reader-tools">
           <button class="chip" data-font="-1" aria-label="Smaller text">A−</button>
           <button class="chip" data-font="1" aria-label="Larger text">A+</button>
-          ${book.sanskrit ? `<button class="chip ${showSa ? "active" : ""}" data-sanskrit>संस्कृत</button>` : ""}
+          ${book.sanskrit && !book.sanskritOnly ? `<button class="chip ${showSa ? "active" : ""}" data-sanskrit>संस्कृत</button>` : ""}
           ${hasNotes ? `<button class="chip ${showNotes ? "active" : ""}" data-notes>Commentary</button>` : ""}
           <a class="chip" href="${contentsHref}">Contents</a>
         </div>
@@ -2609,12 +2623,12 @@
     const isVerse = el.classList.contains("verse");
     const num = isVerse ? el.dataset.ref : el.dataset.i;
     const book = byId(C.books, st.bookId);
-    const ref = isVerse ? el.querySelector(".vnum").textContent : "";
+    const ref = isVerse && el.querySelector(".vnum") ? el.querySelector(".vnum").textContent : "";
     return {
       id: `${st.bookId}|${st.part}|${st.sec}|${isVerse ? "v" : "p"}${num}`,
       book: st.bookId, part: st.part, sec: st.sec, kind: isVerse ? "v" : "p", num,
       where: `${st.single || book.singlePart || st.bookId === "gita" ? st.title : (st.partName || "") + " · " + st.title}${ref ? " · " + ref : ""}`,
-      text: (isVerse ? el.querySelector(".vtext").textContent : el.textContent).trim(),
+      text: (isVerse ? (el.querySelector(".vtext") || el.querySelector(".translit") || el).textContent : el.textContent).trim(),
       deva: isVerse && el.querySelector(".sanskrit") ? el.querySelector(".sanskrit").textContent.trim() : "",
       bookTitle: book.title
     };
@@ -2714,6 +2728,9 @@
   const stripTags = (h) => String(h).replace(/<[^>]+>/g, " ");
   const SMALL_BOOKS = ["gita", "samaveda", "upanishads", "yoga", "vishnu", "garuda"];
   const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "mahabharata"];
+  // The Puranas given only in Sanskrit are searched by their transliteration, on request.
+  const SANSKRIT_BOOKS = ["bhagavata", "shiva", "linga", "skanda", "narada", "brahma", "brahmanda", "kurma", "vamana", "varaha"];
+  const LARGE_MB = 0, SANSKRIT_MB = 0; // download sizes, set when the texts are built
   const searchBooks = {};
   const searchJobs = {};
   let searchToken = 0;
@@ -2751,8 +2768,8 @@
           if (sec.verses) {
             sec.verses.forEach((v) => {
               const o = Array.isArray(v) ? { n: v[0], sa: v[1], en: v[3], ref: bookId === "gita" ? `${part.n}.${v[0]}` : `Verse ${v[0]}` } : v;
-              entries.push({ href: `${base}?v=${o.n}`, title: book.title, where: `${where} · ${o.ref || o.n}`, text: o.en || "",
-                key: keyOf(o.en, ...(o.note || [])) + " " + (o.sa || "") });
+              entries.push({ href: `${base}?v=${o.n}`, title: book.title, where: `${where} · ${o.ref || o.n}`, text: o.en || o.tr || "",
+                key: keyOf(o.en || o.tr, ...(o.note || [])) + " " + (o.sa || "") });
             });
           } else {
             sec.paras.forEach((t, i) => entries.push({ href: `${base}?p=${i}`, title: book.title, where, text: t, key: keyOf(t) }));
@@ -2802,7 +2819,8 @@
     const groups = ["Prayers", "Festivals", "Rites of passage", "Learn"].map((g) => resultGroup(g, app.filter((e) => e.group === g), terms, g.toLowerCase().replace(/\W+/g, "-"))).join("");
     out.innerHTML = groups + `<div id="scriptureResults"><p class="meta" style="margin:20px 4px">Searching the scriptures…</p></div>`;
     const epics = store.get("search:epics", false);
-    const books = SMALL_BOOKS.concat(epics ? LARGE_BOOKS : []);
+    const skt = store.get("search:sanskrit", false);
+    const books = SMALL_BOOKS.concat(epics ? LARGE_BOOKS : [], skt ? SANSKRIT_BOOKS : []);
     let html = "", found = app.length;
     for (const id of books) {
       let entries;
@@ -2818,8 +2836,11 @@
     const box = document.getElementById("scriptureResults");
     if (!box || token !== searchToken) return;
     box.innerHTML = html + (epics ? "" : `
-      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Ramayana and the Mahabharata are very large. Searching them downloads about LARGE_MB MB the first time, then works offline.</p>
+      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Devi Bhagavatam, the Ramayana and the Mahabharata are very large. Searching them downloads about ${LARGE_MB} MB the first time, then works offline.</p>
       <button class="btn ghost" data-search-epics>Also search the Vedas and the epics</button></div>`) +
+      (skt ? "" : `
+      <div class="card" style="margin-top:12px"><p style="margin:0 0 12px;color:var(--ink-2)">Ten Puranas, the Bhagavata among them, are here in Sanskrit only. Search them by their transliteration, such as “krishna” or “narayana”. They download about ${SANSKRIT_MB} MB the first time.</p>
+      <button class="btn ghost" data-search-sanskrit>Also search the Sanskrit Puranas</button></div>`) +
       (found ? "" : `<div class="card empty">Nothing found for “${esc(q)}”. Try a shorter word or a different spelling.</div>`);
   }
 
@@ -3102,8 +3123,8 @@
       route().then(() => scrollTo(0, y));
       return;
     }
-    if ("searchEpics" in t.dataset) {
-      store.set("search:epics", true);
+    if ("searchEpics" in t.dataset || "searchSanskrit" in t.dataset) {
+      store.set("searchEpics" in t.dataset ? "search:epics" : "search:sanskrit", true);
       t.disabled = true;
       t.textContent = "Searching…";
       runSearch(document.getElementById("globalSearch").value.trim());

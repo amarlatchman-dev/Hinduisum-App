@@ -142,11 +142,12 @@ class Vocab:
         for sub in ("mahabharata", "ramayana", "rigveda", "upanishads", "vishnu", "yoga"):
             for f in sorted(glob.glob(os.path.join(ROOT, "texts", sub, "*.json"))):
                 self.add_json(json.load(open(f, encoding="utf-8")))
+        self.wf = {}
         try:
             import wordfreq
-            for w in wordfreq.top_n_list("en", 60000):
+            for w in wordfreq.top_n_list("en", 400000):
                 if w.isalpha():
-                    self.e[w] += int(wordfreq.zipf_frequency(w, "en") * 10)
+                    self.wf[w] = wordfreq.zipf_frequency(w, "en")
         except ImportError:
             pass
         self.g.update(ARCHAIC)
@@ -178,17 +179,83 @@ class Vocab:
         """How much a word (lower case, no punctuation) looks like a real one: 0 = unknown."""
         if not w:
             return 0.0
-        g, e = self.g.get(w, 0), self.e.get(w, 0)
+        g, e, z = self.g.get(w, 0), self.e.get(w, 0), self.wf.get(w, 0.0)
         if "-" in w and not g:
             parts = [p for p in w.split("-") if p]
             if parts and all(self.known(p) for p in parts):
                 return 2.0 + min(self.score(p) for p in parts) / 4
-        if not g and not e:
+        if not g and e < 2 and z < 2.5:
             return 0.0
-        return 1.0 + 1.6 * math.log1p(g) + 0.5 * math.log1p(e / 10)
+        return 1.0 + 1.6 * math.log1p(g) + 0.5 * math.log1p(e / 10) + 0.4 * max(0.0, z - 2.0)
 
     def known(self, w):
         return self.score(w) > 0
+
+    def plausible(self, w):
+        """Not to be 'corrected': a known word, or one that English uses at all (wordfreq)."""
+        return self.known(w) or self.wf.get(w, 0.0) >= 1.5
+
+
+def edit_distance(a, b, cap=3):
+    if abs(len(a) - len(b)) > cap:
+        return cap + 1
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i] + [0] * len(b)
+        for j, cb in enumerate(b, 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb))
+        if min(cur) > cap:
+            return cap + 1
+        prev = cur
+    return prev[-1]
+
+
+_BUCKETS = {}
+
+
+def spell_candidates(c, vocab):
+    """Griffith's words close to an unknown word c (lower case): [(distance, -count, word)]."""
+    if not _BUCKETS:
+        for w in set(vocab.g) | set(vocab.e):
+            n = vocab.g.get(w, 0) * 5 + vocab.e.get(w, 0)
+            if n >= 10 and w.isalpha() and len(w) >= 3:
+                _BUCKETS.setdefault(len(w), []).append((w, n))
+    cap = 1 if len(c) <= 5 else 2
+    out = []
+    for L in range(len(c) - cap, len(c) + cap + 1):
+        for w, n in _BUCKETS.get(L, ()):
+            d = edit_distance(c, w, cap)
+            if d <= cap:
+                out.append((d, -n, w))
+    return sorted(out)
+
+
+def spell(tok, vocab, other=None):
+    """An OCR misreading corrected to the nearest word of Griffith's vocabulary ('Brfthman's' ->
+    'Brahman's', 'heahh' -> 'health'), when the word is unknown, long enough and the nearest word is
+    clearly the best; with `other`, the second OCR reading must be close to it too."""
+    lead, word, trail = split_punct(tok)
+    c = word.lower().replace("'s", "")
+    if len(c) < 4 or not c.isalpha() or vocab.plausible(c):
+        return tok
+    cands = spell_candidates(c, vocab)
+    if word[:1].isupper():  # a name: only Griffith's own words, and well attested
+        cands = [x for x in cands if vocab.g.get(x[2], 0) >= 3]
+    if not cands:
+        return tok
+    best = cands[0]
+    if len(cands) > 1 and cands[1][0] == best[0] and cands[1][1] > best[1] * 0.5:
+        return tok  # two candidates as close, and about as common
+    if other:
+        oc = re.sub(r"[^a-z]", "", other.lower())
+        if edit_distance(oc, best[2], 3) > 2:
+            return tok
+    w = best[2]
+    if word[:1].isupper():
+        w = w.capitalize()
+    if word.lower().endswith("'s") and not w.endswith("'s"):
+        w += "'s"
+    return lead + w + trail
 
 
 ARCHAIC = {w: 50 for w in """thou thee thy thine ye hath doth dost hast art wast wert shalt wilt canst couldst
@@ -229,7 +296,7 @@ def is_furniture(l):
     return fuzzy_has(t, "ATHARVAVEDA", 0.72) or fuzzy_has(t, "HYMNSOF", 0.78)
 
 
-HEAD = re.compile(r"^[^A-Za-z0-9]{0,3}[HB]\s?[YVT¥]\s?[MN]\s?[MNH]\s?[.,']?\s*(.*)$")
+HEAD = re.compile(r"^[^A-Za-z0-9]{0,3}[HB]\s?[YVT¥]\s?[MN]\s?[MNH]S?\s?[.,']?\s*(.*)$")
 
 
 def heading_readings(l, bare_ok=False):
@@ -247,9 +314,9 @@ def heading_readings(l, bare_ok=False):
             return {}
         return roman_readings(mm.group(1).strip())
     if bare_ok:
-        mm = re.match(r"^[^A-Za-z0-9]{0,2}([IVXLCHUl1]{1,7})\s*[.,]\s*$", t)
+        mm = re.match(r"^[^A-Za-z0-9]{0,2}([IVXLCHUl1]{1,8})\s*[.,]\s*$", t)
         if mm:
-            return {v: c + 1 for v, c in roman_readings(mm.group(1)).items()}
+            return {v: c + 1.5 for v, c in roman_readings(mm.group(1)).items()}
     return {}
 
 
@@ -296,7 +363,7 @@ def book_items(lines, a, b, book):
     out, cur, brk, start = [], [], False, a
     for i in range(a, b):
         l = lines[i]
-        r = heading_readings(l, bare_ok=(book == 15)) if l else {}
+        r = heading_readings(l, bare_ok=True) if l else {}
         furn = bool(l) and not r and is_furniture(l)
         if not l or furn or r:
             if cur:
@@ -402,7 +469,7 @@ def viterbi(items, emissions):
             it.verse = l
 
 
-SHORT_LEMMA = re.compile(r"^[\dlIS]{1,3}[.,]?\s+[\"'‘]?[A-Z][\w'’\-]*(\s[\w'’\-.]+){0,4}\s?[:;]\s")
+SHORT_LEMMA = re.compile(r"^[\dlIS£]{1,3}[.,]?\s+[^\sa-z]?[A-Z][^\s:;,]*(\s[^\s:;,]+){0,4}\s?[:;]\s")
 
 
 def split_at_notes(items):
@@ -600,7 +667,8 @@ def assign_stanzas(cands, expect, top):
         for v, cost in readings.items():
             if v < 2 or v + span > top:
                 continue
-            opts = [(sc - 0.9 * (v - u - 1) + 3 - cost, u) for u, (sc, _) in best.items() if u < v]
+            over = 2.5 * (v + span - expect) if expect and v + span > expect and cost > 0 else 0
+            opts = [(sc - 0.9 * (v - u - 1) + 3 - cost - over, u) for u, (sc, _) in best.items() if u < v]
             if opts:
                 sc, u = max(opts)
                 e = v + span
@@ -828,7 +896,7 @@ def block_score(toks, vocab):
     return sum(tok_score(t, vocab) for t in toks) / len(toks)
 
 
-def fuse(A, B, vocab, pref="a", model=None):
+def fuse(A, B, vocab, pref="a", model=None, foreign=None):
     """Merge two readings (token lists) of the same text. Words found in one reading only are kept
     when they are real words, and, for longer runs, read like verse rather than notes."""
     ka, kb = [key(t) for t in A], [key(t) for t in B]
@@ -840,7 +908,11 @@ def fuse(A, B, vocab, pref="a", model=None):
             out += [choose(x, y, vocab, pref) for x, y in zip(a, b)]
         elif op == "replace":
             if len(a) == len(b):
-                out += [choose(x, y, vocab, pref) for x, y in zip(a, b)]
+                for x, y in zip(a, b):
+                    if x.startswith("\x00") and y.startswith("\x00"):
+                        out.append(x + "/" + y[1:])  # the two texts number a stanza differently
+                    else:
+                        out.append(choose(x, y, vocab, pref))
             else:
                 # a word split or joined differently ('hither ward' / 'hitherward'), or junk
                 ja, jb = "".join(key(t) for t in a), "".join(key(t) for t in b)
@@ -855,6 +927,8 @@ def fuse(A, B, vocab, pref="a", model=None):
                     sa -= 0.3 * sum(t.startswith("\x00") for t in b)
                 win = a if (sa > sb or (sa == sb and pref == "a")) else b
                 lose = b if win is a else a
+                if foreign and len(win) >= 6 + len(lose) and foreign([t for t in win if not t.startswith("\x00")]):
+                    win, lose = lose, win
                 out += win + [t for t in lose if t.startswith("\x00") and t not in win]
         else:
             extra = a or b
@@ -865,6 +939,8 @@ def fuse(A, B, vocab, pref="a", model=None):
                 good = []  # '!' read as 'I' in the other text
             if model and len(words_) >= 4 and model.score(" ".join(words_)) < -1.0:
                 good = []
+            if foreign and len(words_) >= 6 and foreign(words_):
+                good = []  # verse of the hymn before or after, run into this one in one text
             if words_ and len(good) >= 0.6 * len(words_) and not (len(words_) == 1 and not core(words_[0])):
                 out += extra
             elif not words_:
@@ -897,9 +973,19 @@ def repair_missing(hy, other):
     for h in sorted(other):
         if h in hy or h - 1 not in hy or not verse_lines(other[h]):
             continue
-        probe = verse_lines(other[h])[0]
+        ov = verse_lines(other[h])
         lines = verse_lines(hy[h - 1])
-        j, r = first_line_match(lines[1:], probe)
+        j, r = first_line_match(lines[1:], ov[0])
+        if r < 0.6:
+            # the first lines may be garbled, or lost with a page of this scan: the first line of the
+            # other text's hymn that is found here marks where the hymn begins
+            for k, probe in enumerate(ov[1:12], 1):
+                if len(probe) < 25:
+                    continue
+                jk, rk = first_line_match(lines[1:], probe)
+                if jk is not None and rk >= 0.8:
+                    j, r = jk, rk
+                    break
         if j is not None and r >= 0.6:
             j += 1
             k = 0
@@ -938,15 +1024,36 @@ def hymn_tokens(items, expect, vocab):
     return out
 
 
+def trim_foreign(big, small, foreign):
+    """Where one scan's hymn runs on into the next hymn (or begins inside the one before) and the
+    other scan's does not, the run-on part, found in a neighbouring hymn, is cut away."""
+    words_b = [i for i, t in enumerate(big) if not t.startswith("\x00")]
+    if len(small) < 15 or len(words_b) < 1.25 * len(small):
+        return big
+    sm = difflib.SequenceMatcher(None, [key(t) for t in big], [key(t) for t in small], autojunk=False)
+    blocks = [m for m in sm.get_matching_blocks() if m.size >= 3]
+    if not blocks:
+        return big
+    a0, a1 = blocks[0].a, blocks[-1].a + blocks[-1].size
+    head, tail = big[:a0], big[a1:]
+    if len([t for t in tail if not t.startswith("\x00")]) >= 8 and foreign([t for t in tail if not t.startswith("\x00")]):
+        big = big[:a1]
+    if len([t for t in head if not t.startswith("\x00")]) >= 8 and foreign([t for t in head if not t.startswith("\x00")]):
+        big = big[a0:]
+    return big
+
+
 def split_markers(toks):
     """{n: text} and {n: last} from a fused token list."""
     out, merged, n = {1: []}, {}, 1
     for t in toks:
         if t.startswith("\x00"):
-            m = re.match(r"\x00(\d+)(?:-(\d+))?", t)
-            v = int(m.group(1))
-            if v <= n or v in out:
+            alts = [re.match(r"(\d+)(?:-(\d+))?", x) for x in t[1:].split("/")]
+            alts = [m for m in alts if int(m.group(1)) > n]
+            if not alts:
                 continue
+            m = next((m for m in alts if int(m.group(1)) == n + 1), min(alts, key=lambda m: int(m.group(1))))
+            v = int(m.group(1))
             n = v
             out[n] = []
             if m.group(2):
@@ -966,7 +1073,8 @@ def finish(text):
         letters = re.sub(r"[^A-Za-z]", "", t)
         if len(letters) >= 2 and (letters.isupper() or re.fullmatch(r"[A-Z][a-z]+[A-Z]+[a-z]*", letters)) \
                 and not re.fullmatch(r"[IVXLC]+", letters):
-            t = re.sub(r"[A-Za-z]+", lambda m: m.group(0)[0] + m.group(0)[1:].lower(), t, count=1)
+            first = re.search(r"[A-Za-z]", t).start()
+            t = t[:first + 1] + t[first + 1:].lower()
         out.append(t)
     s = " ".join(out)
     s = re.sub(r"\s+([,.;:!?])", r"\1", s)
@@ -1014,3 +1122,775 @@ def sanskrit_variants(dharmic, kanda, sukta):
         if variant and variant not in out:
             out.append(variant)
     return out
+
+
+# =========================================================================== titles: Griffith's Index of Hymns
+INDEX_NUM = re.compile(r"^((?:\d|[SOGCTt>•*'’Il](?=[\dSO>•*'’]|\s))[\dSOGCTt>•*'’Il]{0,3}(?:\s?[-–—^,]\s?\d{1,3})*)\s+(?=[\"'(]?[A-Z])")
+
+
+def index_section(lines):
+    """The lines of the Index of Hymns (after the main text), up to the next index."""
+    for i, l in enumerate(lines):
+        if i > len(lines) * 0.75 and re.search(r"INDEX\s+OF\s+HYMNS", l) and not re.search(r"[\[\]]|\d{3}", l) \
+                and any(re.match(r"^\W{0,2}B\S{2,3}\s+[IVXL]", x) for x in lines[i + 1:i + 8]):
+            end = next((k for k in range(i + 1, len(lines))
+                        if re.search(r"INDEX\s+OF\s+NAMES|GENERAL\s+LIST", lines[k])), len(lines))
+            return lines[i + 1:end]
+    return []
+
+
+def index_entries(lines, books, numbered):
+    """{book: [(first, last, text)]} from an Index of Hymns. In a text that prints the hymn numbers,
+    an entry starts with its number(s) ('8,9,10', '129-132'); the numbers are taken as a check only,
+    the entries being numbered in order."""
+    raw, cur = {}, None
+    want = list(books)
+    for l in lines:
+        t = l.strip()
+        if not t:
+            continue
+        m = re.match(r"^\W{0,2}B\S{2,3}\s+([IVXLHFfl/1]{1,6})\S{0,2}\.?\s*$", t)
+        if m and want:
+            r = roman_readings(m.group(1))
+            hit = next((b for b in want[:2] if b in r), None)
+            if hit:
+                while want and want[0] != hit:
+                    want.pop(0)
+                cur = want.pop(0)
+                raw[cur] = []
+                continue
+        if cur is None or (len(t) < 60 and (fuzzy_has(t, "INDEXOFHYMNS", 0.6) or re.search(r"HYMN\W*\s*P|HYMN\W*$", t.upper())
+                                            or re.match(r"^[4-5]\S\S\s", t))):
+            continue
+        t = re.sub(r"(\s*[.,_\-—~'\"*^»•„]{1,3}\s*){2,}", " ", t)  # dot leaders
+        # an entry run on after the page number of the one before ('... 62 20—23 Repetitions of ...')
+        parts = re.split(r"(?<=\s\d{2})\s+(?=\d{1,3}\s?[-–—^]\s?\d{1,3}\s+[A-Z])|(?<=\s\d{2})\s+(?=\d{1,2}[iIl]-?\s+[A-Z])", t)
+        for part in parts:
+            raw[cur].append(part)
+    out = {}
+    for b, ls in raw.items():
+        entries = []
+        for t in ls:
+            m = INDEX_NUM.match(t) if numbered else None
+            starts = bool(m) if numbered else (not entries or re.search(r"\d{1,3}\s*$", entries[-1][1]) and t[:1].isupper())
+            if starts:
+                entries.append([m.group(1) if m else "", t[m.end():] if m else t])
+            elif entries:
+                entries[-1][1] += " " + t
+        nums, k = [], 1
+        for n, text in entries:
+            rng = re.fullmatch(r"(\d{1,3})\s?[-–—^]\s?(\d{1,3})", n.replace(" ", ""))
+            lst = re.fullmatch(r"\d{1,3}(,\d{1,3})+", n.replace(" ", ""))
+            if rng and int(rng.group(1)) in (k, k + 1, k + 2):
+                first, last = int(rng.group(1)), int(rng.group(2))
+            elif lst and int(n.split(",")[0]) in (k, k + 1, k + 2):
+                first, last = int(n.split(",")[0]), int(n.split(",")[-1])
+            elif n.isdigit() and k - 2 <= int(n) <= k + 6 and int(n) >= 1:
+                first = last = int(n)
+            else:
+                first = last = k
+            nums.append((first, last, text))
+            k = last + 1
+        out[b] = nums
+    return out
+
+
+def clean_title(t, vocab):
+    t = ascii_names(t)
+    t = re.sub(r"(\w)- (\w)", r"\1\2", t)
+    t = re.sub(r"(\s+[\d&>/.,'*]{1,4}){1,3}\s*$", "", t)  # page numbers
+    toks = [x for x in (preclean(x) for x in t.split()) if x]
+    while toks and (re.fullmatch(r"\W+|\d+\W*", toks[-1]) or (len(core(toks[-1])) <= 2 and core(toks[-1]) not in
+                                                                ("of", "to", "in", "on", "ox"))):
+        toks.pop()
+    t = " ".join(spell(x, vocab) for x in toks)
+    t = re.sub(r"\s+([,.;:!?])", r"\1", t).strip(" ,.;:-")
+    return t
+
+
+def fuse_titles(primary, other, vocab):
+    """Correct each title of the numbered Index word by word from the other OCR text of the Index
+    (only words read differently are replaced; nothing is added)."""
+    out = {}
+    for b, entries in primary.items():
+        pool = [x for x in (preclean(t) for e in other.get(b, []) for t in e[2].split()) if x]
+        pk = [key(t) for t in pool]
+        for first, last, text in entries:
+            text = re.sub(r"(?<!Hymn)(?<!of)\s+[\d&]{2,3}\b.*$", "", text)  # a page number, and anything run on
+            toks = [x for x in (preclean(t) for t in text.split()) if x]
+            tk = [key(t) for t in toks]
+            best, at, n = 0.0, None, len(toks)
+            for j in range(0, max(1, len(pk) - n + 1)):
+                r = difflib.SequenceMatcher(None, tk, pk[j:j + n + 2], autojunk=False).ratio()
+                if r > best:
+                    best, at = r, j
+            if at is not None and best >= 0.6:
+                sm = difflib.SequenceMatcher(None, tk, pk[at:at + n + 2], autojunk=False)
+                for op, i1, i2, j1, j2 in sm.get_opcodes():
+                    if op in ("equal", "replace") and i2 - i1 == j2 - j1:
+                        for x in range(i2 - i1):
+                            toks[i1 + x] = choose(toks[i1 + x], pool[at + j1 + x], vocab)
+            while toks and len(core(toks[-1])) <= 3 and not vocab.g.get(core(toks[-1])) and core(toks[-1]) not in ("ox",):
+                toks.pop()
+            out[(b, first)] = (last, clean_title(" ".join(toks), vocab))
+    return out
+
+
+def best_window(tk, pk, lo=0):
+    """Where the key list tk matches best in pk (from lo): (start, end, ratio)."""
+    best, at, n = 0.0, None, len(tk)
+    for j in range(lo, max(lo + 1, len(pk) - n + 1)):
+        r = difflib.SequenceMatcher(None, tk, pk[j:j + n], autojunk=False).ratio()
+        if r > best:
+            best, at = r, j
+    return (at, at + n, best) if at is not None else (None, None, 0.0)
+
+
+def fill_gaps(titles, sections, vocab):
+    """A title missing from the numbered Index (its line lost or run into another) is read from the
+    other OCR text of the Index, between the titles of the hymns before and after it."""
+    for b, pool in sections.items():
+        pk = [key(t) for t in pool]
+        for h in range(2, HYMNS[b]):
+            if titles.get((b, h)) or not titles.get((b, h - 1)) or not titles.get((b, h + 1)):
+                continue
+            prev_k = [key(t) for t in titles[(b, h - 1)].split()][-4:]
+            next_k = [key(t) for t in titles[(b, h + 1)].split()][:4]
+            _, e1, r1 = best_window(prev_k, pk)
+            s2, _, r2 = best_window(next_k, pk, e1 or 0)
+            if r1 >= 0.7 and r2 >= 0.7 and e1 is not None and 2 <= s2 - e1 <= 30:
+                t = clean_title(" ".join(pool[e1:s2]), vocab)
+                if len(t) >= 8:
+                    titles[(b, h)] = t
+
+
+def read_titles(ocr, vocab):
+    """{(book, hymn): title} from the Index of Hymns of both volumes."""
+    titles = {}
+    for vol, (num, other) in ((1, ("v1b", "v1a")), (2, ("v2b", "v2a"))):
+        P = index_entries(index_section(load(ocr[num])), VOLUMES[vol], True)
+        O = index_entries(index_section(load(ocr[other])), VOLUMES[vol], False)
+        for (b, first), (last, t) in fuse_titles(P, O, vocab).items():
+            for h in range(first, last + 1):
+                titles[(b, h)] = t
+        for src in (O, P):
+            sections = {b: [x for x in (preclean(t) for e in es for t in re.sub(r"\s\d{1,3}\b", " ", e[2]).split()) if x]
+                        for b, es in src.items()}
+            fill_gaps(titles, sections, vocab)
+    return titles
+
+
+# =========================================================================== titles: Griffith's notes
+INTRO_SENT = re.compile(r"^(?:(?:The|This)\s+(?:hymn|Book|stanza|prose hymn)(?:,[^.]*?,)?\s+(?:is|contains|consists of)\s+)?"
+                        r"([Tt]aken(?:,? in continuation,?)? from R\.\s?V\.\s?[IVXL]+\.?\s?\d+|"
+                        r"(?:a|an|the)\s+[^.]{6,200}?|(?:A|An)\s[^.]{6,200}?)[.,;](?:\s|$)")
+
+
+def note_intros(items):
+    """The opening sentences of the notes in a Book's items, with their positions."""
+    out = []
+    for k, p in enumerate(items):
+        if isinstance(p, Para) and not p.verse:
+            t = re.sub(r"\s+", " ", " ".join(p.lines))
+            t = re.sub(r"(\w)- (\w)", r"\1\2", t)
+            if re.match(r"^(The|This)\s+(hymn|prose hymn)\b|^(A|An)\s+(\w+\s+){0,3}?(charm|prayer|hymn|glorification|"
+                        r"benediction|imprecation|incantation|accompaniment|counter-charm|continuation|expiat\w+|"
+                        r"funeral|curative|protective|formula)|^Taken\b|^(Stanzas?\s[\d,\u2014-]+\s(are|is)\s)?[Tt]aken from R", t):
+                m = INTRO_SENT.match(t)
+                if m:
+                    out.append((k, m.group(1)))
+    return out
+
+
+def intro_title(sent, vocab):
+    t = " ".join(x for x in (preclean(w) for w in sent.split()) if x)
+    t = re.sub(r"\s+([,.;:!?])", r"\1", t)
+    t = re.sub(r"^(the|a|an)\b", lambda m: m.group(1).capitalize(), t)
+    m = re.match(r"^[Tt]aken(?:,? in continuation,?)? from R\.\s?V\.\s?([IVXL]+)\.?\s?(\d+)", t)
+    if m:
+        return f"From Rig Veda {m.group(1)}.{m.group(2)}"
+    return t.strip(" ,;:")
+
+
+CONTENT_STOP = set("a an the of to and or for in on with by from at as his her its their this that is be "
+                   "charm prayer hymn glorification benediction against".split())
+
+
+def overlap(a, b):
+    wa = {w for w in re.findall(r"[a-z]+", a.lower()) if w not in CONTENT_STOP and len(w) > 2}
+    wb = {w for w in re.findall(r"[a-z]+", b.lower()) if w not in CONTENT_STOP and len(w) > 2}
+    return len(wa & wb), len(wa), len(wb)
+
+
+def shorten(t, limit=72):
+    """A long title cut at a clause boundary."""
+    if len(t) <= limit:
+        return t
+    for sep in (", with ", ", and ", "; ", ", for ", ", ", " with ", " for ", " by ", " and "):
+        k = t.rfind(sep, 0, limit + 1)
+        while k > 24:
+            cand = t[:k].rstrip(" ,;")
+            if len(cand) <= limit and not re.search(r"\b(and|or|of|the|a|an|to|in|on|for|with|by)$", cand):
+                return cand
+            k = t.rfind(sep, 0, k)
+    cut = t[:limit].rsplit(" ", 1)[0]
+    while re.search(r"\b(and|or|of|the|a|an|to|in|on|for|with|by)$", cut):
+        cut = cut.rsplit(" ", 1)[0]
+    return cut.rstrip(" ,;")
+
+
+# =========================================================================== stanzas Griffith does not translate
+LATIN = "[Griffith gives {} only in a Latin version, in the Appendix to his translation{}]"
+SPECIAL = {
+    # (book, hymn): [(first stanza, last stanza or None for the end of the hymn, English)]; the
+    # English is Griffith's own note on the passage, or a statement that he gives it only in Latin
+    (1, 11): [(3, None, LATIN.format("stanzas 3-6", ": 'The details given in stanzas 3-6 are strictly obstetric "
+                                     "and not presentable in English.'"))],
+    (2, 20): [(1, None, "[Griffith does not print this hymn. His note on Hymn 19: 'A non-metrical charm invoking "
+                        "Agni's aid against an enemy. Hymns XX-XXIII are exactly similar except that other deities, "
+                        "Vayu, Surya, Chandra or the Moon, and the Waters, are addressed instead of Agni.' Here "
+                        "Vayu is addressed.]")],
+    (2, 21): [(1, None, "[Griffith does not print this hymn: it is Hymn 19 with Surya addressed instead of "
+                        "Agni.]")],
+    (2, 22): [(1, None, "[Griffith does not print this hymn: it is Hymn 19 with Chandra, the Moon, addressed "
+                        "instead of Agni.]")],
+    (2, 23): [(1, None, "[Griffith does not print this hymn: it is Hymn 19 with the Waters addressed instead "
+                        "of Agni.]")],
+    (4, 4): [(3, None, LATIN.format("stanzas 3 to the end", "."))],
+    (5, 15): [(3, None, "[Griffith: 'Stanzas 3-11 of the hymn, which is a charm for general prosperity, are "
+                        "exactly the same with the exception of the numbers which increase by eleven in each stanza "
+                        "(thirty and three, forty and four, and so on) up to one hundred and ten in stanza 10, "
+                        "stanza 11 concluding with one thousand and one hundred.']")],
+    (5, 16): [(2, None, "[Griffith: 'The hymn, which is a charm for the increase and prosperity of cattle, "
+                        "contains ten other similar lines, the only difference being that in the place of "
+                        "ekavrishah, single bull, dvivrishah, double bull, or, worth two bulls, trivrishah, triple "
+                        "bull, or, worth three bulls, and so on, follow in regular order up to ekadasah, "
+                        "eleven-fold, in stanza 11, in which apodakah, waterless, stands instead of the arasah, "
+                        "sapless, of the preceding lines.']")],
+    (6, 16): [(4, 4, "[Griffith: 'The fourth verse, consisting of one line, is untranslatable: Thou art Alasala "
+                     "in front, thou art Silanjala (a weed growing in corn) behind: Nilagalasala (probably a weed "
+                     "of similar kind).']")],
+    (6, 72): [(1, None, LATIN.format("this hymn", "."))],
+    (6, 101): [(1, None, LATIN.format("this hymn", "."))],
+    (6, 138): [(4, None, LATIN.format("stanzas 4 and 5", "."))],
+    (7, 35): [(2, None, LATIN.format("stanzas 2 and 3", ": 'Stanzas 2 and 3 have a totally different object.'"))],
+    (7, 90): [(3, None, LATIN.format("stanza 3", "."))],
+    (20, 126): [(16, 17, LATIN.format("stanzas 16 and 17", ": 'I pass over stanzas 16 and 17, which cannot be "
+                                      "decently translated.'"))],
+    (20, 136): [(1, None, LATIN.format("this hymn", "."))],
+}
+
+# Book 20 repeats stanzas of its own earlier hymns, and Griffith then prints only a reference
+# ('Stanzas 1-4 are repeated from A. V. XX. 14'): those stanzas are given his English from there.
+REPEATS = {
+    (20, 47): {4: (38, 4), 5: (38, 5), 6: (38, 6), 7: (38, 1), 8: (38, 2), 9: (38, 3)},
+    (20, 57): {11: (53, 1), 12: (53, 2), 13: (53, 3)},
+    (20, 59): {1: (10, 1), 2: (10, 2)},
+    (20, 62): {1: (14, 1), 2: (14, 2), 3: (14, 3), 4: (14, 4)},
+    (20, 68): {1: (57, 1), 2: (57, 2), 3: (57, 3)},
+    (20, 70): {7: (38, 4), 8: (38, 5), 9: (38, 6)},
+    (20, 71): {4: (60, 4), 5: (60, 5), 6: (60, 6)},
+}
+
+
+# =========================================================================== pairing with the Sanskrit
+def sa_length(v):
+    return len(re.findall("[क-ह]", v))
+
+
+def pair(en, merged, variants):
+    """Map Griffith's stanzas (by his numbers) to the Sanskrit verses: stanza n covers the verses
+    from n to the next stanza's number (a number the OCR or the print lost leaves two stanzas in
+    one), and the last stanza the rest. Accepted when the numbers fit the verse count and the
+    lengths agree; or, with as many stanzas as verses, one to one (a misprinted number).
+    Returns ({n: (first, last)}, verses, how) or None."""
+    nums = sorted(en)
+    if not nums:
+        return None
+    for sa in variants:
+        S = len(sa)
+        if not S:
+            continue
+        tries = []
+        if nums[-1] <= S:
+            rng = {}
+            for i, n in enumerate(nums):
+                rng[n] = (n, max(n, (nums[i + 1] - 1) if i + 1 < len(nums) else S, merged.get(n, n)))
+            tries.append((rng, "numbers"))
+        if len(nums) == S and nums != list(range(1, S + 1)):
+            tries.append(({n: (k + 1, k + 1) for k, n in enumerate(nums)}, "renumbered"))
+        for rng, how in tries:
+            if how == "numbers" and nums == list(range(1, S + 1)) and not merged:
+                return rng, sa, how  # every verse numbered, as many as in the Sanskrit
+            ratios = []
+            for n, (a, b) in rng.items():
+                if en[n].startswith("["):
+                    continue
+                L = sum(sa_length(sa[i - 1]) for i in range(a, b + 1))
+                ratios.append((len(re.sub(r"[^A-Za-z]", "", en[n])) / max(L, 1), b - a + 1))
+            if not ratios:
+                return rng, sa, how
+            med = sorted(r for r, _ in ratios)[len(ratios) // 2]
+            bad = [r for r, k in ratios if (k > 1 and r < 0.6 * med) or (how == "renumbered" and (r < 0.4 * med or r > 2.6 * med))]
+            if sum(k > 1 for _, k in ratios) > max(1, len(ratios) // 4):
+                bad.append(0)  # too many numbers lost to place the verses
+            if len(ratios) <= 2 or not bad:
+                return rng, sa, how
+    return None
+
+
+# =========================================================================== explicit corrections
+# Titles damaged in both OCR texts of the Index of Hymns (read from the page images' wording).
+TITLE_FIXES = {
+    (2, 11): "Counter-charm, with an amulet, against an enemy's spell",
+    (2, 13): "A youth's Investiture ceremony (godanam)",
+    (2, 16): "A prayer for general protection",
+    (2, 20): "Repetition of Hymn 19, addressed to Vayu instead of Agni",
+    (2, 21): "Repetition of Hymn 19, addressed to Surya instead of Agni",
+    (2, 22): "Repetition of Hymn 19, addressed to Chandra, the Moon, instead of Agni",
+    (2, 23): "Repetition of Hymn 19, addressed to the Waters instead of Agni",
+    (2, 28): "A prayer for a boy's long and happy life",
+    (3, 2): "A rifaccimento or recension of Hymn 1",
+    (3, 8): "A charm to secure the submission, loyalty and fidelity of kinsmen",
+    (3, 19): "A glorification of the office of a King's household priest",
+    (4, 24): "A hymn of prayer and praise to Indra",
+    (6, 25): "A charm to remove pustules or scrofulous swellings (apachitas)",
+    (6, 83): "A charm against sores and pustules (apachitas)",
+    (6, 121): "A prayer for happiness in heaven",
+    (7, 50): "A gambler's prayer for success in gaming",
+    (6, 87): "A benediction addressed to a newly elected King",
+    (6, 88): "A benediction addressed to a newly elected King",
+    (6, 92): "A charm to strengthen and inspirit a war-horse",
+    (7, 12): "A prayer for influence at deliberative and religious meetings",
+    (7, 66): "A prayer to Vak",
+    (8, 10): "A glorification of the mystical abstraction Viraj",
+    (9, 9): "Enunciation of mystico-theological and cosmological doctrine",
+    (10, 7): "Skambha, the Pillar or Fulcrum of all existence",
+    (13, 3): "A glorification of Rohita, with a malediction on the man who wrongs a Brahman",
+    (19, 6): "The Purusha-Sukta, on the mystical Sacrifice of Purusha",
+    (19, 8): "A prayer to the Lunar Mansions and other Powers for protection and prosperity",
+    (19, 21): "A single line giving the names of the chief Vedic metres",
+    (19, 25): "A charm to be used when a young ox is first yoked",
+    (19, 34): "A protective charm addressed to the panacea called Jangida",
+    (19, 35): "A similar charm, addressed to the same",
+    (19, 46): "A charm accompanying investiture with an amulet that ensures safety and victory",
+    (19, 56): "A hymn to Sleep",
+    (19, 61): "A prayer for long life, prosperity and final happiness in heaven",
+    (19, 62): "A prayer for the love of Gods and men",
+    (19, 66): "A hymn to Agni identified with the Sun",
+    (19, 72): "A hymn, accompanying libations, for wealth and prosperity",
+    (4, 30): "A glorification of Vak or Speech",
+    (4, 31): "A hymn to Manyu or Wrath",
+    (6, 60): "The wooing of a bride",
+    (6, 61): "A prayer for prosperity and greatness",
+    (6, 62): "A prayer for purification and riches",
+    (6, 128): "A charm for fair weather",
+    (6, 129): "A charm for success and happiness",
+    (7, 94): "A charm to ensure the obedience of subjects",
+    (7, 95): "An incantation against an undetected thief",
+    (7, 96): "An incantation against an undetected thief",
+    (8, 3): "A prayer for the destruction of demons",
+    (9, 10): "Continuation of Hymn 9",
+    (13, 4): "A glorification of the Sun as the one only Deity",
+    (16, 1): "On the preparation and use of holy water, with a prayer for purification",
+    (18, 2): "A funeral hymn, taken mainly from the Rigveda",
+    (19, 11): "A continuation of Hymn 10",
+    (19, 29): "A continuation of Hymn 28",
+    (19, 65): "A hymn to Agni as the Sun",
+}
+
+# Frequent misreadings left after the two texts are compared (both texts wrong, or the word not
+# in the vocabulary), as (wrong, right) for whole words.
+REPLACEMENTS = {
+}
+
+
+# =========================================================================== the build
+# How the OCR reads the small capitals of a hymn's first word ('THE' as 'Tux', 'THEE' as 'Tare'):
+# (misread letter, true letter) pairs that cost little in small_caps_word().
+SMALL_CAPS = {("u", "h"), ("a", "h"), ("x", "h"), ("n", "h"), ("b", "h"), ("e", "h"), ("x", "e"), ("z", "e"),
+              ("r", "e"), ("b", "e"), ("s", "e"), ("k", "e"), ("c", "e"), ("o", "e"), ("p", "d"), ("r", "f"),
+              ("b", "r"), ("n", "r"), ("r", "y"), ("o", "u"), ("a", "g"), ("i", "l"), ("l", "i"), ("r", "t"),
+              ("e", "i"), ("c", "e"), ("g", "c"), ("w", "m"), ("p", "f"), ("t", "f")}
+
+
+def caps_distance(a, b):
+    prev = [float(j) for j in range(len(b) + 1)]
+    for i, ca in enumerate(a, 1):
+        cur = [float(i)] + [0.0] * len(b)
+        for j, cb in enumerate(b, 1):
+            sub = 0.0 if ca == cb else 0.35 if (ca, cb) in SMALL_CAPS else 1.0
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + sub)
+        prev = cur
+    return prev[-1]
+
+
+_COMMON = []
+
+
+FIRST_WORDS = {(6, 81): "Thou", (10, 2): "Who", (20, 57): "As a", (20, 68): "As a", (20, 82): "If", (20, 135): "Bang!"}  # beyond small_caps_word()
+
+
+def small_caps_word(tok, readings, vocab):
+    """The first word of a hymn, printed in small capitals and often misread by both scans, read as
+    the common word of Griffith's that one of its readings fits best."""
+    lead, word, trail = split_punct(tok)
+    c = word.lower()
+    if not c.isalpha() or vocab.g.get(c, 0) >= 5:
+        return tok
+    cores = {core(r) for r in readings if r}
+    if len(cores) == 1 and c in cores and vocab.plausible(c):
+        return tok  # both scans agree on a real word
+    if not _COMMON:
+        _COMMON.extend(w for w, n in vocab.g.items() if n >= 15 and w.isalpha())
+    best = None
+    for r in [c] + [core(x) for x in readings if x]:
+        if not r or len(r) < 2:
+            continue
+        if vocab.g.get(r, 0) >= 5:
+            cand = (0.0, -vocab.g[r], r)
+            best = min(best, cand) if best else cand
+            continue
+        for w in _COMMON:
+            if w[0] != r[0] or abs(len(w) - len(r)) > 1:
+                continue
+            d = caps_distance(r, w)
+            if d <= 1.05 and (best is None or (d, -vocab.g[w]) < best[:2]):
+                best = (d, -vocab.g[w], w)
+    if not best:
+        return tok
+    return lead + best[2].capitalize() + trail
+
+
+def deity_of(text):
+    """The God a Book 20 hymn addresses: Indra wherever he is named (the Soma of these hymns is
+    mostly the drink offered to him), else the God named most often."""
+    names = {"Indra": "Indra", "Agni": "Agni", "Asvins": "the Asvins", "Surya": "Surya", "Maruts": "the Maruts",
+             "Dawn": "Dawn", "Brihaspati": "Brihaspati", "Varuna": "Varuna", "Vishnu": "Vishnu", "Soma": "Soma"}
+    counts = {n: len(re.findall(r"\b" + n + r"\b", text)) for n in names}
+    if counts["Indra"] and counts["Indra"] >= max(counts[n] for n in names if n != "Soma") / 2:
+        return "Indra"
+    counts["Soma"] = 0  # in Book 20 the Soma is the drink offered to Indra
+    best = max(counts, key=counts.get)
+    return names[best] if counts[best] else None
+
+
+def clean_stanza(text, vocab):
+    toks = []
+    for t in text.split():
+        lead, w, trail = split_punct(t)
+        if w in REPLACEMENTS:
+            t = lead + REPLACEMENTS[w] + trail
+        elif w and not vocab.plausible(core(w)) and core(w) and "-" not in w:
+            t = spell(t, vocab)
+        toks.append(t)
+    return finish(" ".join(toks))
+
+
+def build(ocr_dir, dharmic, ws_dir, rv_dir=None, log=print):
+    ocr = {f: os.path.join(ocr_dir, f + ".txt") for f in ("v1a", "v1b", "v2a", "v2b")}
+    ws = read_wikisource(ws_dir)
+    vocab = Vocab(rv_dir, extra_texts=[v for _, vs in ws.values() for v in vs.values()])
+    report = collections.defaultdict(list)
+
+    # ---- every OCR text: Books, paragraphs, verse or note
+    books = {}
+    for f, vol in (("v1a", 1), ("v1b", 1), ("v2a", 2), ("v2b", 2)):
+        lines = load(ocr[f])
+        starts, end = main_range(lines, VOLUMES[vol])
+        bl = VOLUMES[vol]
+        bounds = [starts[b] for b in bl] + [end]
+        for k, b in enumerate(bl):
+            books[(f[-1], b)] = book_items(lines, bounds[k] + 1, bounds[k + 1], b)
+    model = classify(books)
+
+    # ---- hymns, and the Sanskrit
+    hymns, variants = {}, {}
+    for b in range(1, 21):
+        hy = {o: hymns_of_book(books[(o, b)], HYMNS[b]) for o in "ab"}
+        for o, p in (("a", "b"), ("b", "a")):
+            for h in repair_missing(hy[o], hy[p]):
+                report["heading found by the other text"].append(f"{b}.{h} ({o})")
+        hymns[b] = hy
+        for h in range(1, HYMNS[b] + 1):
+            if b == 13 and h == 4:  # Griffith's 13.4 = suktas 4-9, numbered on through them
+                variants[(b, h)] = [[v for s in range(4, 10) for v in sanskrit_variants(dharmic, 13, s)[0]]]
+            else:
+                variants[(b, h)] = sanskrit_variants(dharmic, b, h)
+
+    # ---- the two readings, word by word
+    toks = {}
+    for b in range(1, 21):
+        for h in range(1, HYMNS[b] + 1):
+            expect = max([len(v) for v in variants[(b, h)]] or [0])
+            toks[(b, h)] = [hymn_tokens(hymns[b][o].get(h, []), expect, vocab) for o in "ab"]
+    agreed = collections.Counter()
+    for ta, tb in toks.values():
+        sm = difflib.SequenceMatcher(None, [key(t) for t in ta], [key(t) for t in tb], autojunk=False)
+        for op, i1, i2, j1, j2 in sm.get_opcodes():
+            if op == "equal":
+                for x, y in zip(ta[i1:i2], tb[j1:j2]):
+                    c = core(x)
+                    if x == y and c.isalpha() and len(c) >= 3:
+                        agreed[c] += 1
+    for c, n in agreed.items():
+        vocab.g[c] += n  # a word both scans read alike is taken as a real one
+    _BUCKETS.clear()
+
+    def foreign_for(b, h):
+        near = [k for x in (h - 1, h + 1) if (b, x) in toks for t in toks[(b, x)] for k in [key(w) for w in t]]
+        near_s = " ".join(near)
+
+        def test(words_):
+            ks = [key(w) for w in words_ if not w.startswith("\x00")]
+            hits = sum(" ".join(ks[i:i + 4]) in near_s for i in range(0, max(1, len(ks) - 3)))
+            return hits >= 0.6 * max(1, len(ks) - 3)
+        return test
+
+    english = {}
+    wer_before = {"a": [0, 0], "b": [0, 0]}
+    wer_after = [0, 0]
+    for (b, h), (ta, tb) in toks.items():
+        foreign = foreign_for(b, h)
+        ta, tb = trim_foreign(ta, tb, foreign), trim_foreign(tb, ta, foreign)
+        fused = fuse(ta, tb, vocab, model=model, foreign=foreign)
+        expect = max([len(v) for v in variants[(b, h)]] or [0])
+        if expect and len(split_markers(fused)[0]) < 0.5 * expect:
+            plain = fuse(ta, tb, vocab, model=model)  # the text found 'foreign' is this hymn's own
+            if len(split_markers(plain)[0]) > len(split_markers(fused)[0]):
+                fused = plain
+        if b == 1 and h in ws:
+            wt = []
+            for n, v in sorted(ws[h][1].items()):
+                if h == 11 and n >= 3:
+                    break
+                if n > 1:
+                    wt.append(f"\x00{n}")
+                wt += preclean_tokens(v.split())
+            for name, t in (("a", ta), ("b", tb)):
+                st, _ = split_markers(t)
+                for n, ref in ws[h][1].items():
+                    if not (h == 11 and n >= 3):
+                        e, m = wer(clean_stanza(st.get(n, ""), vocab), ref)
+                        wer_before[name][0] += e
+                        wer_before[name][1] += m
+            st, _ = split_markers(fused)
+            for n, ref in ws[h][1].items():
+                if not (h == 11 and n >= 3):
+                    e, m = wer(clean_stanza(st.get(n, ""), vocab), ref)
+                    wer_after[0] += e
+                    wer_after[1] += m
+            fused = fuse(fused, wt, vocab)  # Wikisource as a third reading
+        st, merged = split_markers(fused)
+        if st.get(1):
+            first, rest = (st[1].split(None, 1) + [""])[:2]
+            fixed = FIRST_WORDS.get((b, h)) or small_caps_word(first, [t[0] if t else "" for t in (ta, tb)], vocab)
+            if fixed != first:
+                report["first word in small capitals read as"].append(f"{b}.{h}: {first} -> {fixed}")
+            st[1] = fixed + " " + rest
+        english[(b, h)] = ({n: clean_stanza(t, vocab) for n, t in st.items()}, merged)
+    report["wer"] = (wer_before, wer_after)
+
+    # ---- stanzas Griffith refers to elsewhere or does not translate
+    for (b, h), table in REPEATS.items():
+        en, merged = english[(b, h)]
+        for n, (h2, n2) in table.items():
+            if not en.get(n) and english[(b, h2)][0].get(n2):
+                en[n] = english[(b, h2)][0][n2]
+                report["stanzas given from the hymn Griffith refers to"].append(f"{b}.{h}.{n} = {b}.{h2}.{n2}")
+    for (b, h), entries in SPECIAL.items():
+        en, merged = english[(b, h)]
+        for first, last, text in entries:
+            for n in [k for k in en if k >= first and (last is None or k <= last)]:
+                if n != first and en[n]:
+                    report["text dropped for a special entry"].append(f"{b}.{h}.{n}: {en[n][:60]}")
+                del en[n]
+            en[first] = text
+            if last != first:
+                merged[first] = last or 0
+    return english, variants, hymns, books, vocab, report, ocr
+
+
+def hymn_intros(books, b, idx):
+    """{hymn: opening sentence of Griffith's notes}. The notes of a hymn are printed under its last
+    verses, so its opening sentence stands after its heading and before the heading of the hymn
+    after the next one; within that freedom the sentences are matched to the hymns in order,
+    preferring those that share words with the hymn's title in the Index."""
+    out = {}
+    for o in "ab":
+        hy = hymns_of_book(books[(o, b)], HYMNS[b])
+        found = [(h, sent) for h in sorted(hy) for _, sent in note_intros(hy[h])]
+        n, m = HYMNS[b], len(found)
+        # DP over (hymn, sentence): best[i][k] = best score using hymns < i and sentences < k
+        best = [[0.0] * (m + 1) for _ in range(n + 2)]
+        back = {}
+        for i in range(1, n + 1):
+            for k in range(0, m + 1):
+                opts = [(best[i - 1][k], (i - 1, k, None))]
+                if k:
+                    opts.append((best[i][k - 1], (i, k - 1, None)))
+                    hk, sent = found[k - 1]
+                    if hk in (i, i + 1):
+                        sc = 1 + overlap(idx.get((b, i), ""), sent)[0]
+                        opts.append((best[i - 1][k - 1] + sc, (i - 1, k - 1, i)))
+                best[i][k], back[(i, k)] = max(opts, key=lambda x: x[0])
+        i, k = n, m
+        while i > 0 and (i, k) in back:
+            pi, pk, h = back[(i, k)]
+            if h is not None:
+                out.setdefault(h, found[k - 1][1])
+            i, k = pi, pk
+    return out
+
+
+RV_CACHE = {}
+
+
+def rig_source(dharmic, sent, sa):
+    """'From Rig Veda III.40' when the note names a Rig Veda hymn that the Sanskrit of the
+    Atharva hymn really comes from (its first verse is found in that hymn)."""
+    m = re.match(r"From Rig Veda ([IVXL]+)\.(\d+)", sent)
+    if not m or not sa:
+        return ""
+    mandala, sukta = roman(m.group(1)), int(m.group(2))
+    if not mandala or mandala > 10:
+        return ""
+    if mandala not in RV_CACHE:
+        f = os.path.join(dharmic, "Rigveda", f"rigveda_mandala_{mandala}.json")
+        RV_CACHE[mandala] = json.load(open(f, encoding="utf-8")) if os.path.exists(f) else []
+    hymn = next((x for x in RV_CACHE[mandala] if x.get("sukta") == sukta), None)
+    if not hymn:
+        return ""
+    def norm(t):
+        return re.sub(r"[^\u0905-\u0939\u093e-\u094d]", "", ACCENT.sub("", t))
+    rv = norm(hymn["text"])
+    first = norm(sa[0])[:40]
+    if len(first) >= 12 and difflib.SequenceMatcher(None, first, rv, autojunk=False).find_longest_match(
+            0, len(first), 0, len(rv)).size >= 0.7 * len(first):
+        return f"Rig Veda {m.group(1)}.{sukta}"
+    return ""
+
+
+def make_titles(books, english, variants, ocr, dharmic, ws, vocab, report):
+    idx = read_titles(ocr, vocab)
+    titles = {}
+    for b in range(1, 21):
+        intros = hymn_intros(books, b, idx)
+        prev = ""
+        for h in range(1, HYMNS[b] + 1):
+            t = idx.get((b, h), "")
+            if b == 1 and h in ws:  # Wikisource gives Griffith's titles from his Index
+                t = ws[h][0][:1].upper() + ws[h][0][1:].replace("the waters", "the Waters")
+            intro = intro_title(intros[h], vocab) if h in intros else ""
+            bad = not t or any(not vocab.plausible(core(w)) for w in t.split() if core(w)) or len(t) < 8
+            if b == 20 and (h <= 126 or h >= 137):
+                text = " ".join(english[(b, h)][0].values())
+                d = deity_of(text)
+                sa = (variants[(b, h)] or [[]])[0]
+                src = rig_source(dharmic, intro, sa)
+                if h >= 137 and t and not bad:
+                    pass
+                else:
+                    t = (f"To {d}" if d else "To Indra") + (f" (from {src})" if src else "")
+            elif b == 15 and h > 1:
+                t = "The glorification of the Vratya, continued"
+            elif re.match(r"^(The same|On the same subject|A prayer for the same|Theame)\b", t) and prev:
+                t = prev + (", continued" if "continued" in t else "")
+            elif bad and intro and not intro.startswith("From") and (
+                    not t or overlap(t, intro)[0] >= max(1, min(overlap(t, intro)[1:]) // 2)):
+                report["title from the notes (Index garbled)"].append(f"{b}.{h}: {t!r} -> {intro!r}")
+                t = intro
+            t = TITLE_FIXES.get((b, h), t)
+            t = ascii_names(t).replace("lovecharm", "love-charm")
+            t = re.sub(r"\s+", " ", t).strip(" .,;:")
+            t = t[:1].upper() + t[1:]
+            if not t:
+                t = f"Hymn {h}"
+                report["no title"].append(f"{b}.{h}")
+            titles[(b, h)] = shorten(t)
+            prev = titles[(b, h)]
+    return titles
+
+
+def assemble(english, variants, titles, report):
+    out = {}
+    counts = {}
+    for b in range(1, 21):
+        secs = []
+        for h in range(1, HYMNS[b] + 1):
+            en, merged = english[(b, h)]
+            empty = [n for n, t in en.items() if not t.strip()]
+            for n in empty:
+                del en[n]
+            if empty:
+                report["empty stanzas dropped"].append(f"{b}.{h}: {empty}")
+            if not en:
+                report["hymn without English"].append(f"{b}.{h}")
+                en = {1: "[Griffith's English for this hymn could not be recovered from the scans.]"}
+            pr = pair(en, merged, variants[(b, h)])
+            verses = []
+            if pr:
+                rng, sa, how = pr
+                if how == "renumbered":
+                    report["paired one to one, Griffith's numbers differ"].append(f"{b}.{h}: {sorted(en)}")
+                if sorted(en)[-1] < len(sa) or any(a != c for a, c in rng.values()):
+                    report["stanzas paired with more than one verse"].append(
+                        f"{b}.{h}: " + ", ".join(f"{n}->{a}-{c}" for n, (a, c) in sorted(rng.items()) if a != c))
+                for n in sorted(en):
+                    a, c = rng[n]
+                    s_ = "\n".join(sa[a - 1:c])
+                    verses.append({"n": a, "ref": f"{b}.{h}.{a}" + (f"-{c}" if c != a else ""),
+                                   "sa": s_, "tr": iast(s_), "en": en[n]})
+            else:
+                ns = [len(v) for v in variants[(b, h)]] or [0]
+                report["English only (verse numbers or lengths do not fit the Sanskrit)"].append(
+                    f"{b}.{h}: Griffith {max(en)} stanzas ({len(en)} numbered), Sanskrit {'/'.join(map(str, ns))}")
+                for n in sorted(en):
+                    last = merged.get(n)
+                    verses.append({"n": n, "ref": f"{b}.{h}.{n}" + (f"-{last}" if last and last != n else ""),
+                                   "en": en[n]})
+            secs.append({"label": titles[(b, h)], "short": f"{b}.{h}", "name": f"Book {b}, hymn {h}",
+                         "verses": verses})
+        out[b] = {"sections": secs}
+        counts[b] = len(secs)
+    return out, counts
+
+
+def suspicious(out, vocab):
+    c = collections.Counter()
+    for d in out.values():
+        for s in d["sections"]:
+            for v in s["verses"]:
+                if v["en"].startswith("["):
+                    continue
+                for t in re.split(r"[\s\u2014]+", v["en"]):
+                    w = re.sub(r"'s$", "", core(t))
+                    if w and not vocab.known(w) and not vocab.known(w.rstrip("s")):
+                        c[split_punct(t)[1]] += 1
+    return c
+
+
+def main():
+    if len(sys.argv) < 4:
+        sys.exit(__doc__)
+    english, variants, hymns, books, vocab, report, ocr = build(*sys.argv[1:5])
+    titles = make_titles(books, english, variants, ocr, sys.argv[2], read_wikisource(sys.argv[3]), vocab, report)
+    out, counts = assemble(english, variants, titles, report)
+    for b, d in out.items():
+        print(f"atharvaveda/{b}.json", write(f"atharvaveda/{b}.json", d), "bytes,", counts[b], "hymns")
+    (wa, wb), (fe, fn) = (report["wer"][0]["a"], report["wer"][0]["b"]), report["wer"][1]
+    print(f"word error rate on Book 1, hymns 1-18 (Wikisource): OCR a {wa[0] / wa[1]:.4f}, OCR b {wb[0] / wb[1]:.4f}, "
+          f"both compared {fe / fn:.4f} ({fe} of {fn} words)")
+    for k, v in report.items():
+        if k != "wer":
+            print(f"{k}: {len(v)}")
+            for x in v:
+                print("   ", x)
+    sus = suspicious(out, vocab)
+    print("suspicious tokens (not in the vocabulary):", sum(sus.values()), "in", len(sus), "kinds")
+    print("   ", ", ".join(f"{w} {n}" for w, n in sus.most_common(80)))
+    print({b: (AV_SUB[b], counts[b]) for b in range(1, 21)})
+
+
+if __name__ == "__main__":
+    main()

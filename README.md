@@ -57,7 +57,7 @@ When you change files, increase `CACHE` in `sw.js` (for example `dharma-path-v9`
 
 Prayers are chanted by the phone's built-in Hindi voice (Web Speech API), reading the Devanagari. Phones without a Hindi voice hear the romanised words read in English. The tanpura drone is synthesised in the browser with the Web Audio API, so it needs no audio files.
 
-Recordings take priority. Anyone can record a prayer in the app (stored on their device in IndexedDB) and share the file. To publish a recording for everyone, add it to `audio/` and list it in `audio/index.json`. See [`audio/README.md`](audio/README.md). The order is: the person's own recording, then a published one, then the device voice.
+Recordings take priority. The prayers are chanted verse by verse from clips made with ElevenLabs text to speech by `scripts/build_audio.py`, so the verse being chanted is highlighted as it plays. Anyone can also record a prayer in the app (stored on their device in IndexedDB) and share the file, and a recording can be published for everyone by adding it to `audio/` and listing it in `audio/index.json`. See [`audio/README.md`](audio/README.md). The order is: the person's own recording, then a published one, then the device voice.
 
 ## Calendar
 
@@ -74,25 +74,32 @@ To add a city, add it to `CITIES` in the script and run it again.
 
 ## Scriptures
 
-The texts in `texts/` are generated from public-domain sources by `scripts/build_texts.py` and `scripts/build_more_texts.py`:
+The texts in `texts/` are generated from public-domain and openly licensed sources by the scripts in `scripts/`:
 
 | Book | English translation | Sanskrit |
 | --- | --- | --- |
 | Bhagavad Gita | Annie Besant, 4th ed. (1922), all 701 verses | gita/gita open dataset |
-| Rig Veda | Ten selected hymns, translated for Dharma Path | Vedic Heritage Portal, via DharmicData (ODbL) |
+| Rig Veda | Ralph T. H. Griffith (1896), all 1,028 hymns, from Wikisource; ten selected hymns translated for Dharma Path | Vedic Heritage Portal, via DharmicData (ODbL) |
 | Sama Veda | Ralph T. H. Griffith (1895), all 1,794 verses, via DharmicData | — |
-| Upanishads | Swami Paramananda (1919): Isha, Katha and Kena, with his commentary | — |
+| Yajur Veda | Ralph T. H. Griffith, *The Texts of the White Yajurveda* (1899), all 40 books, cleaned from two archive.org scans | DharmicData |
+| Atharva Veda | Ralph T. H. Griffith (1895–96), all 20 books, cleaned from two archive.org scans | DharmicData |
+| Upanishads | Swami Paramananda (1919): Isha, Katha, Kena; F. Max Müller (1879, 1884): Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka, Svetasvatara; R. E. Hume (1921): Mandukya | — |
 | Ramayana | Manmatha Nath Dutt (1891–94), about 15,000 verses across all 7 kandas | Critical edition e-text |
 | Mahabharata | Kisari Mohan Ganguli (1883–96), complete, all 18 parvas | — |
 | Vishnu Purana | Manmatha Nath Dutt after H. H. Wilson, all 6 books | — |
+| Garuda Purana | Ernest Wood and S. V. Subrahmanyam (1911), the Saroddhara | — |
+| Devi Bhagavatam | Swami Vijnanananda (1921–23), complete, with his notes | — |
+| Bhagavata, Shiva, Linga, Skanda, Narada, Brahma, Brahmanda, Kurma, Vamana and Varaha Puranas | none yet | GRETIL (CC BY-NC-SA 4.0); the Varaha from Sanskrit Wikisource (CC BY-SA) |
 | Yoga Sutras | Charles Johnston (1912), all 4 books, with his commentary | — |
 
-The Gita and Ramayana verse pairings come from the open-source [Katha](https://github.com/radhepa/Katha) project. Ganguli's text comes from [sacred-texts.com](https://sacred-texts.com/hin/maha/) via [rahulnyk/mahabharata](https://github.com/rahulnyk/mahabharata). The Vishnu Purana is Project Gutenberg #66208 as prepared by [Tattvika (Kathaveda)](https://github.com/jagdishak-hub/Kathaveda); the Sama Veda and Rig Veda Sanskrit come from [DharmicData](https://github.com/bhavykhatri/DharmicData); the Upanishads and Yoga Sutras are Project Gutenberg #3283 and #2526 via [GITenberg](https://github.com/GITenberg). Ramayana verses that could not be matched reliably to the Sanskrit are left out, so its verse numbers sometimes skip.
+The Gita and Ramayana verse pairings come from the open-source [Katha](https://github.com/radhepa/Katha) project. Ganguli's text comes from [sacred-texts.com](https://sacred-texts.com/hin/maha/) via [rahulnyk/mahabharata](https://github.com/rahulnyk/mahabharata). The Vishnu Purana is Project Gutenberg #66208 as prepared by [Tattvika (Kathaveda)](https://github.com/jagdishak-hub/Kathaveda); the Vedic Sanskrit and the Sama Veda come from [DharmicData](https://github.com/bhavykhatri/DharmicData); the Paramananda Upanishads and the Yoga Sutras are Project Gutenberg #3283 and #2526 via [GITenberg](https://github.com/GITenberg). Ramayana verses that could not be matched reliably to the Sanskrit are left out, so its verse numbers sometimes skip.
+
+The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Varaha Purana from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Padma and Bhavishya Puranas will follow when a usable copy can be fetched, and the Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
 
 To rebuild:
 
 ```sh
-pip install indic-transliteration
+pip install indic-transliteration wordfreq
 git clone --depth 1 https://github.com/radhepa/Katha /tmp/katha
 git clone --depth 1 https://github.com/rahulnyk/mahabharata /tmp/mbh
 git clone --depth 1 https://github.com/jagdishak-hub/Kathaveda /tmp/kathaveda
@@ -105,8 +112,16 @@ python3 scripts/build_texts.py /tmp/katha/assets/data /tmp/mbh/text/KMGanguli
 python3 scripts/build_more_texts.py /tmp/gutenberg-sources.json.gz /tmp/dharmic /tmp/upanishads/3283.txt /tmp/yoga/2526.txt
 ```
 
+The later books are built by their own scripts, each of which explains in its header where its sources come from and how to fetch them:
+
+- `scripts/build_vedas.py`: the complete Rig Veda, from Griffith's hymns on Wikisource and DharmicData.
+- `scripts/build_yajurveda.py` and `scripts/build_atharvaveda.py`: Griffith's Yajur and Atharva Vedas, from two archive.org scans of each book, corrected against each other and paired with DharmicData.
+- `scripts/build_upanishads.py` (with `scripts/upanishads_sbe15.py`): the Upanishads from Müller's and Hume's translations.
+- `scripts/build_puranas.py`: the Garuda Purana and the Devi Bhagavatam, from archive.org.
+- `scripts/build_sanskrit_puranas.py`: the Sanskrit-only Puranas, from GRETIL and Sanskrit Wikisource.
+
 The Rig Veda hymn selection and its English translations live in `scripts/rigveda_hymns.py`.
 
 ## Content notes
 
-All explanations and lessons, and the translations of the prayers and daily wisdom, are original writing for this project, and the lesson paintings are original works generated by the code in `scripts/art`. The prayers themselves are traditional texts in the public domain; their Devanagari was checked against an independent transcription where one was available. The scripture translations are the public-domain editions listed above, except the Rig Veda selection, which was translated for this project.
+All explanations and lessons, and the translations of the prayers and daily wisdom, are original writing for this project, and the lesson paintings are original works generated by the code in `scripts/art`. The prayers themselves are traditional texts in the public domain; their Devanagari was checked against an independent transcription where one was available. The scripture translations are the public-domain editions listed above, except the Rig Veda selection, which was translated for this project. Texts cleaned from scans were checked by reading, but a scanning error can remain here and there.

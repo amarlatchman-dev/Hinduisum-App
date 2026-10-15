@@ -2,7 +2,7 @@
 """Add more of the principal Upanishads to texts/upanishads/, after the Isa, Katha and Kena.
 
 Usage:
-  python3 scripts/build_upanishads.py <sbe_html_dir> <wikitext_dir>
+  python3 scripts/build_upanishads.py <sbe_html_dir> <wikitext_dir> <sbe15_ocr.txt>
 
   sbe_html_dir  Wikisource pages saved with action=render, file names URL-quoted:
                 "Sacred Books of the East/Volume 15/Prasña-upanishad", ".../Mundaka-upanishad"
@@ -10,6 +10,9 @@ Usage:
                 (F. Max Müller, 1879 and 1884)
   wikitext_dir  "Taittiriya Upanishad" and "Sacred Books of the East/Volume 1/Aitareya-âranyaka"
                 saved with action=raw (Müller's translation, 1879 and 1884)
+  sbe15_ocr.txt the archive.org OCR of Sacred Books of the East vol. 15
+                ("1922707.0015.002.umich.edu", the _djvu.txt file), for the Brihadaranyaka and
+                Svetasvatara, which upanishads_sbe15.py cleans
 
 The Mandukya, which Müller did not translate, is R. E. Hume's version (1921), cleaned by hand
 from the scan and kept in this file. Müller's transliteration (italic k for ch, italic g for j,
@@ -26,6 +29,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_more_texts import write  # noqa: E402
 from build_vedas import clean_html  # noqa: E402
+from upanishads_sbe15 import brihadaranyaka, svetasvatara  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "texts")
 ORD = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth",
@@ -351,18 +355,21 @@ PARTS = [
     (7, "Taittiriya Upanishad", "The five sheaths of the Self", None),
     (8, "Aitareya Upanishad", "Consciousness is Brahman", None),
     (9, "Chandogya Upanishad", "That thou art", chandogya),
+    (10, "Brihadaranyaka Upanishad", "Yajnavalkya's teaching", None),
+    (11, "Svetasvatara Upanishad", "The one God, Rudra-Shiva", None),
 ]
 
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         sys.exit(__doc__)
-    cache, wikidir = sys.argv[1], sys.argv[2]
+    cache, wikidir, ocr = sys.argv[1:4]
     index_path = os.path.join(OUT, "index.json")
     index = json.load(open(index_path, encoding="utf-8"))
     parts = [p for p in index["upanishads"]["parts"] if p["n"] <= 3]
     for n, name, sub, fn in PARTS:
-        data = mandukya() if n == 6 else taittiriya(wikidir) if n == 7 else aitareya(wikidir) if n == 8 else fn(cache)
+        data = {6: mandukya, 7: lambda: taittiriya(wikidir), 8: lambda: aitareya(wikidir),
+                10: lambda: brihadaranyaka(ocr), 11: lambda: svetasvatara(ocr)}.get(n, lambda: fn(cache))()
         size = write(f"upanishads/{n}.json", data)
         verses = sum(len(s["verses"]) for s in data["sections"])
         print(f"upanishads/{n}.json  {name}: {len(data['sections'])} sections, {verses} verses, {size // 1024} KB")

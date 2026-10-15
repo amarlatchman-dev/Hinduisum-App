@@ -2281,7 +2281,7 @@
     } else {
       rows = parts.map((p) => `
           <a class="row" href="${bookId === "gita" || p.count === 1 ? readerHref(bookId, p.n, 1) : `#/read/${bookId}/${p.n}`}">
-            <span class="dateblock"><span class="d">${p.n}</span></span>
+            <span class="dateblock"><span class="d">${esc(String(p.short || p.n))}</span></span>
             <span class="body"><h3>${esc(p.name)}</h3><p>${esc(p.sub || "")}${p.count > 1 || bookId === "gita" ? `${p.sub ? " · " : ""}${p.count} ${bookId === "gita" ? "verses" : (book.sectionLabel.toLowerCase() + "s")}` : ""}</p></span>
             ${pos && pos.part === p.n ? `<span class="tag gold">Reading</span>` : `<span class="chev">›</span>`}
           </a>`).join("");
@@ -2309,7 +2309,7 @@
     const sections = await loadSections(bookId, part);
     const pos = getPos(bookId);
     return `
-      <div class="detail-head"><span class="dateblock"><span class="d">${part}</span><span class="m">${esc(book.partLabel)}</span></span><div><div class="eyebrow">${esc(book.title)}</div><h2>${esc(meta.name)}</h2><p>${sections.length} ${book.sectionLabel.toLowerCase()}s</p></div></div>
+      <div class="detail-head"><span class="dateblock"><span class="d">${esc(String(meta.short || part))}</span><span class="m">${esc(meta.label || book.partLabel)}</span></span><div><div class="eyebrow">${esc(book.title)}</div><h2>${esc(meta.name)}</h2><p>${sections.length} ${book.sectionLabel.toLowerCase()}s</p></div></div>
       <div class="section-grid">
         ${sections.map((s, i) => {
           const here = pos && pos.part === part && pos.sec === i + 1;
@@ -2322,7 +2322,7 @@
   function renderVerse(v, prefix, showSa) {
     const o = Array.isArray(v) ? { n: v[0], sa: v[1], tr: v[2], en: v[3], ref: prefix + v[0] } : v;
     return `${o.head ? `<div class="vhead" data-i="${-1000 - o.n}">${esc(o.head)}</div>` : ""}<div class="verse" id="v-${o.n}" data-ref="${o.n}">
-      <div class="vnum">${esc(o.ref || prefix + o.n)}</div>
+      ${o.ref === "" ? "" : `<div class="vnum">${esc(o.ref || prefix + o.n)}</div>`}
       ${showSa && o.sa ? `<div class="sanskrit">${esc(o.sa)}</div><p class="translit">${esc(o.tr || "")}</p>` : ""}
       <p class="vtext">${esc(o.en)}</p>
       ${o.note ? `<div class="vnote">${o.note.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
@@ -2712,8 +2712,8 @@
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const keyOf = (...parts) => fold(parts.join(" ")).toLowerCase();
   const stripTags = (h) => String(h).replace(/<[^>]+>/g, " ");
-  const SMALL_BOOKS = ["gita", "rigveda", "samaveda", "upanishads", "yoga", "vishnu"];
-  const LARGE_BOOKS = ["ramayana", "mahabharata"];
+  const SMALL_BOOKS = ["gita", "samaveda", "upanishads", "yoga", "vishnu", "garuda"];
+  const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "mahabharata"];
   const searchBooks = {};
   const searchJobs = {};
   let searchToken = 0;
@@ -2818,8 +2818,8 @@
     const box = document.getElementById("scriptureResults");
     if (!box || token !== searchToken) return;
     box.innerHTML = html + (epics ? "" : `
-      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Ramayana and Mahabharata are very large. Searching them downloads about 23 MB the first time, then works offline.</p>
-      <button class="btn ghost" data-search-epics>Also search the Ramayana and Mahabharata</button></div>`) +
+      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Ramayana and the Mahabharata are very large. Searching them downloads about LARGE_MB MB the first time, then works offline.</p>
+      <button class="btn ghost" data-search-epics>Also search the Vedas and the epics</button></div>`) +
       (found ? "" : `<div class="card empty">Nothing found for “${esc(q)}”. Try a shorter word or a different spelling.</div>`);
   }
 

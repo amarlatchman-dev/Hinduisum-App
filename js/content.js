@@ -154,15 +154,14 @@ window.CONTENT = {
       id: "rigveda",
       title: "Rig Veda",
       sanskritTitle: "ऋग्वेद",
-      tagline: "Ten great hymns · Sanskrit with English",
-      partLabel: "Selection",
+      tagline: "All 1,028 hymns · Sanskrit with English",
+      partLabel: "Mandala",
       sectionLabel: "Hymn",
       verses: true,
       sanskrit: true,
-      singlePart: true,
       category: "veda",
-      translation: "Sanskrit from the Vedic Heritage Portal, via the open DharmicData project. English translation by Dharma Path.",
-      about: "The oldest scripture of Hinduism, composed more than 3,000 years ago: 1,028 hymns to the divine powers of fire, dawn, sky and the cosmos. This selection gathers ten of its most beloved hymns, including the Gayatri, the Purusha Sukta and the Hymn of Creation."
+      translation: "Sanskrit from the Vedic Heritage Portal, via the open DharmicData project. The ten mandalas in the English verse translation of Ralph T. H. Griffith (1896), public domain, from Wikisource; the opening selection translated by Dharma Path.",
+      about: "The oldest scripture of Hinduism, composed more than 3,000 years ago: 1,028 hymns in ten books (mandalas) to the divine powers of fire, dawn, sky and the cosmos. It opens here with ten of its most beloved hymns, including the Gayatri, the Purusha Sukta and the Hymn of Creation, followed by the complete text, hymn by hymn."
     },
     {
       id: "samaveda",
@@ -177,16 +176,42 @@ window.CONTENT = {
       about: "The Veda of melody. Most of its verses come from the Rig Veda, arranged to be sung by the priests during the Soma sacrifice; Indian classical music traces its roots to these chants. Krishna says in the Gita: “Among the Vedas, I am the Sama Veda.”"
     },
     {
+      id: "yajurveda",
+      title: "Yajur Veda",
+      sanskritTitle: "यजुर्वेद",
+      tagline: "The White Yajur Veda · 40 books of sacred formulas",
+      partLabel: "Book",
+      sectionLabel: "Book",
+      verses: true,
+      sanskrit: true,
+      category: "veda",
+      translation: "Sanskrit of the Madhyandina Vajasaneyi Samhita via the open DharmicData project. English translation by Ralph T. H. Griffith, The Texts of the White Yajurveda (1899), public domain, cleaned from two scans of the printed book.",
+      about: "The Veda of ritual. Its prose formulas and verses were spoken by the Adhvaryu priest as he built the altar, kindled the fires and made the offerings. Among its forty books are the Shatarudriya, the great litany to Rudra still chanted in Shiva temples (Book 16); the Purusha hymn (Book 31); the Shiva Sankalpa, 'may my mind be of auspicious resolve' (Book 34); and, as its last book, the Isha Upanishad."
+    },
+    {
+      id: "atharvaveda",
+      title: "Atharva Veda",
+      sanskritTitle: "अथर्ववेद",
+      tagline: "Hymns, prayers and charms · 20 books",
+      partLabel: "Book",
+      sectionLabel: "Hymn",
+      verses: true,
+      sanskrit: true,
+      category: "veda",
+      translation: "Sanskrit of the Shaunaka recension via the open DharmicData project. English verse translation by Ralph T. H. Griffith, The Hymns of the Atharva-Veda (1895–96), public domain, cleaned from two scans of the printed book.",
+      about: "The Veda of everyday life. Beside hymns to the gods it holds prayers for healing, long life, harmony in the family, a good harvest and protection from harm, and some of the most profound hymns of the Vedas: the Hymn to the Earth (12.1), Skambha, the pillar of the universe (10.7), and the hymns to Time (19.53–54). Ayurveda traces its roots to it."
+    },
+    {
       id: "upanishads",
       title: "Upanishads",
       sanskritTitle: "उपनिषद्",
-      tagline: "Isha, Katha and Kena · with commentary",
+      tagline: "The eleven principal Upanishads",
       partLabel: "Upanishad",
       sectionLabel: "Part",
       verses: true,
       category: "upanishad",
-      translation: "English translation with commentary by Swami Paramananda (1919), public domain.",
-      about: "The philosophical heart of the Vedas, teaching the oneness of the Self (Atman) and the Absolute (Brahman). These are three of the best loved: the Isha; the Katha, with the young Nachiketas questioning Death himself; and the Kena."
+      translation: "Isha, Katha and Kena: translation with commentary by Swami Paramananda (1919). Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka and Svetasvatara: F. Max Müller, Sacred Books of the East (1879 and 1884), with Sanskrit names in modern spelling. Mandukya: Robert Ernest Hume (1921). All public domain.",
+      about: "The philosophical heart of the Vedas, teaching the oneness of the Self (Atman) and the Absolute (Brahman). Here are the principal Upanishads: the Isha; the Katha, with the young Nachiketas questioning Death himself; the Kena; the Prasna's six questions; the Mundaka's higher knowledge; the Mandukya on Om and the four states of the Self; the Taittiriya's five sheaths; the Aitareya; the Chandogya, with its 'That thou art'; the vast Brihadaranyaka; and the devotional Svetasvatara."
     },
     {
       id: "vishnu",
@@ -199,6 +224,31 @@ window.CONTENT = {
       category: "purana",
       translation: "English prose translation by Manmatha Nath Dutt, based on H. H. Wilson's translation, public domain. Footnote markers have been removed.",
       about: "One of the eighteen great Puranas, told by the sage Parashara to his disciple Maitreya: the creation of the world, the cycles of time, the stories of Dhruva and Prahlada, the great royal dynasties and the life of Krishna."
+    },
+    {
+      id: "garuda",
+      title: "Garuda Purana",
+      sanskritTitle: "गरुडपुराण",
+      tagline: "The Saroddhara · death, the afterlife and liberation",
+      partLabel: "Part",
+      sectionLabel: "Chapter",
+      verses: true,
+      singlePart: true,
+      category: "purana",
+      translation: "English translation by Ernest Wood and S. V. Subrahmanyam, The Garuda Purana (Saroddhara), 1911, public domain. A few mantras that the translators gave only in Sanskrit are left out.",
+      about: "Vishnu's teaching to Garuda, king of birds, on what happens at death and after: the soul's journey to the city of Yama, the fruits of good and evil deeds, the rites by which a family helps its departed through the first year, and, at the last, the way to liberation. Many Hindu families read it during the days of mourning after a death."
+    },
+    {
+      id: "devibhagavatam",
+      title: "Devi Bhagavatam",
+      sanskritTitle: "देवीभागवतम्",
+      tagline: "The Purana of the Goddess · 12 books",
+      partLabel: "Book",
+      sectionLabel: "Chapter",
+      verses: true,
+      category: "purana",
+      translation: "English translation by Swami Vijnanananda (Hari Prasanna Chatterji), The Srimad Devi Bhagawatam, 1921–23, public domain. The translator's notes appear beneath their verses.",
+      about: "The great Purana of the Divine Mother, counted by her devotees among the eighteen Mahapuranas. It tells how the Goddess, the Supreme Shakti, creates, sustains and dissolves the worlds; of her battles with Mahishasura, Shumbha and Nishumbha; of Navaratri, first kept by Rama; and, in the Devi Gita, her own teaching on the Self, Yoga and devotion."
     },
     {
       id: "yoga",

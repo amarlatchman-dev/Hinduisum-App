@@ -275,7 +275,7 @@ def build_full_rigveda(dharmic, cache):
                 v["en"] = en.get(k, "")
                 verses.append(v)
             sec = {"label": deity_label(anukramani(dharmic, "rig", m, s), m, s), "short": f"{m}.{s}",
-                   "name": f"Mandala {m}, hymn {s}" + (" · Valakhilya" if m == 8 and 49 <= s <= 59 else "")}
+                   "name": f"Hymn {s}" + (" · Valakhilya" if m == 8 and 49 <= s <= 59 else "")}
             gaps = [k for k in range(1, n + 1) if k not in en]
             if raw and not en:
                 sec["intro"] = ["Griffith did not translate this hymn into English; it is given here in Sanskrit "

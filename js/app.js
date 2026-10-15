@@ -2730,7 +2730,7 @@
   const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "mahabharata"];
   // The Puranas given only in Sanskrit are searched by their transliteration, on request.
   const SANSKRIT_BOOKS = ["bhagavata", "shiva", "linga", "skanda", "narada", "brahma", "brahmanda", "kurma", "vamana", "varaha"];
-  const LARGE_MB = 0, SANSKRIT_MB = 0; // download sizes, set when the texts are built
+  const LARGE_MB = 37, SANSKRIT_MB = 41; // download sizes of the texts, in MB
   const searchBooks = {};
   const searchJobs = {};
   let searchToken = 0;

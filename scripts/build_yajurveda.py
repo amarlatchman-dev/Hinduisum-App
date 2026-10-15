@@ -33,6 +33,7 @@ from indic_transliteration import sanscript
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_more_texts import ACCENTS, write  # noqa: E402
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "texts")
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
@@ -555,7 +556,7 @@ Girisanta Rakshasas Rakshasa Yatudhana Yatudhanas Brahmanicide Kshatra Vaisvanar
 Dhishnyas Havirdhana Sadas Udumbara Asvattha Parna Khadira Palasa Vikankata Nyagrodha Salmali Darbha Kusa
 Vrata Diksha Upasad Upasads Avabhritha Agnishvattas Barhishads Somavat Pitaras Manes Kavya Vena Gungu Subhadra
 Kampila Ambika Ambalika Ambi Tryambaka Mujavant Sarvamedha Purushamedha Mahiman Brahmodya Isavasya
-Saras Rishi Rishis Richas Sadhyas Sadhya Prana Sambhava Asambhava Sambhuti Asambhuti Vinasa Vidya Avidya Kakup Marka Tutha Svishtakrit Havishkrit Parivatsara Idvatsara Samvatsara Anuvatsara Idavatsara Dvipad Chatushpad Kulipaya""".split()
+Vata Saryata Saras Rishi Rishis Richas Sadhyas Sadhya Prana Sambhava Asambhava Sambhuti Asambhuti Vinasa Vidya Avidya Kakup Marka Tutha Svishtakrit Havishkrit Parivatsara Idvatsara Samvatsara Anuvatsara Idavatsara Dvipad Chatushpad Kulipaya""".split()
 
 
 class Vocab:
@@ -714,8 +715,10 @@ def verse_tokens(lines):
             continue  # 'things! I homage': the mark read twice
         if t == "1" and nxt[:1].islower() and not prev_tok[:1].isupper():
             t = "I"  # 'the earth 1 place thee'
-        elif t == "I" and nxt[:1].isupper() and out and out[-1][-1:].isalpha():
+        elif t == "I" and nxt[:1].isupper() and out and re.search(r"[A-Za-z&^4]$", out[-1]):
             t = HOLE  # 'come I Havishkrit': a '!'
+        elif t == "I" and nxt[:1].isupper() and out and out[-1][-1:] in ".!?;:":
+            continue  # 'strength. I One, Bharati': a speck
 
         elif t in ("1", "\\", "%", "t", "f", "l", "}", "]", "|", "1:", "?", "!") or re.fullmatch(r"[\\%]+", t):
             if not out and t not in ("?", "!"):
@@ -729,7 +732,7 @@ def verse_tokens(lines):
                 out.append("…")
             continue
         if re.fullmatch(r"\d+[.,:;)]*", t) and not (out and re.fullmatch(
-                r"\(?([IVXL]+[.,]?|verses?|Book|\d+[,—–-])", re.sub(r"[^\w.,—–-]", "", out[-1]), re.I)):
+                r"\(?([IVXLl]+\.|verses?|Book|\d+[,—–-])", re.sub(r"[^\w.,—–-]", "", out[-1]), re.I)):
             continue  # a stray verse or page number, not a reference ('as in XIII. 25', 'verse 9')
         if all(c in PUNCT for c in t) and t != "…":
             if out:
@@ -743,7 +746,7 @@ def verse_tokens(lines):
             t = lead + core + re.sub(r"^[&^$§]+", "", trail)
         if not out and re.fullmatch(r"[A-Z]{3,}", re.sub(r"\W", "", t)) and len(toks) > 1:
             t = t[0] + t[1:].lower()  # 'PURUSHA hath': small capitals
-        if re.fullmatch(r"[B-HJ-NP-Zb-hj-np-z][.,;:!?]?", t) or re.fullmatch(r"[IVXLl1]{1,4}\)", t):
+        if re.fullmatch(r"[B-HJ-NP-Zb-hj-np-z]|[io]|[B-HJ-NP-Zb-hj-np-z][.,;:!?]", t) or re.fullmatch(r"[IVXLl1]{1,4}\)", t):
             continue  # a stray letter ('G Thou', 'r This') or a misread number ('IX) Now')
         out.append(t)
     if out and out[-1] == "I" and len(out) > 1:
@@ -1112,10 +1115,24 @@ FIXES = [
     (r"\bCrja\b", "Urja"), (r"\bishi\b", "Rishi"), (r"\bB\^ishi's", "Rishi's"),
     (r"\bSaras,? vat[it]?\b", "Sarasvati"), (r"\bSaras vatt\b", "Sarasvati"), (r"\bSarasvat\b(?!-)", "Sarasvati"),
     (r"\bSaras\?", "Sarasvati,"), (r"\bId[\\£(]+(?=[\s,.;:!?])", "Ida"), (r"\bVisfedevas\b", "Visvedevas"),
-    (r"\boma juice", "Soma juice"), (r"\bhann us not\b", "harm us not"), (r"\bju thy hands\b", "in thy hands"),
+    (r"\boma juice", "Soma juice"), (r"(\w)!? I (?=To |Svaha)", r"\1! "), (r"\bI-also\b", "I also"),
+    (r"\bUni verse\b", "Universe"), (r"\brival-slayiag\b", "rival-slaying"), (r"\bFatr-shapen\b", "Fair-shapen"),
+    (r"\bpreamiueut\b", "preeminent"), (r"\bOmutfic\b", "Omnific"), (r"\bUklia\b", "Ukha"), (r"\btheTrivrit\b", "the Trivrit"),
+    (r"\bIndra-Varuoa\b", "Indra-Varuna"), (r"\bIndca-Vishpu\b", "Indra-Vishnu"), (r"\bMitra-Yarazia\b", "Mitra-Varuna"),
+    (r"\bSo-andSo\b|\bSoaand-So\b|\bSo-and>So\b", "So-and-So"), (r"\bhendecasjrllabic\b", "hendecasyllabic"),
+    (r"\bOrdhvaoabhas\b", "Urdhvanabhas"), (r"\bNigrabbyaa\b", "Nigrabhya"), (r"\blaishis\b", "Rishis"),
+    (r"\bSoma-purohasinga\b", "Soma-purchasing"), (r"\bDadhikr's\b", "Dadhikra's"), (r"\bSo-and-Sot\b", "So-and-So"),
+    (r"(?<=[A-Za-z])[£}%<©\\/]+", ""), (r"\bO>", "O"), (r"\b\d[*^]\d\b|\s\\i\b|\bL\\", ""), (r"\bS[vwy][ahkbil&^4ª]{2,4}(?=[!\s.,;:]|$)", "Svaha"), (r"\bSvahaa\b", "Svaha"),
+    (r"\baryata\b", "Saryata"), (r"\barasvati", "Sarasvati"), (r"\bIdk\b", "Ida"), (r"\bKiu-to-the-Sun\b", "Kin-to-the-Sun"),
+    (r"\bCbatnrvimsa\b", "Chaturvimsa"), (r"\bGororiga\b", "Gomriga"), (r"\bblack-uecked\b", "black-necked"), (r"\bhann us not\b", "harm us not"), (r"\bju thy hands\b", "in thy hands"),
     (r"\byou who he and\b", "you who lie and"), (r"\ban to thy bow", "and to thy bow"), (r"\bwear% ", "wears "),
     (r"\barva and to Pasupati", "Sarva and to Pasupati"), (r"\bPufijishtbas\b", "Punjishthas"), (r"Lord of the fied Steeds", "Lord of the Red Steeds"), (r"\beta\b", "etc."),
     (r"\bono-thoughted\b", "one-thoughted"), (r"\b(Brihati|Jagati)! metre", r"\1 metre"),
+    (r"\bEudr\b", "Rudra"), (r"\bBhnlja\b", "Bhuja"), (r"\blay>", "lay"), (r"\bwith I& and", "with Ida and"),
+    (r"\bRealese\b", "Release"), (r"\bConsuipption\b", "Consumption"), (r"\boflspring\b", "offspring"),
+    (r"\bGayatrl!? metre", "Gayatri metre"), (r"\bPraiaijana\b", "Prajajana"), (r"\bUpatpsu\b", "Upamsu"),
+    (r"\bTheRishi\b", "The Rishi"), (r"\bOmmflc's", "Omnific's"), (r"\bindus trious\b", "industrious"),
+    (r"\bDrya!", "Durva!"), (r"^\\i\s+", ""), (r"\bRiksania\b", "Riksama"), (r"\bNidhauavat\b", "Nidhanavat"),
 ]
 
 
@@ -1151,7 +1168,7 @@ BOOK_FIXES = {
          (r"\bSombhikti\b", "Sambhuti"), (r"from Sambara, another from Sambhava", "from Sambhava, another from Asambhava"),
          (r"^The mail who knows .*endless life\.$",
           "The man who knows Sambhuti and Vinasa simultaneously, He, by Vinasa passing death, gains by Sambhuti endless life."),
-         (r"Nescience\. I Thus", "Nescience. Thus"), (r"clearly knows\. Self", "clearly knows, Self"), (r"lead as to riches", "lead us to riches")],
+         (r"Nescience\. I Thus", "Nescience. Thus"), (r"depart the man who kill", "depart the men who kill"), (r"clearly knows\. Self", "clearly knows, Self"), (r"lead as to riches", "lead us to riches")],
 }
 
 
@@ -1185,11 +1202,11 @@ def finish(tokens, vocab, namer, stats):
                 if fixed:
                     stats["names"] += 1
                     core = fixed
-            if core[:1].islower() and "-" not in core and vocab.score(core) < 1.5:
-                fixed = vocab.repair(core)
-                if fixed:
+            if core[:1].islower() and vocab.score(core) < 1.5:
+                parts = [vocab.repair(p) if vocab.score(p) < 1.5 else None for p in core.split("-")]
+                if any(parts):
                     stats["spelling"] += 1
-                    core = fixed
+                    core = "-".join(f or p for f, p in zip(parts, core.split("-")))
         out.append(lead + core + trail)
     text = " ".join(out)
     # a mark standing for '?' or '!': a question if the sentence opens with a question word
@@ -1211,6 +1228,10 @@ def finish(tokens, vocab, namer, stats):
     text = re.sub(r"(?<=[a-z])\?(?= [a-z])", "", text)  # 'in a place? remote'
     text = re.sub(r"(?<=[a-z])(?<!etc)\.(?= [a-z])", "", text)  # 'him who. sees'
     text = re.sub(r"(?<=\w) -(?=\w)", "-", text)  # 'self -existent'
+    text = re.sub(r"(?<=[a-z])>(?=[a-z])", "-", text)  # 'praise>song'
+    text = re.sub(r"\b([IVXLivxl]{2,6})\.(?= \d)", lambda m: m.group(1).upper().replace("L", "L") + ".", text)
+    text = re.sub(r"\b([IVX]+)l\.(?= \d)", r"\1I.", text)  # 'XIIl. 25'
+    text = re.sub(r"([.!?])[\s.,;:'\"\-—]+$", r"\1", text)  # 'a man.-——\''
     text = re.sub(r"(?<=[!?.]) …", "", text)
     text = re.sub(r"([!?]) I ([a-z])", lambda m: f"{m.group(1)} {m.group(2).upper()}", text)  # 'things! I homage'
     text = re.sub(r"(?<=[a-z])A(?=\b|'s)", "a", text)  # 'PratimA', 'DikshA's'
@@ -1385,6 +1406,11 @@ def main():
     print("\nwords not in the vocabulary (top 80):")
     print("  ", ", ".join(f"{w} {c}" for w, c in suspicious.most_common(80)))
     print("\n" + repr(summary))
+    index_path = os.path.join(OUT, "index.json")
+    index = json.load(open(index_path, encoding="utf-8"))
+    index["yajurveda"] = {"parts": [{"n": b, "name": f"Book {b}", "sub": name, "count": 1}
+                                    for b, (name, _) in sorted(summary.items())]}
+    print("index.json", write("index.json", index), "bytes")
 
 
 if __name__ == "__main__":

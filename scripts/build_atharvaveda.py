@@ -193,7 +193,7 @@ class Vocab:
 
     def plausible(self, w):
         """Not to be 'corrected': a known word, or one that English uses at all (wordfreq)."""
-        return self.known(w) or self.wf.get(w, 0.0) >= 1.5
+        return self.g.get(w, 0) > 0 or self.e.get(w, 0) >= 2 or self.wf.get(w, 0.0) >= 3.0
 
 
 def edit_distance(a, b, cap=3):
@@ -236,9 +236,11 @@ def spell(tok, vocab, other=None):
     clearly the best; with `other`, the second OCR reading must be close to it too."""
     lead, word, trail = split_punct(tok)
     c = word.lower().replace("'s", "")
-    if len(c) < 4 or not c.isalpha() or vocab.plausible(c):
+    if len(c) < 3 or not c.isalpha() or vocab.plausible(c):
         return tok
     cands = spell_candidates(c, vocab)
+    if len(c) == 3:  # a short word: only a common one, one letter off
+        cands = [x for x in cands if x[0] == 1 and -x[1] >= 200]
     if word[:1].isupper():  # a name: only Griffith's own words, and well attested
         cands = [x for x in cands if vocab.g.get(x[2], 0) >= 3]
     if not cands:
@@ -570,6 +572,10 @@ def hymns_of_book(items, n):
             continue
         if cur is not None and not isinstance(it, Head):
             out[cur].append(it)
+    for h, its in out.items():  # a one-line hymn whose line was taken for a note ('Gayatri, Ushnih, ...')
+        paras = [p for p in its if isinstance(p, Para)]
+        if paras and not any(p.verse for p in paras) and len(paras[0].lines) <= 3:
+            paras[0].verse = True
     return out
 
 
@@ -1502,7 +1508,39 @@ TITLE_FIXES = {
 # Frequent misreadings left after the two texts are compared (both texts wrong, or the word not
 # in the vocabulary), as (wrong, right) for whole words.
 REPLACEMENTS = {
+    "Sdrya": "Surya", "Varnna": "Varuna", "Varupa": "Varuna", "Graht": "Grahi", "Kiondinis": "Kimidinis",
+    "Sddra": "Sudra", "hyinn": "hymn", "miloh-kine": "milch-kine", "erushing": "crushing", "Gugguld": "Guggulu",
+    "Ajasringt": "Ajasringi", "Jearned": "learned", "g'ory": "glory", "Mitra-varuga": "Mitra-Varuna",
+    "Mabavrishas": "Mahavrishas", "Vishkaridha-j": "Vishkandha", "Ardyis": "Arayis", "Ardyts": "Arayis",
+    "Kuh": "Kuhu", "Patae": "Patha", "Pauchaudana": "Panchaudana", "Sbrabhaka": "Serabhaka", "Slra": "Sira",
+    "Khapvakha": "Khanvakha", "Khaimakhd": "Khaimakha", "Tadurt": "Taduri", "Thixxk": "Think",
+    "JLightning-Flasher": "Lightning-Flasher", "Thislowly": "This lowly",
 }
+
+# Whole phrases (the OCR split or ran together words), and passages restored where both scans fail.
+PHRASES = {
+    "Kush ilia's": "Kushtha's", "EUe where": "Elsewhere", "Mahaa- vrishas": "Mahavrishas",
+    "Mahaa-vrishas": "Mahavrishas", "Brihati, Trishtup, Jagat,": "Brihati, Trishtup, Jagati.",
+}
+
+
+# Last misreadings, found in the list of suspicious words and read against the page images; applied
+# to the finished text and titles.
+FINAL = [
+    (r"\bMitra-varu[gpy]a\b", "Mitra-Varuna"), (r"\bSbrabhaka\b", "Serabhaka"), (r"\bYajuayajuiya\b", "Yajnayajniya"),
+    (r"\bAffiicb\b", "Afflict"), (r"\bAauai\b", "Agni"), (r"\bher\. afterbirth", "her afterbirth"), (r"\beontractest\b", "contractest"),
+    (r"\baecordantly\b", "accordantly"), (r"\bhjrmn\b", "hymn"), (r"\bTrdyawana\b", "Trayamana"),
+    (r"\bNitatnt\b", "Nitatni"), (r"\bPraxr\b", "Prastara"), (r"\beattle\b", "cattle"), (r"\bRakft I\b", "Raka!"),
+    (r"\binflietest\b", "inflictest"), (r"\ball-rbounteous I\b", "all-bounteous!"), (r"\blightnmg\b", "lightning"),
+    (r"\bSvftm\b", "Svaha"), (r"\bBhatapati\b", "Bhutapati"), (r"\bdefied Earth\b", "deified Earth"),
+    (r"^A hymn to Kama or Time$", "A hymn to Kala or Time"), (r'\\"paid', '"paid'), (r'reverence be "paid!', "reverence be paid!"),
+]
+
+
+def final_fix(t):
+    for a, b in FINAL:
+        t = re.sub(a, b, t)
+    return t
 
 
 # =========================================================================== the build
@@ -1584,7 +1622,12 @@ def clean_stanza(text, vocab):
         elif w and not vocab.plausible(core(w)) and core(w) and "-" not in w:
             t = spell(t, vocab)
         toks.append(t)
-    return finish(" ".join(toks))
+    while toks and len(core(toks[-1])) <= 2 and not vocab.known(core(toks[-1])) and core(toks[-1]) not in ("o", "i"):
+        toks.pop()  # a stray mark or letter left at the end of a stanza ('Rh')
+    text = finish(" ".join(toks))
+    for a, b in PHRASES.items():
+        text = text.replace(a, b)
+    return text
 
 
 def build(ocr_dir, dharmic, ws_dir, rv_dir=None, log=print):
@@ -1849,7 +1892,7 @@ def assemble(english, variants, titles, report):
                     last = merged.get(n)
                     verses.append({"n": n, "ref": f"{b}.{h}.{n}" + (f"-{last}" if last and last != n else ""),
                                    "en": en[n]})
-            secs.append({"label": titles[(b, h)], "short": f"{b}.{h}", "name": f"Book {b}, hymn {h}",
+            secs.append({"label": titles[(b, h)], "short": f"{b}.{h}", "name": f"Hymn {h}",
                          "verses": verses})
         out[b] = {"sections": secs}
         counts[b] = len(secs)
@@ -1876,8 +1919,18 @@ def main():
     english, variants, hymns, books, vocab, report, ocr = build(*sys.argv[1:5])
     titles = make_titles(books, english, variants, ocr, sys.argv[2], read_wikisource(sys.argv[3]), vocab, report)
     out, counts = assemble(english, variants, titles, report)
+    for d in out.values():
+        for sec in d["sections"]:
+            sec["label"] = final_fix(sec["label"])
+            for v in sec["verses"]:
+                v["en"] = final_fix(v["en"])
     for b, d in out.items():
         print(f"atharvaveda/{b}.json", write(f"atharvaveda/{b}.json", d), "bytes,", counts[b], "hymns")
+    index_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "texts", "index.json")
+    index = json.load(open(index_path, encoding="utf-8"))
+    index["atharvaveda"] = {"parts": [{"n": b, "name": f"Book {b}", "sub": AV_SUB[b], "count": counts[b]}
+                                      for b in range(1, 21)]}
+    print("index.json", write("index.json", index), "bytes")
     (wa, wb), (fe, fn) = (report["wer"][0]["a"], report["wer"][0]["b"]), report["wer"][1]
     print(f"word error rate on Book 1, hymns 1-18 (Wikisource): OCR a {wa[0] / wa[1]:.4f}, OCR b {wb[0] / wb[1]:.4f}, "
           f"both compared {fe / fn:.4f} ({fe} of {fn} words)")

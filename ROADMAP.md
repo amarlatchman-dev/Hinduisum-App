@@ -28,7 +28,15 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
       ceremony, like Aarti mode.
 - [ ] **Recorded audio**: finish the ElevenLabs prayer recordings (16 prayers left), then the 141 rite
       mantras (about 13,000 characters, more than one month's free quota).
-- [ ] **Read-aloud of the English translations**, with the browser's voice.
+- [ ] **Listen to any book with the device voice**: a Listen button in the reader that reads verse by
+      verse, highlights each one and carries on into the next chapter, in English and (where the phone
+      has a Hindi voice) Sanskrit. Free, works offline, about a day's work.
+- [ ] **Recorded readings of the most-read texts** with ElevenLabs: the Bhagavad Gita (about 160,000
+      characters, Sanskrit and English), then the Sundar Kand and the key Upanishads. One or two months of a
+      paid plan rather than years of the free quota. Recording every book (about 43 million characters,
+      roughly 800 hours and 20–25 GB of audio) would need paid hosting and is not planned.
+- [ ] Link public-domain human readings where they exist (e.g. LibriVox English readings of the Gita and
+      Upanishads; Sanskrit chanting on archive.org once each licence is checked).
 - [ ] Notes on each rite page where the old manuals differ from today's custom (e.g. three rounds of the
       fire in Paraskara; the meaning of the seven steps).
 

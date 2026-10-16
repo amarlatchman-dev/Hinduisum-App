@@ -2106,7 +2106,7 @@
       ${set.groups.map((g) => `${g.title ? `<h3 class="phase">${esc(g.title)}</h3>` : ""}<div class="mantra-list">${g.mantras.map((m) => {
         const book = m.read && READ_BOOKS[m.read.split("/")[2]];
         return `<div class="card mantra">
-          <div class="m-at"><span class="n">${++k}</span><h4>${esc(m.at)}</h4></div>
+          <div class="m-at"><span class="n">${++k}</span><h4>${esc(m.at)}</h4>${m.use ? `<span class="m-use ${m.use}">${m.use === "core" ? "Central" : "Some traditions"}</span>` : ""}</div>
           ${m.do ? `<p class="m-do">${esc(m.do)}</p>` : ""}
           <p class="m-sa">${esc(m.sa)}</p>
           <p class="m-tr">${esc(m.tr)}</p>

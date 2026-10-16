@@ -1023,12 +1023,16 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .rite-steps h4 { margin: 4px 0 3px; font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
 .rite-steps p { margin: 0; color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; }
 .m-jump { margin: 6px 0 4px; white-space: normal; text-align: left; color: var(--ink); border-color: var(--gold); }
+#riteMantras { scroll-margin-top: 76px; }
 .mantra-basis { margin: 0 4px 16px; color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; }
 .mantra-list { margin-bottom: 18px; }
 .mantra { padding: 16px 18px; margin-bottom: 12px; }
 .mantra .m-at { display: flex; align-items: center; gap: 10px; }
 .mantra .n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--gold); color: var(--gold); font-weight: 600; font-size: 0.74rem; }
-.mantra h4 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.12rem; line-height: 1.25; }
+.mantra h4 { margin: 0; flex: 1; font-family: var(--display); font-weight: 600; font-size: 1.12rem; line-height: 1.25; }
+.mantra .m-use { flex: none; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 999px; padding: 3px 8px; }
+.mantra .m-use.core { background: var(--gold); color: var(--bg); }
+.mantra .m-use.some { border: 1px solid var(--line-strong); color: var(--muted); }
 .mantra .m-do { margin: 8px 0 12px; color: var(--ink-2); font-size: 0.9rem; line-height: 1.55; }
 .mantra .m-sa { margin: 0 0 4px; font-family: var(--deva); font-size: 1.08rem; line-height: 1.85; white-space: pre-line; color: var(--ink); }
 .mantra .m-tr { margin: 0 0 10px; font-style: italic; color: var(--ink-2); font-size: 0.84rem; line-height: 1.6; white-space: pre-line; }

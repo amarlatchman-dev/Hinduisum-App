@@ -96,6 +96,8 @@ The Gita and Ramayana verse pairings come from the open-source [Katha](https://g
 
 The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Padma, Bhavishya and Varaha Puranas from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
 
+The mantras of the rites of passage (`js/rite-mantras.js`) follow the ritual manuals, the Grihya Sutras, in the order each rite is performed: chiefly the Paraskara Grihya Sutra of the White Yajurveda, with Katyayana's supplements on shraddha and tarpana, from [Sanskrit Wikisource](https://sa.wikisource.org/) (CC BY-SA), and the Ashvalayana Grihya Sutra for the funeral, from GRETIL (CC BY-NC-SA 4.0), with the Vedic verses they quote taken from the samhitas in `texts/`. Each mantra's Sanskrit was checked against its source; Hermann Oldenberg's translation of the Grihya Sutras (*Sacred Books of the East* 29–30, 1886–92) was used to place the verses, and the English is our own. Rites with no chapter in the Grihya Sutras, such as Vidyarambha and Shashtipurti, use Vedic prayers that priests commonly choose for them.
+
 To rebuild:
 
 ```sh

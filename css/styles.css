@@ -1045,3 +1045,12 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .rite-notes .card { margin: 0; }
 .rite-notes p { margin: 8px 0 0; color: var(--ink-2); font-size: 0.92rem; }
 @media (min-width: 560px) { .rite-notes { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Backup and restore ---------- */
+.bk-have { margin: 6px 0 4px; color: var(--ink); line-height: 1.6; }
+.bk-have span { white-space: nowrap; }
+.bk-rec { display: flex; align-items: center; gap: 12px; margin: 14px 0 0; font-size: 0.92rem; color: var(--ink); cursor: pointer; }
+.bk-rec input { flex: none; width: 19px; height: 19px; margin: 0; accent-color: var(--gold); }
+.card.notice { border-color: var(--gold); }
+.card.notice p { margin: 6px 0 0; color: var(--ink-2); font-size: 0.92rem; }
+.footer-note a, .card.notice a { color: var(--gold); }

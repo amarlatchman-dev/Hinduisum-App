@@ -16,9 +16,10 @@ Across the app:
 
 - **Search** (top bar) finds prayers, festivals, lessons and words in every scripture. Spellings with or without diacritics both match, so "Krishna" finds "Kṛṣṇa". The Ramayana and Mahabharata are searched on request because of their size.
 - **Your practice** keeps a private record of mantras and malas chanted, chapters read, aartis sung and lessons finished, with a daily streak, a 12-week view and simple check-ins (prayed, meditated, fasted…).
+- **Backup and restore** saves everything the app keeps on the device (bookmarks, highlights and notes, practice history, japa counts, favourites, finished lessons, reading places, rite checklists, reminder choices, settings and, if chosen, your recordings) to one file, and restores it on any device, either added to what is there or replacing it.
 - **Reminders** cover festivals, Ekadashi, moon days and vrats, the evening before or the same morning, plus an optional daily prayer reminder. They can be added to the phone's own calendar as an `.ics` file for exact alerts, and on browsers that allow it the app can show its own notices.
 
-It also has dark mode and works offline as an installable PWA. It needs no account, sends no tracking, and saves progress only on the user's own device.
+It also has dark mode and works offline as an installable PWA. It needs no account, sends no tracking, and saves progress only on the user's own device, which can be backed up to a file. Planned work is listed in [ROADMAP.md](ROADMAP.md).
 
 ## Run it
 

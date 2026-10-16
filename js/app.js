@@ -1492,6 +1492,7 @@
           <a class="row" href="#/reminders">${seal("स्मर")}<span class="body"><h3>Reminders</h3><p>Festival alerts and a daily prayer nudge</p></span><span class="chev">›</span></a>
           <a class="row" href="#/saved">${seal("ग्रन्थ")}<span class="body"><h3>Bookmarks and notes</h3><p>Verses you have saved while reading</p></span><span class="chev">›</span></a>
           <a class="row" href="#/recordings">${seal("नाद")}<span class="body"><h3>Your recordings</h3><p>Chants recorded in your own voice</p></span><span class="chev">›</span></a>
+          <a class="row" href="#/backup">${seal("रक्षा")}<span class="body"><h3>Backup and restore</h3><p>${store.get("backup:last", 0) ? `Last backup ${esc(fmtDay(store.get("backup:last", 0)))}` : "Save everything here to a file, or move it to a new phone"}</p></span><span class="chev">›</span></a>
         </div>
       </div>`;
   }
@@ -1919,8 +1920,196 @@
         </div>
       </div>
 
+      ${ids.length ? `<p class="footer-note">Recordings are kept on this device. <a href="#/backup">Back them up</a> to keep them safe.</p>` : ""}
+
       ${published.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Recorded for everyone</h2></div>
         <div class="list">${published.map((id) => prayerRow(prayer(id))).join("")}</div></div>` : ""}`;
+  }
+
+  /* ====================================================================== */
+  /* Backup and restore                                                      */
+  /* Everything the app keeps on this device, in one file to keep or move.   */
+  /* ====================================================================== */
+  const BACKUP_VERSION = 1;
+  // Not carried between devices: the backup's own bookkeeping, and what belongs to this device alone
+  // (its background-sync registration and its speech voices).
+  const LOCAL_ONLY = (k) => k.startsWith("backup:") || k === "reminders:periodic" || k.startsWith("voice:");
+
+  function storedKeys() {
+    const keys = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("dp:") && !LOCAL_ONLY(k.slice(3))) keys.push(k.slice(3));
+      }
+    } catch (e) { /* storage unavailable */ }
+    return keys.sort();
+  }
+
+  const fmtSize = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`;
+  const fmtDay = (t) => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+
+  // What a set of stored values holds, in words: "12 saved verses", "40 days of practice"…
+  function backupSummary(data, recs) {
+    const sum = (prefix, f) => Object.keys(data).filter((k) => k.startsWith(prefix)).reduce((n, k) => n + f(data[k]), 0);
+    return [
+      [Object.keys(data.marks || {}).length, "saved verse"],
+      [Object.values(data.practice || {}).filter((d) => dayPoints(d) > 0).length, "day of practice", "days of practice"],
+      [sum("japa:", (j) => (j && (j.count || j.malas) ? 1 : 0)), "japa counter"],
+      [(data.favorites || []).length, "favourite prayer"],
+      [sum("progress:", (l) => (Array.isArray(l) ? l.length : 0)), "finished lesson"],
+      [sum("read:pos:", () => 1), "book with your place kept", "books with your place kept"],
+      [sum("rite:need:", (l) => (Array.isArray(l) && l.length ? 1 : 0)), "rite checklist"],
+      [recs, "recording"]
+    ].filter(([n]) => n > 0).map(([n, one, many]) => plural(n, one, many));
+  }
+
+  const blobBase64 = (blob) => new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+    fr.onerror = () => reject(fr.error);
+    fr.readAsDataURL(blob);
+  });
+  function base64Blob(b64, type) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: type || "audio/webm" });
+  }
+
+  async function makeBackup(withRecordings) {
+    const data = {};
+    storedKeys().forEach((k) => { data[k] = store.get(k, null); });
+    let recs = [];
+    if (withRecordings) {
+      const all = await idbRun("readonly", (st) => st.getAll()).catch(() => []);
+      recs = await Promise.all((all || []).map(async (r) => ({ id: r.id, t: r.t, dur: r.dur, type: r.blob.type, data: await blobBase64(r.blob) })));
+    }
+    return { app: "dharma-path", kind: "backup", version: BACKUP_VERSION, created: new Date().toISOString(), data, recordings: recs };
+  }
+
+  const backupFile = (blob) => new File([blob], `dharma-path-backup-${ymd(new Date())}.json`, { type: "application/json" });
+  const canShareFiles = () => { try { return !!(navigator.canShare && navigator.canShare({ files: [backupFile(new Blob(["{}"]))] })); } catch (e) { return false; } };
+
+  async function saveBackup(share) {
+    const box = document.getElementById("bkRec");
+    const blob = new Blob([JSON.stringify(await makeBackup(!box || box.checked))], { type: "application/json" });
+    const file = backupFile(blob);
+    let done = false;
+    if (share) {
+      try {
+        if (canShareFiles()) { await navigator.share({ files: [file], title: "Dharma Path backup" }); done = true; }
+      } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    if (!done) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = file.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+    store.set("backup:last", Date.now());
+    toast(done ? "Backup sent" : "Backup saved to your downloads");
+    if (location.hash.startsWith("#/backup")) route();
+  }
+
+  async function readBackup(file) {
+    let b = null;
+    try { b = JSON.parse(await file.text()); } catch (e) { /* not JSON */ }
+    if (!b || b.app !== "dharma-path" || b.kind !== "backup" || !b.data || typeof b.data !== "object") throw new Error("That file isn't a Dharma Path backup");
+    if (b.version > BACKUP_VERSION) throw new Error("This backup comes from a newer Dharma Path. Reload the app to update it, then try again");
+    return b;
+  }
+
+  // Adding a backup to what is here never removes anything: lists are joined, records that carry a
+  // time ("t") keep the newer copy, counts keep the higher number, and this device's settings stay.
+  const isObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+  function mergeValue(here, there, top) {
+    if (here === undefined || here === null) return there;
+    if (Array.isArray(here) && Array.isArray(there)) {
+      const seen = new Set(here.map((x) => JSON.stringify(x)));
+      return here.concat(there.filter((x) => !seen.has(JSON.stringify(x))));
+    }
+    if (isObj(here) && isObj(there)) {
+      if (typeof here.t === "number" && typeof there.t === "number") return there.t > here.t ? there : here;
+      const out = { ...here };
+      Object.keys(there).forEach((k) => { out[k] = mergeValue(here[k], there[k], false); });
+      return out;
+    }
+    if (!top && typeof here === "number" && typeof there === "number") return Math.max(here, there);
+    return here;
+  }
+
+  async function restoreBackup(b, mode) {
+    if (mode === "replace") storedKeys().forEach((k) => { try { localStorage.removeItem("dp:" + k); } catch (e) { /* ignore */ } });
+    Object.entries(b.data).forEach(([k, v]) => {
+      if (LOCAL_ONLY(k)) return;
+      store.set(k, mode === "replace" ? v : mergeValue(store.get(k, undefined), v, true));
+    });
+    // Notices need this device's own permission; leave them off until they are turned on here.
+    const prefs = store.get("reminders", null);
+    if (prefs && prefs.notify && !(window.Notification && Notification.permission === "granted")) store.set("reminders", { ...prefs, notify: false });
+    let recs = 0;
+    try {
+      if (mode === "replace") await idbRun("readwrite", (st) => st.clear());
+      for (const r of b.recordings || []) {
+        if (mode !== "replace" && mine[r.id] && mine[r.id].t >= r.t) continue;
+        await idbRun("readwrite", (st) => st.put({ id: r.id, blob: base64Blob(r.data, r.type), dur: r.dur, t: r.t }));
+        recs++;
+      }
+    } catch (e) { /* recordings can't be stored here, for example in a private window */ }
+    store.set("backup:restored", { from: b.created, mode, recs, lost: (b.recordings || []).length - recs });
+    location.reload();
+  }
+
+  async function chooseBackup(file) {
+    let b;
+    try { b = await readBackup(file); } catch (e) { toast(e.message); return; }
+    const what = backupSummary(b.data, (b.recordings || []).length);
+    const res = await openSheet({
+      eyebrow: "Restore a backup",
+      preview: `Backup made on ${fmtDay(b.created)}${what.length ? `: ${what.join(", ")}` : ", with nothing saved in it yet"}.`,
+      actions: [{ id: "merge", label: "Add it to this device", primary: true }, { id: "replace", label: "Replace everything on this device" }, { id: "cancel", label: "Cancel" }]
+    });
+    if (!res || res.id === "cancel") return;
+    if (res.id === "replace") {
+      const sure = await openSheet({
+        eyebrow: "Replace everything",
+        preview: "The bookmarks, notes, practice history, settings and recordings now on this device will be removed, and the backup's put in their place. This can't be undone.",
+        actions: [{ id: "replace", label: "Replace everything", primary: true }, { id: "cancel", label: "Cancel" }]
+      });
+      if (!sure || sure.id !== "replace") return;
+    }
+    toast("Restoring…");
+    await restoreBackup(b, res.id);
+  }
+
+  function backupView() {
+    const data = {};
+    storedKeys().forEach((k) => { data[k] = store.get(k, null); });
+    const ids = Object.keys(mine);
+    const bytes = ids.reduce((n, id) => n + (mine[id].size || 0), 0);
+    const have = backupSummary(data, ids.length);
+    const last = store.get("backup:last", 0);
+    const done = store.get("backup:restored", null);
+    if (done) { try { localStorage.removeItem("dp:backup:restored"); } catch (e) { /* ignore */ } }
+    return `
+      <h2 class="page-title">Backup and restore</h2>
+      <p class="page-sub">Dharma Path keeps everything you do on this device, and nowhere else. Save it to a file now and then, so it is never lost, and to bring it to a new phone.</p>
+      ${done ? `<div class="card notice"><div class="eyebrow">Restored</div><p>Your backup from ${esc(fmtDay(done.from))} has been ${done.mode === "replace" ? "restored on this device" : "added to this device"}.${done.lost > 0 ? ` ${plural(done.lost, "recording")} couldn't be stored in this browser.` : ""} If you use reminder notices, turn them on again in <a href="#/reminders">Reminders</a>.</p></div>` : ""}
+      <div class="card">
+        <div class="eyebrow">On this device</div>
+        <p class="bk-have">${have.length ? have.map((x) => `<span>${esc(x)}</span>`).join(" · ") : "Nothing saved yet. Your bookmarks, notes, practice and recordings will be counted here."}</p>
+        ${ids.length ? `<label class="bk-rec"><input type="checkbox" id="bkRec" checked><span>Include my recordings (${fmtSize(bytes)})</span></label>` : ""}
+        <div class="btn-row"><button class="btn" data-backup="save">Download a backup</button>${canShareFiles() ? `<button class="btn ghost" data-backup="share">Send it…</button>` : ""}</div>
+        <p class="meta" style="margin:12px 0 0">${last ? `Last backup: ${esc(fmtDay(last))}.` : "No backup made on this device yet."} Keep the file somewhere safe, such as your email, Google Drive or iCloud.</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Restore</div>
+        <h3 class="card-h">Bring back a backup</h3>
+        <p class="meta" style="margin:0">Choose a Dharma Path backup file. You can add it to what is already here, or replace what is here with it.</p>
+        <div class="btn-row"><label class="btn ghost">Choose a backup file<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
+      </div>
+      <p class="footer-note">A backup holds your bookmarks, highlights and notes, practice history and japa counts, favourite prayers, finished lessons, places in the books, rite checklists, reminder choices and settings, and your recordings if you include them. Books saved for offline reading aren't included; save them again from the library.</p>`;
   }
 
   /* ====================================================================== */
@@ -2742,7 +2931,8 @@
           <span class="body"><h3>${esc(m.bookTitle)}</h3><p class="where">${esc(m.where)}${m.bm ? " · Bookmark" : ""}${m.hl ? " · Highlight" : ""}</p>
           <p class="snip ${m.hl ? "hl-snip" : ""}">${esc(m.text.length > 180 ? m.text.slice(0, 180) + "…" : m.text)}</p>
           ${m.note ? `<p class="note-snip">${esc(m.note)}</p>` : ""}</span><span class="chev">›</span></a>`;
-      }).join("")}</div>` : `<div class="card empty">${all.length ? "Nothing here yet." : "Nothing saved yet. Open any scripture and tap a verse to begin."}</div>`}`;
+      }).join("")}</div>` : `<div class="card empty">${all.length ? "Nothing here yet." : "Nothing saved yet. Open any scripture and tap a verse to begin."}</div>`}
+      ${all.length ? `<p class="footer-note">Your notes are kept on this device. <a href="#/backup">Back them up</a> to keep them safe.</p>` : ""}`;
   }
 
   /* ====================================================================== */
@@ -2905,8 +3095,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { rites: "learn", practice: "home", reminders: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { rites: "learn", practice: "home", reminders: "home", backup: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -2929,7 +3119,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -2942,6 +3132,7 @@
         case "practice": html = practiceView(); break;
         case "reminders": html = await remindersView(); break;
         case "recordings": await recordingsReady; html = recordingsView(); break;
+        case "backup": await recordingsReady; html = backupView(); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -3007,6 +3198,8 @@
   /* Interactions                                                            */
   /* ====================================================================== */
   view.addEventListener("click", (e) => {
+    const bk = e.target.closest("[data-backup]");
+    if (bk) { saveBackup(bk.dataset.backup === "share").catch(() => toast("Couldn't make the backup")); return; }
     const jump = e.target.closest("[data-jump]");
     if (jump) { const el = document.getElementById(jump.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth" }); return; }
     if (readerState && !e.target.closest("a, button, textarea") && !String(getSelection())) {
@@ -3245,6 +3438,12 @@
   });
 
   view.addEventListener("change", (e) => {
+    if (e.target.id === "bkFile") {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (f) chooseBackup(f);
+      return;
+    }
     const nd = e.target.closest("[data-need]");
     if (nd) {
       const [rid, k] = nd.dataset.need.split(":");

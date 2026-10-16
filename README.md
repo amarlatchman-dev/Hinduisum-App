@@ -89,12 +89,12 @@ The texts in `texts/` are generated from public-domain and openly licensed sourc
 | Vishnu Purana | Manmatha Nath Dutt after H. H. Wilson, all 6 books | — |
 | Garuda Purana | Ernest Wood and S. V. Subrahmanyam (1911), the Saroddhara | — |
 | Devi Bhagavatam | Swami Vijnanananda (1921–23), complete, with his notes | — |
-| Bhagavata, Shiva, Linga, Skanda, Narada, Brahma, Brahmanda, Kurma, Vamana and Varaha Puranas | none yet | GRETIL (CC BY-NC-SA 4.0); the Varaha from Sanskrit Wikisource (CC BY-SA) |
+| Bhagavata, Shiva, Linga, Skanda, Narada, Padma, Brahma, Brahmanda, Bhavishya, Kurma, Vamana and Varaha Puranas | none yet | GRETIL (CC BY-NC-SA 4.0); the Padma, Bhavishya and Varaha from Sanskrit Wikisource (CC BY-SA) |
 | Yoga Sutras | Charles Johnston (1912), all 4 books, with his commentary | — |
 
 The Gita and Ramayana verse pairings come from the open-source [Katha](https://github.com/radhepa/Katha) project. Ganguli's text comes from [sacred-texts.com](https://sacred-texts.com/hin/maha/) via [rahulnyk/mahabharata](https://github.com/rahulnyk/mahabharata). The Vishnu Purana is Project Gutenberg #66208 as prepared by [Tattvika (Kathaveda)](https://github.com/jagdishak-hub/Kathaveda); the Vedic Sanskrit and the Sama Veda come from [DharmicData](https://github.com/bhavykhatri/DharmicData); the Paramananda Upanishads and the Yoga Sutras are Project Gutenberg #3283 and #2526 via [GITenberg](https://github.com/GITenberg). Ramayana verses that could not be matched reliably to the Sanskrit are left out, so its verse numbers sometimes skip.
 
-The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Varaha Purana from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Padma and Bhavishya Puranas will follow when a usable copy can be fetched, and the Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
+The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Padma, Bhavishya and Varaha Puranas from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
 
 To rebuild:
 
@@ -119,6 +119,7 @@ The later books are built by their own scripts, each of which explains in its he
 - `scripts/build_upanishads.py` (with `scripts/upanishads_sbe15.py`): the Upanishads from Müller's and Hume's translations.
 - `scripts/build_puranas.py`: the Garuda Purana and the Devi Bhagavatam, from archive.org.
 - `scripts/build_sanskrit_puranas.py`: the Sanskrit-only Puranas, from GRETIL and Sanskrit Wikisource.
+- `scripts/build_wikisource_puranas.py`: the Padma and Bhavishya Puranas, from Sanskrit Wikisource.
 
 The Rig Veda hymn selection and its English translations live in `scripts/rigveda_hymns.py`.
 

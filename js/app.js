@@ -2729,8 +2729,8 @@
   const SMALL_BOOKS = ["gita", "samaveda", "upanishads", "yoga", "vishnu", "garuda"];
   const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "mahabharata"];
   // The Puranas given only in Sanskrit are searched by their transliteration, on request.
-  const SANSKRIT_BOOKS = ["bhagavata", "shiva", "linga", "skanda", "narada", "brahma", "brahmanda", "kurma", "vamana", "varaha"];
-  const LARGE_MB = 37, SANSKRIT_MB = 41; // download sizes of the texts, in MB
+  const SANSKRIT_BOOKS = ["bhagavata", "shiva", "linga", "skanda", "narada", "padma", "brahma", "brahmanda", "bhavishya", "kurma", "vamana", "varaha"];
+  const LARGE_MB = 37, SANSKRIT_MB = 72; // download sizes of the texts, in MB
   const searchBooks = {};
   const searchJobs = {};
   let searchToken = 0;
@@ -2839,7 +2839,7 @@
       <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Devi Bhagavatam, the Ramayana and the Mahabharata are very large. Searching them downloads about ${LARGE_MB} MB the first time, then works offline.</p>
       <button class="btn ghost" data-search-epics>Also search the Vedas and the epics</button></div>`) +
       (skt ? "" : `
-      <div class="card" style="margin-top:12px"><p style="margin:0 0 12px;color:var(--ink-2)">Ten Puranas, the Bhagavata among them, are here in Sanskrit only. Search them by their transliteration, such as “krishna” or “narayana”. They download about ${SANSKRIT_MB} MB the first time.</p>
+      <div class="card" style="margin-top:12px"><p style="margin:0 0 12px;color:var(--ink-2)">Twelve Puranas, the Bhagavata among them, are here in Sanskrit only. Search them by their transliteration, such as “krishna” or “narayana”. They download about ${SANSKRIT_MB} MB the first time.</p>
       <button class="btn ghost" data-search-sanskrit>Also search the Sanskrit Puranas</button></div>`) +
       (found ? "" : `<div class="card empty">Nothing found for “${esc(q)}”. Try a shorter word or a different spelling.</div>`);
   }

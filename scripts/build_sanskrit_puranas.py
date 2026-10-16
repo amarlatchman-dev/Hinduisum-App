@@ -208,7 +208,7 @@ def build(gretil, varaha):
             write(f"{pid}/{i}.json", {"sections": secs})
             name = (names.get(part, f"Part {part[0]}") if isinstance(names, dict)
                     else f"{names} {part[0]}" if isinstance(names, str) else title)
-            index_parts.append({"n": i, "name": name, "sub": f"{len(secs)} adhyayas", "count": len(secs)})
+            index_parts.append({"n": i, "name": name, "sub": "", "count": len(secs)})
         index[pid] = {"parts": index_parts}
         total = sum(len(s) for c in parts.values() for s in c.values())
         print(f"{pid}: {len(parts)} parts, {sum(len(c) for c in parts.values())} chapters, {total} verses")

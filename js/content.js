@@ -322,6 +322,20 @@ window.CONTENT = {
       about: "A Purana of Vishnu in which the sage Narada learns from the four Kumaras about dharma, devotion and the vows of the year; its first part also summarises all eighteen Puranas. Its second part, given here in part, tells the story of King Rukmangada and his devotion to the Ekadashi fast, and the glory of the Ganga."
     },
     {
+      id: "padma",
+      title: "Padma Purana",
+      sanskritTitle: "पद्मपुराणम्",
+      tagline: "The lotus of creation, holy places and devotion to Vishnu · Sanskrit",
+      partLabel: "Khanda",
+      sectionLabel: "Adhyaya",
+      verses: true,
+      sanskrit: true,
+      sanskritOnly: true,
+      category: "purana",
+      translation: "Sanskrit text from Sanskrit Wikisource (CC BY-SA), in Devanagari with a transliteration. A free English translation is still being looked for.",
+      about: "One of the longest Puranas, named for the lotus from which Brahma rose at the start of creation. Its seven khandas tell of creation and the lines of kings, the holy lake of Pushkara, the sacred rivers and places of pilgrimage, the story of Rama's horse sacrifice, and the vows and festivals dear to Vishnu, among them the glories of Ekadashi and of the Bhagavad Gita."
+    },
+    {
       id: "brahma",
       title: "Brahma Purana",
       sanskritTitle: "ब्रह्मपुराणम्",
@@ -349,6 +363,20 @@ window.CONTENT = {
       category: "purana",
       translation: "Sanskrit text from GRETIL, the Göttingen Register of Electronic Texts in Indian Languages (CC BY-NC-SA 4.0), in Devanagari with a transliteration. A free English translation is still being looked for.",
       about: "The Purana of the cosmic egg, brahmanda, from which the universe unfolds: creation, the ages of the world, the lines of gods, sages and kings, and the shape of the worlds. Its last part holds the Lalitopakhyana, the story of the Goddess Lalita Tripurasundari."
+    },
+    {
+      id: "bhavishya",
+      title: "Bhavishya Purana",
+      sanskritTitle: "भविष्यपुराणम्",
+      tagline: "Sun worship, rites and the ages to come · Sanskrit",
+      partLabel: "Part",
+      sectionLabel: "Adhyaya",
+      verses: true,
+      sanskrit: true,
+      sanskritOnly: true,
+      category: "purana",
+      translation: "Sanskrit text from Sanskrit Wikisource (CC BY-SA), in Devanagari with a transliteration. A free English translation is still being looked for.",
+      about: "The Purana of things to come, bhavishya, told by the sage Sumantu to King Shatanika and by Krishna to Yudhishthira. Its Brahma Parva teaches the rites of life and the worship of the Sun; the Madhyama Parva the building and consecration of temples; the Pratisarga Parva tells of the kings and saints of the ages to come; and the Uttara Parva of the vows and gifts of the whole year."
     },
     {
       id: "kurma",

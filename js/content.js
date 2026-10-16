@@ -209,8 +209,9 @@ window.CONTENT = {
       partLabel: "Upanishad",
       sectionLabel: "Part",
       verses: true,
+      sanskrit: true,
       category: "upanishad",
-      translation: "Isha, Katha and Kena: translation with commentary by Swami Paramananda (1919). Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka and Svetasvatara: F. Max Müller, Sacred Books of the East (1879 and 1884), with Sanskrit names in modern spelling. Mandukya: Robert Ernest Hume (1921). All public domain.",
+      translation: "Isha, Katha and Kena: translation with commentary by Swami Paramananda (1919). Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka and Svetasvatara: F. Max Müller, Sacred Books of the East (1879 and 1884), with Sanskrit names in modern spelling. Mandukya: Robert Ernest Hume (1921). All public domain. The Sanskrit, with a transliteration, is from Sanskrit Wikisource (CC BY-SA), checked against the translations verse by verse.",
       about: "The philosophical heart of the Vedas, teaching the oneness of the Self (Atman) and the Absolute (Brahman). Here are the principal Upanishads: the Isha; the Katha, with the young Nachiketas questioning Death himself; the Kena; the Prasna's six questions; the Mundaka's higher knowledge; the Mandukya on Om and the four states of the Self; the Taittiriya's five sheaths; the Aitareya; the Chandogya, with its 'That thou art'; the vast Brihadaranyaka; and the devotional Svetasvatara."
     },
     {

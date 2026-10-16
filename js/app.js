@@ -3010,9 +3010,10 @@
           const base = readerHref(bookId, part.n, n);
           if (sec.verses) {
             sec.verses.forEach((v) => {
-              const o = Array.isArray(v) ? { n: v[0], sa: v[1], en: v[3], ref: bookId === "gita" ? `${part.n}.${v[0]}` : `Verse ${v[0]}` } : v;
+              const o = Array.isArray(v) ? { n: v[0], sa: v[1], tr: v[2], en: v[3], ref: bookId === "gita" ? `${part.n}.${v[0]}` : `Verse ${v[0]}` } : v;
+              // The transliteration is searched too, so "tat tvam asi" finds the verse as well as its English.
               entries.push({ href: `${base}?v=${o.n}`, title: book.title, where: `${where} · ${o.ref || o.n}`, text: o.en || o.tr || "",
-                key: keyOf(o.en || o.tr, ...(o.note || [])) + " " + (o.sa || "") });
+                key: keyOf(o.en || o.tr, o.en ? o.tr || "" : "", ...(o.note || [])) + " " + (o.sa || "") });
             });
           } else {
             sec.paras.forEach((t, i) => entries.push({ href: `${base}?p=${i}`, title: book.title, where, text: t, key: keyOf(t) }));

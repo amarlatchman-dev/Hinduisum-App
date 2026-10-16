@@ -73,7 +73,7 @@ def number(s):
 
 def iast(line):
     t = sanscript.transliterate(line, sanscript.DEVANAGARI, sanscript.IAST)
-    return re.sub(r"\s+", " ", t).strip()
+    return re.sub(r"\s+", " ", t.replace("~", "m̐")).strip()         # the library writes ँ as "~"
 
 
 def text_lines(wiki):

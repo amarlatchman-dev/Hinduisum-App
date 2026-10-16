@@ -85,7 +85,7 @@ The texts in `texts/` are generated from public-domain and openly licensed sourc
 | Sama Veda | Ralph T. H. Griffith (1895), all 1,794 verses, via DharmicData | — |
 | Yajur Veda | Ralph T. H. Griffith, *The Texts of the White Yajurveda* (1899), all 40 books, cleaned from two archive.org scans | DharmicData |
 | Atharva Veda | Ralph T. H. Griffith (1895–96), all 20 books, cleaned from two archive.org scans | DharmicData |
-| Upanishads | Swami Paramananda (1919): Isha, Katha, Kena; F. Max Müller (1879, 1884): Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka, Svetasvatara; R. E. Hume (1921): Mandukya | — |
+| Upanishads | Swami Paramananda (1919): Isha, Katha, Kena; F. Max Müller (1879, 1884): Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka, Svetasvatara; R. E. Hume (1921): Mandukya | Sanskrit Wikisource (CC BY-SA), matched verse by verse |
 | Ramayana | Manmatha Nath Dutt (1891–94), about 15,000 verses across all 7 kandas | Critical edition e-text |
 | Mahabharata | Kisari Mohan Ganguli (1883–96), complete, all 18 parvas | — |
 | Vishnu Purana | Manmatha Nath Dutt after H. H. Wilson, all 6 books | — |
@@ -96,7 +96,7 @@ The texts in `texts/` are generated from public-domain and openly licensed sourc
 
 The Gita and Ramayana verse pairings come from the open-source [Katha](https://github.com/radhepa/Katha) project. Ganguli's text comes from [sacred-texts.com](https://sacred-texts.com/hin/maha/) via [rahulnyk/mahabharata](https://github.com/rahulnyk/mahabharata). The Vishnu Purana is Project Gutenberg #66208 as prepared by [Tattvika (Kathaveda)](https://github.com/jagdishak-hub/Kathaveda); the Vedic Sanskrit and the Sama Veda come from [DharmicData](https://github.com/bhavykhatri/DharmicData); the Paramananda Upanishads and the Yoga Sutras are Project Gutenberg #3283 and #2526 via [GITenberg](https://github.com/GITenberg). Ramayana verses that could not be matched reliably to the Sanskrit are left out, so its verse numbers sometimes skip.
 
-The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Padma, Bhavishya and Varaha Puranas from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
+The Sanskrit-only Puranas come from [GRETIL](https://gretil.sub.uni-goettingen.de/), the Göttingen Register of Electronic Texts in Indian Languages, under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 licence, and the Padma, Bhavishya and Varaha Puranas and the Sanskrit of the Upanishads from [Sanskrit Wikisource](https://sa.wikisource.org/) under CC BY-SA; the files made from them in `texts/` are shared under the same terms. The Puranas with free English translations (Markandeya, Brahma Vaivarta, Matsya, Agni) are being prepared from scans.
 
 The mantras of the rites of passage (`js/rite-mantras.js`) follow the ritual manuals, the Grihya Sutras, in the order each rite is performed: chiefly the Paraskara Grihya Sutra of the White Yajurveda, with Katyayana's supplements on shraddha and tarpana, from [Sanskrit Wikisource](https://sa.wikisource.org/) (CC BY-SA), and the Ashvalayana Grihya Sutra for the funeral, from GRETIL (CC BY-NC-SA 4.0), with the Vedic verses they quote taken from the samhitas in `texts/`. Each mantra's Sanskrit was checked against its source; Hermann Oldenberg's translation of the Grihya Sutras (*Sacred Books of the East* 29–30, 1886–92) was used to place the verses, and the English is our own. Rites with no chapter in the Grihya Sutras, such as Vidyarambha and Shashtipurti, use Vedic prayers that priests commonly choose for them.
 
@@ -124,6 +124,7 @@ The later books are built by their own scripts, each of which explains in its he
 - `scripts/build_puranas.py`: the Garuda Purana and the Devi Bhagavatam, from archive.org.
 - `scripts/build_sanskrit_puranas.py`: the Sanskrit-only Puranas, from GRETIL and Sanskrit Wikisource.
 - `scripts/build_wikisource_puranas.py`: the Padma and Bhavishya Puranas, from Sanskrit Wikisource.
+- `scripts/add_upanishad_sanskrit.py`: adds the Sanskrit of the eleven Upanishads, from Sanskrit Wikisource, to the English built by `build_upanishads.py`, matching Müller's and Paramananda's numbering verse by verse.
 
 The Rig Veda hymn selection and its English translations live in `scripts/rigveda_hymns.py`.
 

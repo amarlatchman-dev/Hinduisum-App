@@ -9,10 +9,11 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
       file, and restore it on any device.
 - [x] **Plain transliteration**: a switch to show "Om Namah Shivaya" instead of "oṃ namaḥ śivāya", for
       readers who find diacritics hard.
-- [ ] **Sanskrit for the Upanishads**: the Upanishads are in English only; add the Devanagari and IAST
+- [x] **Sanskrit for the Upanishads**: the Upanishads are in English only; add the Devanagari and IAST
       (GRETIL has the texts).
 - [ ] **The Ramcharitmanas**, and the Sundar Kand on its own: Tulsidas's Awadhi with F. S. Growse's
-      public-domain English (1883). For many diaspora families this is the scripture they sing.
+      public-domain English (1883). For many diaspora families this is the scripture they sing. The
+      DharmicData set already used for the Vedas has the Ramcharitmanas text.
 - [ ] **Dates by tithi for loved ones**: enter the date someone passed away and get their yearly
       shraddha tithi and their day in Pitru Paksha; birthdays by Hindu tithi too. The city calendars
       already hold the tithis.

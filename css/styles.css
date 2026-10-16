@@ -1022,6 +1022,19 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .rite-steps .n { flex: none; position: relative; width: 31px; height: 31px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--gold); color: var(--gold); font-weight: 600; font-size: 0.82rem; }
 .rite-steps h4 { margin: 4px 0 3px; font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.2; }
 .rite-steps p { margin: 0; color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; }
+.m-jump { margin: 6px 0 4px; white-space: normal; text-align: left; color: var(--ink); border-color: var(--gold); }
+.mantra-basis { margin: 0 4px 16px; color: var(--ink-2); font-size: 0.92rem; line-height: 1.6; }
+.mantra-list { margin-bottom: 18px; }
+.mantra { padding: 16px 18px; margin-bottom: 12px; }
+.mantra .m-at { display: flex; align-items: center; gap: 10px; }
+.mantra .n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--gold); color: var(--gold); font-weight: 600; font-size: 0.74rem; }
+.mantra h4 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.12rem; line-height: 1.25; }
+.mantra .m-do { margin: 8px 0 12px; color: var(--ink-2); font-size: 0.9rem; line-height: 1.55; }
+.mantra .m-sa { margin: 0 0 4px; font-family: var(--deva); font-size: 1.08rem; line-height: 1.85; white-space: pre-line; color: var(--ink); }
+.mantra .m-tr { margin: 0 0 10px; font-style: italic; color: var(--ink-2); font-size: 0.84rem; line-height: 1.6; white-space: pre-line; }
+.mantra .m-en { margin: 0 0 10px; line-height: 1.6; }
+.mantra .m-src { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 0.76rem; line-height: 1.5; color: var(--muted); }
+.mantra .m-src a { color: var(--gold); text-decoration: none; font-weight: 500; white-space: nowrap; }
 .customs .row h3 { font-size: 1.02rem; }
 .customs .row p { color: var(--ink-2); }
 .rite-notes { display: grid; gap: 12px; margin: 6px 0 4px; }

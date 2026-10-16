@@ -2092,6 +2092,31 @@
     return `<ol class="rite-steps">${steps.map(([t, d], i) => `<li><span class="n">${i + 1 + offset}</span><div><h4>${esc(t)}</h4><p>${esc(d)}</p></div></li>`).join("")}</ol>`;
   }
 
+  // The mantras of a rite, in the order they are said, from js/rite-mantras.js.
+  const READ_BOOKS = { rigveda: "Rig Veda", yajurveda: "Yajur Veda", atharvaveda: "Atharva Veda", samaveda: "Sama Veda", upanishads: "Upanishads" };
+  const riteMantraSet = (r) => (C.riteMantras || {})[r.id];
+  const riteMantraCount = (set) => set ? set.groups.reduce((n, g) => n + g.mantras.length, 0) : 0;
+
+  function riteMantras(r) {
+    const set = riteMantraSet(r);
+    if (!set) return "";
+    let k = 0;
+    return `<div class="section" id="riteMantras"><div class="section-head"><h2 class="section-title">The mantras</h2><span class="meta">${riteMantraCount(set)} in order</span></div>
+      <p class="mantra-basis">${esc(set.basis)}</p>
+      ${set.groups.map((g) => `${g.title ? `<h3 class="phase">${esc(g.title)}</h3>` : ""}<div class="mantra-list">${g.mantras.map((m) => {
+        const book = m.read && READ_BOOKS[m.read.split("/")[2]];
+        return `<div class="card mantra">
+          <div class="m-at"><span class="n">${++k}</span><h4>${esc(m.at)}</h4></div>
+          ${m.do ? `<p class="m-do">${esc(m.do)}</p>` : ""}
+          <p class="m-sa">${esc(m.sa)}</p>
+          <p class="m-tr">${esc(m.tr)}</p>
+          <p class="m-en">${esc(m.en)}</p>
+          <p class="m-src">${esc(m.src)}${book ? ` · <a href="${m.read}">Read it in the ${book}</a>` : ""}</p>
+        </div>`;
+      }).join("")}</div>`).join("")}
+    </div>`;
+  }
+
   function lifeEventView(id) {
     const r = byId(C.lifeEvents, id);
     if (!r) return notFound();
@@ -2110,6 +2135,7 @@
         <p class="rite-summary">${esc(r.summary)}</p>
 
         <div class="glance">${glance.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>
+        ${riteMantraSet(r) ? `<button class="chip m-jump" data-jump="riteMantras">The ${riteMantraCount(riteMantraSet(r))} mantras of this rite ›</button>` : ""}
 
         <div class="section"><div class="section-head"><h2 class="section-title">The meaning</h2></div>
           <div class="prose lesson-body">${r.intro}</div>
@@ -2128,6 +2154,8 @@
             return `<h3 class="phase">${esc(ph.title)}</h3>${riteSteps(ph.steps, before)}`;
           }).join("") : riteSteps(r.steps)}
         </div>
+
+        ${riteMantras(r)}
 
         ${r.customs && r.customs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Across regions</h2></div>
           <div class="list customs">${r.customs.map(([where, what]) => `<div class="row static"><span class="body"><h3>${esc(where)}</h3><p>${esc(what)}</p></span></div>`).join("")}</div>
@@ -2979,6 +3007,8 @@
   /* Interactions                                                            */
   /* ====================================================================== */
   view.addEventListener("click", (e) => {
+    const jump = e.target.closest("[data-jump]");
+    if (jump) { const el = document.getElementById(jump.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth" }); return; }
     if (readerState && !e.target.closest("a, button, textarea") && !String(getSelection())) {
       const item = e.target.closest(".reader .verse, .reader .para:not(.intro)");
       if (item) { itemSheet(item); return; }

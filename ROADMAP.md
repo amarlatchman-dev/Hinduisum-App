@@ -7,7 +7,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 - [x] **Backup and restore**: save everything kept on the device (bookmarks, notes, highlights, practice
       history, japa counts, favourites, reading places, reminders, settings and your own recordings) to one
       file, and restore it on any device.
-- [ ] **Plain transliteration**: a switch to show "Om Namah Shivaya" instead of "oṃ namaḥ śivāya", for
+- [x] **Plain transliteration**: a switch to show "Om Namah Shivaya" instead of "oṃ namaḥ śivāya", for
       readers who find diacritics hard.
 - [ ] **Sanskrit for the Upanishads**: the Upanishads are in English only; add the Devanagari and IAST
       (GRETIL has the texts).

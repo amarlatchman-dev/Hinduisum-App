@@ -1,5 +1,5 @@
 // Offline support: cache the app shell, then serve cache-first and refresh in the background.
-const CACHE = "dharma-path-v15";
+const CACHE = "dharma-path-v16";
 const DATA = "dp-data"; // reminder settings written by the app; kept across updates
 const SHELL = [
   "./", "index.html", "css/styles.css", "js/content.js", "js/academy.js", "js/rites.js", "js/rite-mantras.js", "js/prayers.js", "js/app.js",

@@ -987,6 +987,7 @@
         <button class="chip ${show.dev ? "active" : ""}" data-show="dev">देवनागरी</button>
         <button class="chip ${show.rom ? "active" : ""}" data-show="rom">Roman</button>
         <button class="chip ${show.en ? "active" : ""}" data-show="en">Meaning</button>
+        ${p.verses.some((v) => IAST.test(v[1])) ? simpleChip() : ""}
         <button class="chip" data-pscale="-1" aria-label="Smaller text">A−</button>
         <button class="chip" data-pscale="1" aria-label="Larger text">A+</button>
       </div>
@@ -995,7 +996,7 @@
           <div class="stanza ${v[3] === "Refrain" ? "refrain" : ""}">
             ${v[3] ? `<span class="eyebrow label">${esc(v[3])}</span>` : ""}
             <p class="dev">${esc(v[0])}</p>
-            <p class="rom">${esc(v[1])}</p>
+            <p class="rom" ${romanAttr(v[1])}>${esc(roman(v[1]))}</p>
             <p class="en">${esc(v[2])}</p>
           </div>`).join("")}
       </div>
@@ -1013,6 +1014,27 @@
       .replace(/c(?!h)/g, "ch").replace(/'/g, "")
       .replace(/(^|[\s-])([a-z])/g, (m, sp, ch) => sp + ch.toUpperCase());
   }
+
+  // Simple spelling: the scholarly transliteration without its marks, as most families write it:
+  // "oṃ namaḥ śivāya" becomes "om namah shivaya". Text already in everyday spelling (the Hindi,
+  // Awadhi and other vernacular prayers) has no marks to remove and is left as it is.
+  const IAST = /[āīūṛṝḷḹṃṁḥśṣṇṭḍñṅĀĪŪṚṜḶṂḤŚṢṆṬḌÑṄ]/;
+  const simpleOn = () => store.get("roman:simple", false);
+  function plainRoman(t) {
+    return String(t).normalize("NFC")
+      .replace(/cch/g, "\u0001").replace(/ch/g, "\u0001").replace(/c/g, "ch").replace(/\u0001/g, "chh")
+      .replace(/Cch|Ch/g, "\u0002").replace(/C/g, "Ch").replace(/\u0002/g, "Chh")
+      .replace(/[śṣ]/g, "sh").replace(/[ŚṢ]/g, "Sh")
+      .replace(/[ṛṝ]/g, "ri").replace(/[ṚṜ]/g, "Ri").replace(/[ḷḹḻ]/g, "l").replace(/[ḶḺ]/g, "L")
+      .replace(/m̐/g, "n").replace(/[ṃṁ]/g, "m").replace(/[ṂṀ]/g, "M").replace(/ḥ/g, "h").replace(/Ḥ/g, "H")
+      .replace(/[ñṅṇ]/g, "n").replace(/[ÑṄṆ]/g, "N").replace(/ṭ/g, "t").replace(/Ṭ/g, "T").replace(/ḍ/g, "d").replace(/Ḍ/g, "D")
+      .replace(/(\S)['’](?=\S)/g, "$1")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "").normalize("NFC");
+  }
+  const roman = (t) => (t && simpleOn() && IAST.test(t) ? plainRoman(t) : t || "");
+  // A transliteration that follows the switch; the scholarly text stays in data-iast.
+  const romanAttr = (t) => `data-iast="${esc(t || "")}"`;
+  const simpleChip = () => `<button class="chip ${simpleOn() ? "active" : ""}" data-simple title="Show the transliteration in everyday spelling, without accent marks: shivaya rather than śivāya">Simple spelling</button>`;
 
   const japaKey = (id) => "japa:" + id;
   const japaState = (id) => store.get(japaKey(id), { count: 0, malas: 0 });
@@ -1170,6 +1192,7 @@
         </header>
         <div class="aarti-opts" id="aartiOpts" hidden>
           ${opt("dev", "देवनागरी", show.dev)}${opt("rom", "Roman", show.rom)}${opt("en", "Meaning", show.en)}
+          ${p.verses.some((v) => IAST.test(v[1])) ? simpleChip() : ""}
           ${hasRefrain ? opt("repeat", "Repeat refrain", store.get("aarti:repeat", true)) : ""}
           ${hasAudio(p.id) ? opt("drone", "Tanpura", Drone.on()) : ""}
           <button class="chip" data-aopt="smaller" aria-label="Smaller text">A−</button>
@@ -1226,7 +1249,7 @@
       stage.innerHTML = `<div class="aarti-verse ${v[3] === "Refrain" ? "refrain" : ""}">
         ${label ? `<div class="eyebrow">${esc(label)}</div>` : ""}
         <p class="dev">${esc(v[0])}</p>
-        <p class="rom">${esc(v[1])}</p>
+        <p class="rom" ${romanAttr(v[1])}>${esc(roman(v[1]))}</p>
         <p class="en">${esc(v[2])}</p>
       </div>`;
     }
@@ -2292,13 +2315,14 @@
     let k = 0;
     return `<div class="section" id="riteMantras"><div class="section-head"><h2 class="section-title">The mantras</h2><span class="meta">${riteMantraCount(set)} in order</span></div>
       <p class="mantra-basis">${esc(set.basis)}</p>
+      <div class="chips" style="margin:-4px 0 14px">${simpleChip()}</div>
       ${set.groups.map((g) => `${g.title ? `<h3 class="phase">${esc(g.title)}</h3>` : ""}<div class="mantra-list">${g.mantras.map((m) => {
         const book = m.read && READ_BOOKS[m.read.split("/")[2]];
         return `<div class="card mantra">
           <div class="m-at"><span class="n">${++k}</span><h4>${esc(m.at)}</h4>${m.use ? `<span class="m-use ${m.use}">${m.use === "core" ? "Central" : "Some traditions"}</span>` : ""}</div>
           ${m.do ? `<p class="m-do">${esc(m.do)}</p>` : ""}
           <p class="m-sa">${esc(m.sa)}</p>
-          <p class="m-tr">${esc(m.tr)}</p>
+          <p class="m-tr" ${romanAttr(m.tr)}>${esc(roman(m.tr))}</p>
           <p class="m-en">${esc(m.en)}</p>
           <p class="m-src">${esc(m.src)}${book ? ` · <a href="${m.read}">Read it in the ${book}</a>` : ""}</p>
         </div>`;
@@ -2330,7 +2354,7 @@
           <div class="prose lesson-body">${r.intro}</div>
         </div>
 
-        ${r.verse ? `<div class="night rite-verse">${mandala()}<p class="v-dev">${esc(r.verse[0])}</p><p class="v-rom">${esc(r.verse[1])}</p><p class="v-en">“${esc(r.verse[2])}”</p><p class="meta">${esc(r.verse[3])}</p></div>` : ""}
+        ${r.verse ? `<div class="night rite-verse">${mandala()}<p class="v-dev">${esc(r.verse[0])}</p><p class="v-rom" ${romanAttr(r.verse[1])}>${esc(roman(r.verse[1]))}</p><p class="v-en">“${esc(r.verse[2])}”</p><p class="meta">${esc(r.verse[3])}</p></div>` : ""}
 
         ${r.need && r.need.length ? `<div class="section"><div class="section-head"><h2 class="section-title">What you'll need</h2><span class="meta" id="needCount">${checked.length} of ${r.need.length} ready</span></div>
           <div class="card need-list">${r.need.map((n, k) => `<label class="need"><input type="checkbox" data-need="${r.id}:${k}" ${checked.includes(k) ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>
@@ -2554,7 +2578,7 @@
     const o = Array.isArray(v) ? { n: v[0], sa: v[1], tr: v[2], en: v[3], ref: prefix + v[0] } : v;
     return `${o.head ? `<div class="vhead" data-i="${-1000 - o.n}">${esc(o.head)}</div>` : ""}<div class="verse" id="v-${o.n}" data-ref="${o.n}">
       ${o.ref === "" ? "" : `<div class="vnum">${esc(o.ref || prefix + o.n)}</div>`}
-      ${showSa && o.sa ? `<div class="sanskrit">${esc(o.sa)}</div><p class="translit">${esc(o.tr || "")}</p>` : ""}
+      ${showSa && o.sa ? `<div class="sanskrit">${esc(o.sa)}</div><p class="translit" ${romanAttr(o.tr)}>${esc(roman(o.tr))}</p>` : ""}
       ${o.en ? `<p class="vtext">${esc(o.en)}</p>` : ""}
       ${o.note ? `<div class="vnote">${o.note.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
     </div>`;
@@ -2605,6 +2629,7 @@
           <button class="chip" data-font="-1" aria-label="Smaller text">A−</button>
           <button class="chip" data-font="1" aria-label="Larger text">A+</button>
           ${book.sanskrit && !book.sanskritOnly ? `<button class="chip ${showSa ? "active" : ""}" data-sanskrit>संस्कृत</button>` : ""}
+          ${book.sanskrit && showSa ? simpleChip() : ""}
           ${hasNotes ? `<button class="chip ${showNotes ? "active" : ""}" data-notes>Commentary</button>` : ""}
           <a class="chip" href="${contentsHref}">Contents</a>
         </div>
@@ -2913,7 +2938,7 @@
     });
     if (!res) return;
     if (res.id === "share") shareCard({ eyebrow: `${typeOf(p.type).one} · ${deityOf(p.deity).name}`, deva: v[0], text: v[2], cite: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}` });
-    if (res.id === "copy") copyText(`${v[0]}\n\n${v[1]}\n\n${v[2]}\n\n${p.name}`);
+    if (res.id === "copy") copyText(`${v[0]}\n\n${roman(v[1])}\n\n${v[2]}\n\n${p.name}`);
   }
 
   function savedView(query) {
@@ -3020,7 +3045,7 @@
   function resultGroup(name, items, terms, id) {
     if (!items.length) return "";
     const shown = items.slice(0, 6);
-    const row = (e) => `<a class="row" href="${e.href}"><span class="body"><h3>${esc(e.title)}</h3><p class="where">${esc(e.where)}</p><p class="snip">${snippet(e.text, terms)}</p></span><span class="chev">›</span></a>`;
+    const row = (e) => `<a class="row" href="${e.href}"><span class="body"><h3>${esc(e.title)}</h3><p class="where">${esc(e.where)}</p><p class="snip">${snippet(roman(e.text), terms)}</p></span><span class="chev">›</span></a>`;
     return `<div class="section-head" style="margin-top:20px"><h2 class="section-title">${esc(name)}</h2><span class="meta">${items.length >= 200 ? "200+" : items.length} ${items.length === 1 ? "result" : "results"}</span></div>
       <div class="list" id="grp-${id}">${shown.map(row).join("")}
       ${items.length > shown.length ? `<button class="row more" data-more="${id}">Show ${Math.min(items.length, 200) - shown.length} more</button>` : ""}</div>
@@ -3198,6 +3223,15 @@
   /* Interactions                                                            */
   /* ====================================================================== */
   view.addEventListener("click", (e) => {
+    const simple = e.target.closest("[data-simple]");
+    if (simple) {
+      store.set("roman:simple", !simpleOn());
+      document.querySelectorAll("[data-iast]").forEach((el) => { el.textContent = roman(el.dataset.iast); });
+      document.querySelectorAll("[data-simple]").forEach((c) => c.classList.toggle("active", simpleOn()));
+      toast(simpleOn() ? "Simple spelling is on: shivaya" : "Scholarly spelling is on: śivāya");
+      if (typeof fitAarti === "function" && document.getElementById("aarti")) fitAarti();
+      return;
+    }
     const bk = e.target.closest("[data-backup]");
     if (bk) { saveBackup(bk.dataset.backup === "share").catch(() => toast("Couldn't make the backup")); return; }
     const jump = e.target.closest("[data-jump]");

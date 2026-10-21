@@ -320,7 +320,8 @@ rite({
   ],
   withPriest: `A priest leads the Vedic recitations and guides the families through each step. Many priests offer shorter ceremonies with explanations in English for guests of every background.`,
   abroad: `If you need a civil ceremony for legal reasons, it can be held separately. A printed or projected guide to the rituals helps guests follow and share in the meaning.`,
-  prayers: [`ganesha`, `sarva-mangala`, `sarve-bhavantu`, `jagdish`]
+  prayers: [`ganesha`, `sarva-mangala`, `sarve-bhavantu`, `jagdish`],
+  links: [[`Course: the Matikor and other Caribbean traditions`, `#/academy/caribbean/5`]]
 });
 
 rite({

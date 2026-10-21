@@ -49,7 +49,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 ## Caribbean and community
 
-- [ ] Guides for **Jhandi puja**, **Phagwah chowtal**, **Ramleela**, **Kartik snan** and the matikor songs.
+- [x] Guides for **Jhandi puja**, **Phagwah chowtal**, **Ramleela**, **Kartik snan** and the matikor songs.
 - [ ] A **Dutch or Sarnami** interface for Suriname.
 - [ ] A **mandir finder** for each city (needs a list someone keeps up to date).
 
@@ -57,7 +57,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 - [ ] **Quizzes** at the end of each course.
 - [ ] **Gita memorisation** with spaced repetition.
-- [ ] **Reading plans**, such as "the Gita in 18 days" or "the Sundar Kand on Tuesdays".
+- [x] **Reading plans**, such as "the Gita in 18 days" or "the Sundar Kand on Tuesdays".
 - [ ] **Children's stories** from the Panchatantra and Hitopadesha, illustrated in the app's painting style.
 
 ## Quality and reach

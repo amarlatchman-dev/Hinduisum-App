@@ -708,7 +708,7 @@
     const d0 = today();
     const w = C.wisdom[dayOfYear(d0) % C.wisdom.length];
     const ref = C.gitaDaily[dayOfYear(d0) % C.gitaDaily.length];
-    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [], tomorrow = "", timing = "", paranaRow = "";
+    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [], tomorrow = "", timing = "", paranaRow = "", planRows = "";
     try {
       await loadCalendar();
       const i = calIdx(d0);
@@ -725,6 +725,7 @@
           .sort((a, b) => (a.kind === "festival" ? 0 : 1) - (b.kind === "festival" ? 0 : 1));
       }
       tomorrow = tomorrowRows();
+      planRows = await planTodayRows().catch(() => "");
       if (!homeMonth) homeMonth = [d0.getFullYear(), d0.getMonth()];
       calHtml = `<div class="card" id="homeCal">${monthGrid(homeMonth[0], homeMonth[1], "home")}</div>`;
       const next = upcoming(i, 5, (e) => isFestival(e[1]) || e[1] === "ekadashi");
@@ -744,15 +745,15 @@
         ${timing}
       </div>
 
-      ${todayEvents.length || tomorrow || paranaRow ? `
+      ${todayEvents.length || tomorrow || paranaRow || planRows ? `
         <div class="section" style="margin-top:18px">
           <div class="list">${todayEvents.map((o) => `
             <a class="row" href="#/day/${ymd(d0)}">${seal(o.deva)}
-              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}${paranaRow}${tomorrow}
+              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}${paranaRow}${planRows}${tomorrow}
           </div>
         </div>` : ""}
 
-      <div class="hero-wrap" style="margin-top:${todayEvents.length || tomorrow || paranaRow ? 0 : 20}px">
+      <div class="hero-wrap" style="margin-top:${todayEvents.length || tomorrow || paranaRow || planRows ? 0 : 20}px">
         <a class="night verse-hero fade-in" id="gitaToday" href="#/read/gita/${ref[0]}?v=${ref[1]}">
           ${mandala()}
           <div class="eyebrow">Bhagavad Gita · Verse of the day</div>
@@ -952,6 +953,7 @@
         ${f.traditions ? `<h3>Traditions</h3><ul>${f.traditions.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
       </div>
       ${f.atHome ? `<div class="card prose"><h3>Celebrate at home</h3><ol class="steps">${f.atHome.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></div>` : ""}
+      ${f.caribbean ? `<a class="row" href="${f.caribbean[1]}" style="margin-top:12px"><span class="body"><span class="eyebrow">In the Caribbean</span><h3>${esc(f.caribbean[0])}</h3></span><span class="chev">›</span></a>` : ""}
       ${prs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Prayers for ${esc(f.name.split(" ·")[0])}</h2></div><div class="list">${prs.map(prayerRow).join("")}</div></div>` : ""}`;
   }
 
@@ -1672,6 +1674,7 @@
     if (!r || r.getBoundingClientRect().bottom > innerHeight + 60) return;
     st.counted = true;
     logPractice("read", `${st.bookId}|${st.part}|${st.sec}`);
+    planOnRead(st.bookId, st.part, st.sec).catch(() => {});
   }
 
   /* ====================================================================== */
@@ -2778,6 +2781,170 @@
     }).catch(() => {});
   }
 
+  /* ====================================================================== */
+  /* Reading plans: a book in daily portions, ticked off as you read          */
+  /* ====================================================================== */
+  const PLANS = C.plans || [];
+  const planState = (id) => store.get("plan:" + id, null);
+  const activePlans = () => PLANS.filter((p) => planState(p.id));
+  const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayDiff = (a, b) => Math.round((b - a) / 86400000);
+
+  // A plan's daily portions, each { spans: [{ part, from, to }], label, href, end: [part, section] }.
+  async function planDays(plan) {
+    if (plan.weekly) return [];
+    const index = await loadIndex();
+    const parts = index[plan.book].parts;
+    const book = byId(C.books, plan.book);
+    let days;
+    if (plan.breaks) {
+      days = [];
+      let part = 1, sec = 1;
+      for (const [p, doha] of plan.breaks) {
+        const end = doha === "end" ? parts[p - 1].count : doha + 1;   // section 1 is the invocation, so doha N is section N + 1
+        const spans = [];
+        while (part < p) { spans.push({ part, from: sec, to: parts[part - 1].count }); part++; sec = 1; }
+        spans.push({ part, from: sec, to: end });
+        days.push(spans.filter((x) => x.from <= x.to));
+        sec = end + 1;
+        if (sec > parts[part - 1].count && part < parts.length) { part++; sec = 1; }
+      }
+    } else days = plan.days.map(([part, from, to]) => [{ part, from, to }]);
+    const manas = plan.book === "ramcharitmanas" || plan.book === "sundarkand";
+    const secName = (part, n) => !manas ? `${book.sectionLabel.toLowerCase()} ${n}`
+      : n === 1 ? "the invocation" : plan.book === "ramcharitmanas" && part === 7 && n === parts[6].count ? "the closing verses" : `doha ${n - 1}`;
+    return days.map((spans) => {
+      const label = spans.map(({ part, from, to }) => {
+        if (plan.book === "gita") return `Chapter ${part} · ${parts[part - 1].sub}`;
+        const name = book.singlePart ? "" : parts[part - 1].name;
+        const whole = from === 1 && to === parts[part - 1].count;
+        if (whole) return name ? `${name}, complete` : "The whole book";
+        const range = from === to ? secName(part, from) : manas ? `${secName(part, from)} to ${secName(part, to)}` : `${book.sectionLabel.toLowerCase()}s ${from} to ${to}`;
+        return name ? `${name}: ${range}` : range.charAt(0).toUpperCase() + range.slice(1);
+      }).join("; ");
+      const last = spans[spans.length - 1];
+      return { spans, label, href: readerHref(plan.book, spans[0].part, spans[0].from), end: [last.part, last.to] };
+    });
+  }
+
+  // Where a plan stands: the next day to read, how many are done, and how far behind it is.
+  function planStatus(plan, days) {
+    const st = planState(plan.id);
+    if (!st) return null;
+    const t = today();
+    if (plan.weekly) {
+      const back = (t.getDay() - st.weekday + 7) % 7;
+      return { weekly: true, isDay: back === 0, doneToday: st.done.includes(ymd(t)), last: addDays(t, -back) };
+    }
+    const done = st.done || [];
+    const next = days.findIndex((_, i) => !done.includes(i));
+    const due = Math.min(days.length, dayDiff(parseYmd(st.start), t) + 1);
+    return { next, done: done.length, total: days.length, behind: Math.max(0, due - done.length), finished: next < 0 };
+  }
+
+  function setPlanDay(plan, key, on) {
+    const st = planState(plan.id);
+    if (!st) return;
+    st.done = (st.done || []).filter((x) => x !== key);
+    if (on) st.done.push(key);
+    store.set("plan:" + plan.id, st);
+  }
+
+  // Reading to the end of a day's portion ticks it off.
+  async function planOnRead(bookId, part, sec) {
+    for (const plan of activePlans().filter((p) => p.book === bookId)) {
+      if (plan.weekly) {
+        const index = await loadIndex();
+        const s = planStatus(plan, []);
+        if (s.isDay && !s.doneToday && sec === index[bookId].parts[part - 1].count) {
+          setPlanDay(plan, ymd(today()), true);
+          toast("This week's Sundar Kand is read. Jai Hanuman!");
+        }
+        continue;
+      }
+      const days = await planDays(plan);
+      const s = planStatus(plan, days);
+      if (!s || s.finished) continue;
+      const d = days[s.next];
+      if (d.end[0] === part && d.end[1] === sec) {
+        setPlanDay(plan, s.next, true);
+        toast(s.next + 1 === days.length ? `${plan.title}: complete. Well done!` : `Day ${s.next + 1} of ${days.length} read`);
+      }
+    }
+  }
+
+  // Rows for the Today page: the reading due in each plan.
+  async function planTodayRows() {
+    const rows = [];
+    for (const plan of activePlans()) {
+      const days = await planDays(plan).catch(() => null);
+      if (!days) continue;
+      const s = planStatus(plan, days);
+      if (plan.weekly) {
+        if (s.isDay && !s.doneToday) rows.push(`<a class="row" href="#/read/sundarkand/1/1">${seal(plan.deva)}<span class="body"><span class="eyebrow">Today's reading</span><h3>The Sundar Kand</h3><p>It is ${WEEKDAY_NAMES[planState(plan.id).weekday]}: the whole Sundar Kand, then the Hanuman Chalisa.</p></span><span class="chev">›</span></a>`);
+        continue;
+      }
+      if (s.finished || s.behind === 0) continue;
+      const d = days[s.next];
+      rows.push(`<a class="row" href="${d.href}">${seal(plan.deva)}<span class="body"><span class="eyebrow">Today's reading · Day ${s.next + 1} of ${s.total}</span><h3>${esc(plan.title)}</h3><p>${esc(d.label)}${s.behind > 1 ? ` · ${s.behind} days to catch up` : ""}</p></span><span class="chev">›</span></a>`);
+    }
+    return rows.join("");
+  }
+
+  function plansView() {
+    const row = (p) => {
+      const st = planState(p.id);
+      const note = !st ? p.summary : p.weekly ? `Every ${WEEKDAY_NAMES[st.weekday]} · read ${st.done.length} time${st.done.length === 1 ? "" : "s"}` : `In progress · ${(st.done || []).length} days read`;
+      return `<a class="row" href="#/plan/${p.id}">${seal(p.deva)}<span class="body"><h3>${esc(p.title)}</h3><p>${esc(note)}</p></span>${st ? `<span class="tag gold">Active</span>` : ""}<span class="chev">›</span></a>`;
+    };
+    return `
+      <h2 class="page-title">Reading plans</h2>
+      <p class="page-sub">Read a sacred book a little each day. Today's reading appears on the Today page, and a day is ticked off when you read to its end.</p>
+      <div class="list">${PLANS.map(row).join("")}</div>
+      <p class="footer-note">Your progress is kept on this device and in your backup.</p>`;
+  }
+
+  async function planView(id) {
+    const plan = byId(PLANS, id);
+    if (!plan) return notFound();
+    const st = planState(plan.id);
+    const book = byId(C.books, plan.book);
+    let body = "";
+    if (plan.weekly) {
+      const wd = st ? st.weekday : 2;
+      const s = st && planStatus(plan, []);
+      body = `
+        <div class="card form-grid">
+          <label>Read it every<select data-plan-weekday="${plan.id}">${[2, 6, 0, 1, 3, 4, 5].map((d) => `<option value="${d}" ${d === wd ? "selected" : ""}>${WEEKDAY_NAMES[d]}</option>`).join("")}</select></label>
+        </div>
+        <div class="btn-row">
+          <a class="btn" href="#/read/sundarkand/1/1">Read the Sundar Kand</a>
+          <a class="btn ghost" href="#/puja/hanuman-chalisa">Hanuman Chalisa</a>
+        </div>
+        ${st ? `<div class="card" style="margin-top:14px"><label class="need"><input type="checkbox" data-plan-week="${plan.id}" ${st.done.includes(ymd(s.last)) ? "checked" : ""}><span>Read on ${esc(longDay(s.last))}</span></label>
+          <p class="meta" style="margin:8px 0 0">Read ${st.done.length} time${st.done.length === 1 ? "" : "s"} since ${esc(longDay(parseYmd(st.start)))}.</p></div>` : ""}`;
+    } else {
+      const days = await planDays(plan);
+      const s = st && planStatus(plan, days);
+      const done = st ? st.done || [] : [];
+      body = `
+        ${s ? `<div class="card"><div class="eyebrow">${s.finished ? "Complete" : `Day ${s.next + 1} of ${s.total}`}</div>
+          <div class="progress" style="margin:10px 0"><span style="width:${Math.round(s.done / s.total * 100)}%"></span></div>
+          <p class="meta" style="margin:0">${s.done} of ${s.total} days read${s.finished ? "" : s.behind > 1 ? ` · ${s.behind} to catch up` : " · up to date"}</p>
+          ${s.finished ? "" : `<div class="btn-row" style="margin-top:12px"><a class="btn" href="${days[s.next].href}">Read day ${s.next + 1}</a></div>`}</div>` : ""}
+        <div class="section"><div class="section-head"><h2 class="section-title">The days</h2></div>
+          <div class="card need-list">${days.map((d, i) => `
+            <div class="plan-day"><label class="need"><input type="checkbox" data-plan-day="${plan.id}:${i}" ${done.includes(i) ? "checked" : ""} ${st ? "" : "disabled"}><span><b>Day ${i + 1}</b> ${esc(d.label)}</span></label><a class="plan-go" href="${d.href}" aria-label="Read day ${i + 1}">›</a></div>`).join("")}</div>
+        </div>`;
+    }
+    return `
+      <a class="eyebrow course-link" href="#/plans">Reading plans · ${esc(book.title)}</a>
+      <h2 class="lesson-title">${esc(plan.title)}</h2>
+      <p class="rite-summary">${esc(plan.about)}</p>
+      <div class="btn-row" style="margin-bottom:16px">${st ? `<button class="btn ghost" data-plan-stop="${plan.id}">Stop this plan</button>` : `<button class="btn" data-plan-start="${plan.id}">Start today</button>`}</div>
+      ${body}`;
+  }
+
   function libraryView() {
     const bookRow = (b) => {
       const pos = getPos(b.id);
@@ -2812,6 +2979,7 @@
         return books.length ? `<div class="section-head" style="margin-top:22px"><h2 class="section-title">${esc(c.name)}</h2></div><div class="list">${books.map(bookRow).join("")}</div>` : "";
       }).join("")}
       <div class="list" style="margin-top:22px">
+        <a class="row" href="#/plans">${seal("नित्य")}<span class="body"><h3>Reading plans</h3><p>${activePlans().length ? `${activePlans().length} in progress` : "The Gita in 18 days, the Manas in 30 or 9, the Sundar Kand weekly"}</p></span><span class="chev">›</span></a>
         <a class="row" href="#/saved">${seal("चिह्न")}<span class="body"><h3>Bookmarks and notes</h3><p>${Object.keys(getMarks()).length} saved · tap any verse while reading</p></span><span class="chev">›</span></a>
         <a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
   }
@@ -3513,8 +3681,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn" };
-  const TAB = { rites: "learn", booklet: "learn", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures" };
+  const TAB = { rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -3538,7 +3706,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -3566,6 +3734,8 @@
         case "life": html = lifeEventView(id); break;
         case "rites": html = ritesView(); break;
         case "booklet": html = bookletView(id); break;
+        case "plans": html = plansView(); break;
+        case "plan": html = await planView(id); break;
         case "read":
           if (!id) html = libraryView();
           else if (id === "about") html = aboutTextsView();
@@ -3705,6 +3875,18 @@
     }
     if (t.hasAttribute("data-bk-print")) { window.print(); return; }
     if (t.hasAttribute("data-read-aloud")) { readAloud(t, false); return; }
+    if (t.dataset.planStart) {
+      const plan = byId(PLANS, t.dataset.planStart);
+      store.set("plan:" + plan.id, plan.weekly ? { start: ymd(today()), weekday: 2, done: [] } : { start: ymd(today()), done: [] });
+      route();
+      return;
+    }
+    if (t.dataset.planStop) {
+      if (!confirm("Stop this plan? Your progress in it will be cleared.")) return;
+      try { localStorage.removeItem("dp:plan:" + t.dataset.planStop); } catch (e) { /* ignore */ }
+      route();
+      return;
+    }
     if (t.hasAttribute("data-listen-lang")) {
       const book = byId(C.books, readerState.bookId);
       const order = ["en", "sa", "both"];
@@ -3901,6 +4083,31 @@
   });
 
   view.addEventListener("change", (e) => {
+    const pd = e.target.closest("[data-plan-day]");
+    if (pd) {
+      const [id, i] = pd.dataset.planDay.split(":");
+      setPlanDay(byId(PLANS, id), +i, pd.checked);
+      route();
+      return;
+    }
+    const pw = e.target.closest("[data-plan-week]");
+    if (pw) {
+      const plan = byId(PLANS, pw.dataset.planWeek);
+      const st = planState(plan.id);
+      const back = (today().getDay() - st.weekday + 7) % 7;
+      setPlanDay(plan, ymd(addDays(today(), -back)), pw.checked);
+      route();
+      return;
+    }
+    const wd = e.target.closest("[data-plan-weekday]");
+    if (wd) {
+      const id = wd.dataset.planWeekday;
+      const st = planState(id) || { start: ymd(today()), done: [] };
+      st.weekday = +wd.value;
+      store.set("plan:" + id, st);
+      route();
+      return;
+    }
     if (e.target.id === "bkFile") {
       const f = e.target.files && e.target.files[0];
       e.target.value = "";

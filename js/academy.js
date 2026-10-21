@@ -1679,3 +1679,92 @@ course({
     }
   ]
 });
+
+/* ---------------------------------------------------------------------- */
+/* Hindu traditions of the Caribbean                                       */
+/* ---------------------------------------------------------------------- */
+course({
+  id: `caribbean`, deva: `परम्परा`, category: `practice`, art: `jhandi`,
+  title: `Hindu Traditions of the Caribbean`,
+  subtitle: `Jhandi, Phagwah, Ramleela, Kartik and Matikor`,
+  intro: `Between 1838 and 1917, indentured labourers from India, most of them from the Bhojpuri-speaking villages of eastern Uttar Pradesh and western Bihar, brought their faith to Trinidad, Guyana, Suriname and Jamaica. Five lessons on the traditions their descendants have kept alive, some of them now rarer in India than in the Caribbean.`,
+  lessons: [
+    {
+      title: `Jhandi: the prayer flags`, art: `jhandi`,
+      caption: `Jhandis raised in the yard after a puja, the newest red one for Hanuman.`,
+      body: `<p>Drive through any Hindu village in Trinidad or Guyana and you will see them: tall bamboo poles in front yards, each flying a coloured flag. These are <strong>jhandis</strong> (from the Hindi <em>jhanda</em>, a flag), and they are one of the most recognisable signs of Indo-Caribbean Hinduism.</p>
+<h3>What a jhandi is</h3>
+<p>A jhandi is a bamboo pole, ritually consecrated, with a cloth flag at its top. It is raised at the end of a puja held at home and planted in the yard, where it stays as a sign that the family has worshipped, and as a symbol of the victory of good over evil. The puja itself is often simply called “a jhandi”: families speak of “keeping a jhandi” for a thanksgiving, a birthday, a new house, a recovery from illness or a safe return from a journey, and many keep one every year.</p>
+<h3>The colours</h3>
+<p>The colour of the flag tells which deity was worshipped. The red flag of <strong>Hanuman</strong>, the protector, is by far the most common, and many families raise a red jhandi every year. Other colours vary from family to family and pandit to pandit; one common Trinidad listing gives white for Saraswati, yellow for Krishna, blue for Shiva and black for Shani. Some flags now carry printed images of the deity. Ask your own pandit or elders which colours your family uses.</p>
+<h3>Raising the jhandi</h3>
+<p>Before the puja the bamboo is cut and cleaned. In many homes it is washed with water or coconut milk, marked with turmeric and sindoor, and tied with the flag and sometimes mango leaves. After the puja, which commonly includes prayers to Ganesha, the Hanuman Chalisa and the havan, the pole is carried out, offered water and flowers, and planted with the family gathered around. The old jhandis are left standing until they fall, so a yard full of faded flags is a record of a family's years of devotion.</p>
+<h3>A sign of belonging</h3>
+<p>For the descendants of indentured labourers, who were often discouraged from practising their faith openly, the jhandi became a quiet public declaration: <em>this is a Hindu home</em>. Today Indo-Caribbean families in Toronto, New York and London raise them too, sometimes in small city back gardens.</p>`,
+      terms: [[`Jhandi`, `A consecrated bamboo pole with a prayer flag, raised after a puja; also the name for the puja itself.`], [`Hanuman jhandi`, `The red flag raised for Hanuman, the most common of all.`], [`Pandit`, `The priest who leads the puja.`]],
+      practice: `If your family has jhandis, ask an elder when each was raised and why. If not, the next time you keep a puja for a blessing, ask your pandit about raising one.`,
+      links: [[`Hanuman Chalisa`, `#/puja/hanuman-chalisa`], [`Hanuman Aarti`, `#/puja/hanuman-aarti`], [`Course: Daily puja at home`, `#/academy/puja`]]
+    },
+    {
+      title: `Phagwah and chowtal`, art: `holi`,
+      caption: `Phagwah: colour, song and the coming of spring.`,
+      body: `<p><strong>Phagwah</strong> (also spelled Phagwa) is the Caribbean name for Holi, from the month of Phalgun in which it falls. In Guyana it is a national holiday, and across the region it is one of the most joyful days of the year: a day of coloured powder and water, music, and visits to friends and neighbours.</p>
+<h3>The story</h3>
+<p>Phagwah celebrates the triumph of good over evil in the story of <strong>Prahlad</strong>, the young devotee of Vishnu whose father, the demon king Hiranyakashipu, tried to kill him. His aunt <strong>Holika</strong>, who could not be burned, took the boy into a fire, but she was consumed and Prahlad came out unharmed. On the night before Phagwah, many communities burn a bonfire or an effigy of Holika, the <strong>Holika dahan</strong>.</p>
+<h3>Abeer and colour</h3>
+<p>On the day itself people throw <strong>abeer</strong>, a coloured liquid or powder, often a bright magenta, and coloured powders, singing and dancing as they go. Mandirs and communities hold Phagwah melas with music and sweets. Many families begin the morning with a prayer before the play begins, and the day ends with visiting, forgiving and feasting.</p>
+<h3>Chowtal</h3>
+<p>The music of Phagwah is <strong>chowtal</strong>, a form of Bhojpuri folk song carried to the Caribbean by the indentured labourers, and now kept far more vigorously in Trinidad, Guyana and Suriname than in the villages it came from. Two rows of singers face each other, with a <strong>dholak</strong> drummer at one end and others keeping time on the <strong>jhal</strong> or manjeera (hand cymbals). The two sides sing the lines back and forth, the rhythm and tempo rising until the song bursts into a fast, joyful climax. The songs, in old Hindi and Bhojpuri, praise Krishna and Radha, Rama, and the colours and beauty of spring.</p>
+<p>Chowtal groups rehearse for weeks before Phagwah, and many communities hold chowtal competitions. Its survival owes much to written songbooks, to leaders who explain the old words to new singers, and to the women who have joined in large numbers.</p>`,
+      terms: [[`Phagwah`, `Holi, named for the month of Phalgun.`], [`Abeer`, `Coloured liquid or powder thrown at Phagwah.`], [`Chowtal`, `A Bhojpuri Phagwah song sung by two facing groups, rising to a fast climax.`], [`Dholak, jhal`, `The two-headed hand drum and the hand cymbals that accompany chowtal.`]],
+      practice: `Find a recording of a Caribbean chowtal group and listen for the two sides answering each other and the moment the tempo breaks into the climax.`,
+      links: [[`The Holi guide`, `#/festival/holi`], [`Madhurashtakam`, `#/puja/madhurashtakam`]]
+    },
+    {
+      title: `Ramleela: the Ramayan on the village field`, art: `ramleela`,
+      caption: `The last night of the Ramleela: Ravan burns.`,
+      body: `<p><strong>Ramleela</strong> (“Rama's play”) is the open-air dramatic retelling of the Ramayan as Tulsidas tells it in the <strong>Ramcharitmanas</strong>. In India it is performed in thousands of towns at Dussehra; in the Caribbean it was brought by indentured labourers and has survived as a village tradition for well over a century.</p>
+<h3>In Trinidad</h3>
+<p>Trinidad has the strongest Ramleela tradition in the Caribbean. Performances are recorded from the 1880s, and the Ramleela of <strong>Dow Village</strong> is counted among the oldest still running. The Ramleela of <strong>Felicity</strong>, performed in the same fields for more than a hundred years, became known around the world when the poet Derek Walcott described it in his Nobel lecture in 1992. Today there are some thirty-five Ramleela sites in Trinidad. The season falls in the weeks before Divali, around Navratri.</p>
+<h3>How it is performed</h3>
+<p>A Ramleela runs over about ten nights, each opening with a puja. Each night presents part of the story, from Rama's birth and his marriage to Sita, through the exile, Sita's abduction and Hanuman's journey to Lanka, to the great battle. The performance weaves together singing of the Manas, narration, recitation and dialogue, with drums and costumes made by the village itself. Many of the actors are villagers who play the same part for years, and children grow up dreaming of playing Hanuman.</p>
+<h3>The burning of Ravan</h3>
+<p>On the final night a huge effigy of <strong>Ravan</strong>, ten-headed and often many metres tall, built of bamboo, paper and cloth, is set alight, usually by a flaming arrow from Rama, to the cheers of the crowd: the victory of good over evil made visible.</p>
+<h3>In Guyana and Suriname</h3>
+<p>Ramleela was once performed in villages across Guyana and Suriname too. It faded in the twentieth century, but temples and cultural groups have worked to revive it, and performances have returned in recent years.</p>`,
+      terms: [[`Ramleela`, `The open-air play of the Ramayan, performed over several nights.`], [`Ramcharitmanas`, `Tulsidas's Ramayan in Awadhi, the text the Ramleela follows.`], [`Ravan dahan`, `The burning of Ravan's effigy on the last night.`]],
+      practice: `Read the Sundar Kand, Hanuman's journey to Lanka, in the Ramcharitmanas, one of the best-loved nights of any Ramleela.`,
+      links: [[`Read the Ramcharitmanas`, `#/read/ramcharitmanas`], [`The Sundar Kand`, `#/read/sundarkand`], [`Navaratri and Dussehra`, `#/festival/navaratri`]]
+    },
+    {
+      title: `Kartik nahan: the bath in the sea`, art: `kartik-snan`,
+      caption: `Dawn on Kartik Purnima: bathers offer water to the rising sun.`,
+      body: `<p>The month of <strong>Kartik</strong> (October to November) is one of the holiest of the Hindu year, especially sacred to Vishnu. The Padma Purana says that one who bathes early in the morning during Kartik gains the merit of bathing at every place of pilgrimage. Its full moon, <strong>Kartik Purnima</strong>, is the day of <strong>Kartik nahan</strong> or <strong>Kartik snan</strong>, the sacred bath.</p>
+<h3>In the Caribbean</h3>
+<p>In India, pilgrims bathe in the Ganga and other holy rivers. In the Caribbean the sea and the rivers take their place. Before dawn on Kartik Purnima, thousands of Hindus in Guyana make their way to river banks and the seashore, and in Trinidad they gather in their thousands at <strong>Manzanilla beach</strong> on the east coast and at other beaches and rivers. In Guyana, Kartik nahan is the last Hindu festival of the year.</p>
+<h3>The puja</h3>
+<p>Families set up a puja on the sand, often with a pandit, worshipping Vishnu, in Trinidad especially in his form as <strong>Matsya</strong>, the fish avatar who saved the Vedas and the world from the flood. They float small lamps and offerings of flowers on the water, raise jhandis on the shore, and walk into the sea to bathe. Many stand in the water facing the rising sun and pour water from a lota as an offering, an <strong>arghya</strong>, to Surya. Devotees say that bathing on this day is like bathing with the Lord himself, washing away the year's impurities.</p>
+<h3>Caring for the sea</h3>
+<p>Many mandirs and Hindu organisations now ask families to bring offerings that will not harm the shore: flowers rather than plastic, clay lamps rather than foil, and to take everything else home. Bathing in the sea is a way of honouring it.</p>`,
+      terms: [[`Kartik nahan / snan`, `The sacred bath on the full moon of Kartik.`], [`Matsya`, `Vishnu's fish avatar, worshipped at the Kartik bath.`], [`Arghya`, `Water offered to the sun from cupped hands or a lota.`]],
+      practice: `On the next Kartik Purnima, rise before dawn. Bathe, in the sea or a river if you can, and offer water to the rising sun with the Gayatri Mantra or a prayer to Surya.`,
+      links: [[`Kartik Purnima`, `#/festival/kartik-purnima`], [`Gange cha Yamune: the bathing prayer`, `#/puja/ganga-snana`], [`Surya mantra`, `#/puja/surya-mantra`], [`Course: Matsya, the fish`, `#/academy/avatars/2`]]
+    },
+    {
+      title: `Matikor: blessing the earth before a wedding`, art: `matikor`,
+      caption: `The women's procession to the Matikor, with lamp, drum and basket.`,
+      body: `<p>An Indo-Caribbean Hindu wedding unfolds over several days. In Trinidad many weddings begin on a Friday with the Matikor, continue on the Saturday, and reach the ceremony itself on the Sunday. The <strong>Matikor</strong> (also spelled maticoor, and popularly called “dig dutty” in Guyana) is the women's ceremony that opens it all, held at both the bride's and the groom's homes, usually a night or two before the wedding.</p>
+<h3>The meaning</h3>
+<p>The name comes from <em>mati</em>, earth, and <em>kor</em>, digging. At its heart is a prayer to <strong>Dharti Mata</strong>, Mother Earth, asking her blessing for the marriage and its fruitfulness. Earth is the first mother, the giver of life and the ground of the home the couple will build.</p>
+<h3>The ceremony</h3>
+<p>In the evening, the women of the family, led by the mother of the bride or groom, go in procession to a clean spot away from the house, often to the beat of the <strong>tassa</strong> drums. They carry a lamp, and a flat basket or tray with the offerings: flowers, turmeric, sindoor, rice, and sweets. There a little earth is dug and worshipped with prayers, and some of it is brought back for the wedding rites, for example for the earthen hearth or the decoration of the marriage canopy. Customs vary between families and between Trinidad, Guyana and Suriname, and the pandit or the older women of the family guide what is done.</p>
+<h3>The songs</h3>
+<p>Matikor is above all a night of the women's songs, sung in old Bhojpuri and Hindi, and of dancing. Some songs are tender blessings; others are teasing and frankly bawdy, joking about married life and advising the bride. It is a joyful, free and loving gathering: the bride is fed, danced around and showered with blessings before she begins her new life.</p>
+<h3>Haldi and what follows</h3>
+<p>Turmeric paste (<em>haldi</em>) is rubbed on the bride or groom over the days before the wedding, to purify and beautify. The <strong>laawa</strong>, parched rice, which the bride's brother will pour into her hands during the wedding, is often prepared at this time too.</p>`,
+      terms: [[`Matikor`, `“Digging the earth”: the women's pre-wedding prayer to Mother Earth.`], [`Dharti Mata`, `Mother Earth.`], [`Tassa`, `The Indo-Caribbean drum ensemble played at weddings and festivals.`], [`Laawa`, `Parched rice offered into the sacred fire during the wedding, with the bride's brother.`]],
+      practice: `Ask the women in your family which Matikor songs they remember, and record them singing, so that the songs are not lost.`,
+      links: [[`The Hindu wedding (Vivaha)`, `#/life/vivaha`], [`Booklet for wedding guests`, `#/booklet/vivaha`]]
+    }
+  ]
+});

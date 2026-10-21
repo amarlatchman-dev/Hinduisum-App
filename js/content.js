@@ -569,6 +569,7 @@ window.CONTENT = {
     },
     {
       id: "holi",
+      caribbean: ["Phagwah and chowtal", "#/academy/caribbean/2"],
       deva: "होली",
       prayers: ["madhurashtakam", "kunj-bihari", "hare-krishna"],
       name: "Holi",
@@ -639,6 +640,7 @@ window.CONTENT = {
     },
     {
       id: "navaratri",
+      caribbean: ["Ramleela on the village field", "#/academy/caribbean/3"],
       dayName: "Sharad Navaratri begins",
       deva: "नवरात्रि",
       prayers: ["ya-devi", "ambe-aarti", "durga-chalisa", "durga-mantra"],
@@ -683,6 +685,7 @@ window.CONTENT = {
     },
     {
       id: "kartik-purnima",
+      caribbean: ["Kartik nahan: the bath in the sea", "#/academy/caribbean/4"],
       deva: "कार्तिक",
       prayers: ["deepa-jyoti", "shiva", "jagdish"],
       name: "Kartik Purnima / Dev Deepavali",

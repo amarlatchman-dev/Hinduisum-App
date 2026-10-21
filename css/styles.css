@@ -1065,3 +1065,53 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .form-grid label { display: grid; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--ink-2); }
 .form-grid input, .form-grid select { font: inherit; font-size: 1rem; font-weight: 400; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
 @media (min-width: 560px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Following a rite in Aarti mode ---------- */
+.aarti-verse .at { font-family: var(--display); font-size: max(16px, calc(var(--fs) * 0.5)); color: var(--night-gold); margin: 0 0 calc(var(--fs) * 0.2); }
+.aarti-verse .do { font-family: var(--sans); font-size: max(12px, calc(var(--fs) * 0.32)); line-height: 1.5; color: var(--night-muted); max-width: 40em; margin: 0 auto calc(var(--fs) * 0.45); }
+.aarti.hide-en .aarti-verse .do { display: none; }
+.rite-tools { margin: 10px 0 0; }
+
+/* ---------- Booklet for guests ---------- */
+.form-grid input[type="checkbox"] { padding: 0; width: 18px; height: 18px; accent-color: var(--gold); }
+.bk-opts { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.form-grid .bk-opt { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--ink); font-size: 0.92rem; }
+.booklet { background: #fffdf8; color: #2a2117; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 22px; margin: 6px 0 24px; font-family: var(--sans); line-height: 1.6; }
+.booklet h1, .booklet h2, .booklet h3, .booklet h4 { font-family: var(--display); color: #2a2117; font-weight: 600; }
+.booklet .dv, .booklet .bk-deva { font-family: var(--deva); white-space: pre-line; }
+.booklet .rom { font-style: italic; white-space: pre-line; }
+.booklet .src, .booklet cite { font-size: 0.78rem; color: #7a6a55; font-style: normal; }
+.bk-cover { text-align: center; padding: 18px 0 30px; border-bottom: 1px solid #e6dccb; }
+.bk-om { font-family: var(--deva); font-size: 3rem; color: #a0742a; line-height: 1; }
+.bk-deva { font-size: 1.4rem; color: #a0742a; margin: 12px 0 0; }
+.bk-cover h1 { font-size: 2rem; margin: 6px 0 2px; }
+.bk-sanskrit { font-style: italic; color: #7a6a55; margin: 0; }
+.bk-who { font-family: var(--display); font-size: 1.4rem; margin: 22px 0 0; }
+.bk-when { margin: 8px 0 0; color: #5a4a35; }
+.bk-welcome { max-width: 30em; margin: 22px auto 0; color: #5a4a35; font-size: 0.92rem; }
+.bk-part { padding-top: 22px; }
+.bk-part h2 { font-size: 1.4rem; margin: 0 0 10px; color: #8a5f1c; }
+.bk-part h3 { font-size: 1.05rem; margin: 18px 0 6px; }
+.bk-part ol { padding-left: 1.4em; margin: 0; }
+.bk-part li { margin: 0 0 8px; }
+.bk-lead { font-weight: 600; }
+.bk-verse { margin: 16px 0 0; padding: 14px 16px; border-left: 3px solid #c79a4a; background: #f8f1e4; }
+.bk-verse p { margin: 0 0 6px; }
+.bk-mantra { padding: 12px 0; border-top: 1px solid #efe6d6; break-inside: avoid; }
+.bk-mantra h4 { margin: 0 0 6px; font-size: 0.98rem; }
+.bk-mantra p { margin: 0 0 4px; }
+.bk-mantra .dv { font-size: 1.08rem; }
+.bk-mantra .en { color: #4a3d2c; }
+.bk-end { text-align: center; padding: 26px 0 0; border-top: 1px solid #e6dccb; margin-top: 18px; }
+.bk-end p { margin: 0 0 4px; }
+
+@media print {
+  @page { margin: 16mm 14mm; }
+  body { background: #fff !important; }
+  .topbar, .tabbar, .no-print, .toast, .update-banner { display: none !important; }
+  #view, main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .booklet { border: 0; padding: 0; margin: 0; background: #fff; font-size: 11pt; }
+  .bk-cover { min-height: 85vh; display: flex; flex-direction: column; justify-content: center; border: 0; break-after: page; }
+  .bk-part h2 { break-after: avoid; }
+  .bk-part h3 { break-after: avoid; }
+}

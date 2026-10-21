@@ -25,7 +25,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 - [x] **Daily timings**: Rahu Kalam, Yamaganda, Gulika, Abhijit and Brahma muhurta, the time each tithi
       ends, and the Ekadashi parana (fast-breaking) window, on each day page and the Today page.
-- [ ] **Rite booklets and follow-along mode**: print or save a rite (above all the wedding) as a programme
+- [x] **Rite booklets and follow-along mode**: print or save a rite (above all the wedding) as a programme
       with each step and mantra for guests, and a big-text mode that shows one mantra at a time during the
       ceremony, like Aarti mode.
 - [ ] **Recorded audio**: finish the ElevenLabs prayer recordings (16 prayers left), then the 141 rite

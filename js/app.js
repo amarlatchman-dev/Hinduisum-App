@@ -1278,8 +1278,19 @@
     return seq;
   }
 
+  // A rite's mantras as a prayer, for following the ceremony in Aarti mode. Each verse carries
+  // its place in the rite: [sa, tr, en, null, { n, at, do, group }].
+  function riteAsPrayer(id) {
+    const r = byId(C.lifeEvents, id), set = r && riteMantraSet(r);
+    if (!set) return null;
+    const verses = [];
+    set.groups.forEach((g) => g.mantras.forEach((m) => verses.push([m.sa, m.tr, m.en, null, { n: verses.length + 1, at: m.at, do: m.do, group: g.title }])));
+    return { id: "rite:" + r.id, rite: r, name: r.name, lang: "Sanskrit", verses };
+  }
+  const aartiSource = (id) => (String(id).startsWith("rite:") ? riteAsPrayer(id.slice(5)) : prayer(id));
+
   function aartiView(id) {
-    const p = prayer(id);
+    const p = aartiSource(id);
     if (!p) return notFound();
     const show = store.get("aartiShow", { dev: true, rom: true, en: true });
     const hasRefrain = p.verses.some((v) => v[3] === "Refrain");
@@ -1291,7 +1302,7 @@
           <button class="aarti-icon" data-aarti="close" aria-label="Close">
             <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
-          <div class="aarti-title"><div class="eyebrow">${esc(typeOf(p.type).one)} · ${esc(deityOf(p.deity).name)}</div><h2>${esc(p.name)}</h2></div>
+          <div class="aarti-title"><div class="eyebrow">${p.rite ? "Follow the rite" : `${esc(typeOf(p.type).one)} · ${esc(deityOf(p.deity).name)}`}</div><h2>${esc(p.name)}</h2></div>
           <button class="aarti-icon" data-aarti="opts" aria-label="Display options" aria-expanded="false">
             <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
           </button>
@@ -1309,9 +1320,9 @@
         <div class="aarti-foot">
           <div class="aarti-progress" aria-hidden="true"><span id="aartiBar"></span></div>
           <div class="aarti-controls">
-            <button class="aarti-icon lg" data-aarti="prev" aria-label="Previous verse"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button class="aarti-icon lg" data-aarti="prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
             ${hasAudio(p.id) ? `<button class="btn aarti-play" data-aarti="play">${PLAY_ICON}Chant</button>` : `<span class="aarti-hint">Tap or swipe to move on</span>`}
-            <button class="aarti-icon lg" data-aarti="next" aria-label="Next verse"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+            <button class="aarti-icon lg" data-aarti="next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
           </div>
         </div>
       </div>`;
@@ -1348,6 +1359,19 @@
     } else {
       const k = seq[i];
       const v = p.verses[k];
+      if (v[4]) {
+        const m = v[4];
+        stage.innerHTML = `<div class="aarti-verse">
+          <div class="eyebrow">Mantra ${m.n} of ${p.verses.length}${m.group ? ` · ${esc(m.group)}` : ""}</div>
+          <p class="at">${esc(m.at)}</p>
+          ${m.do ? `<p class="do">${esc(m.do)}</p>` : ""}
+          <p class="dev">${esc(v[0])}</p>
+          <p class="rom" ${romanAttr(v[1])}>${esc(roman(v[1]))}</p>
+          <p class="en">${esc(v[2])}</p>
+        </div>`;
+        fitAarti();
+        return;
+      }
       // Labelled lines (refrain, doha) show their label; the rest are numbered among themselves.
       const verseNo = p.verses.filter((x, n) => n <= k && !x[3]).length;
       const total = p.verses.filter((x) => !x[3]).length;
@@ -1369,7 +1393,7 @@
     if (n < 0) return;
     if (n >= aarti.seq.length) {
       aarti.done = true;
-      if (!aarti.logged) { aarti.logged = true; logPractice("aarti", aarti.p.id); }
+      if (!aarti.logged && !aarti.p.rite) { aarti.logged = true; logPractice("aarti", aarti.p.id); }
     } else aarti.i = n;
     paintAarti();
   }
@@ -1405,16 +1429,16 @@
   }
 
   function closeAarti() {
-    const id = aarti && aarti.p.id;
+    const p = aarti && aarti.p;
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     if (navCount > 1) history.back();
-    else location.replace("#/puja/" + id);
+    else location.replace(p && p.rite ? riteHref(p.rite) : "#/puja/" + (p && p.id));
   }
 
   function bindAarti() {
     const box = document.getElementById("aarti");
     if (!box) { aarti = null; return; }
-    const p = prayer(box.dataset.id);
+    const p = aartiSource(box.dataset.id);
     aarti = { p, seq: aartiSeq(p), i: 0, done: false };
     keepAwake();
     paintAarti();
@@ -2554,6 +2578,72 @@
     </div>`;
   }
 
+  /* A printable programme of a rite for guests ----------------------------------------------- */
+  const BOOKLET_DEFAULT = { who: "", when: "", where: "", meaning: true, steps: true, mantras: true, sa: true, tr: true, en: true };
+  const bookletPrefs = (id) => ({ ...BOOKLET_DEFAULT, ...store.get("booklet:" + id, {}) });
+
+  function bookletBody(r, o) {
+    const set = riteMantraSet(r);
+    const steps = r.phases ? r.phases : [{ title: "", steps: r.steps || [] }];
+    let n = 0, k = 0;
+    return `
+      <section class="bk-cover">
+        <div class="bk-om">ॐ</div>
+        <p class="bk-deva">${esc(r.deva)}</p>
+        <h1>${esc(r.name)}</h1>
+        <p class="bk-sanskrit">${esc(r.sanskrit)}</p>
+        ${o.who ? `<p class="bk-who">${esc(o.who)}</p>` : ""}
+        ${o.when || o.where ? `<p class="bk-when">${[o.when, o.where].filter(Boolean).map(esc).join("<br>")}</p>` : ""}
+        <p class="bk-welcome">Welcome. This booklet follows the ceremony, so you can share in each step and understand the words being chanted.</p>
+      </section>
+      ${o.meaning ? `<section class="bk-part"><h2>The meaning</h2><p class="bk-lead">${esc(r.summary)}</p><div class="prose">${r.intro}</div>
+        ${r.verse ? `<blockquote class="bk-verse"><p class="dv">${esc(r.verse[0])}</p><p class="rom" ${romanAttr(r.verse[1])}>${esc(roman(r.verse[1]))}</p><p>“${esc(r.verse[2])}”</p><cite>${esc(r.verse[3])}</cite></blockquote>` : ""}</section>` : ""}
+      ${o.steps ? `<section class="bk-part"><h2>The ceremony</h2>${steps.map((ph) => `${ph.title ? `<h3>${esc(ph.title)}</h3>` : ""}<ol start="${n + 1}">${ph.steps.map(([t, d]) => { n++; return `<li><b>${esc(t)}</b> ${esc(d)}</li>`; }).join("")}</ol>`).join("")}</section>` : ""}
+      ${o.mantras && set ? `<section class="bk-part"><h2>The mantras</h2>${set.groups.map((g) => `${g.title ? `<h3>${esc(g.title)}</h3>` : ""}${g.mantras.map((m) => `
+        <div class="bk-mantra"><h4>${++k}. ${esc(m.at)}</h4>
+          ${o.sa ? `<p class="dv">${esc(m.sa)}</p>` : ""}${o.tr ? `<p class="rom" ${romanAttr(m.tr)}>${esc(roman(m.tr))}</p>` : ""}${o.en ? `<p class="en">${esc(m.en)}</p>` : ""}
+          <p class="src">${esc(m.src)}</p></div>`).join("")}`).join("")}</section>` : ""}
+      <section class="bk-end"><p class="dv">ॐ शान्तिः शान्तिः शान्तिः</p><p>Om, peace, peace, peace.</p><p class="src">Prepared with Dharma Path</p></section>`;
+  }
+
+  function bookletView(id) {
+    const r = byId(C.lifeEvents, id);
+    if (!r) return notFound();
+    const o = bookletPrefs(id), set = riteMantraSet(r);
+    const box = (k, label) => `<label class="bk-opt"><input type="checkbox" data-bk="${k}" ${o[k] ? "checked" : ""}><span>${label}</span></label>`;
+    return `
+      <div class="no-print">
+        <a class="eyebrow course-link" href="${riteHref(r)}">${esc(r.name)}</a>
+        <h2 class="lesson-title">Booklet for guests</h2>
+        <p class="page-sub">A programme of the ceremony to print or save as a PDF, with each step and mantra explained.</p>
+        <div class="card form-grid" id="bookletForm" data-id="${r.id}">
+          <label>Names (optional)<input type="text" maxlength="80" data-bk="who" value="${esc(o.who)}" placeholder="${r.id === "vivaha" ? "Priya and Arjun" : "Whose ceremony"}"></label>
+          <label>Date and time<input type="text" maxlength="80" data-bk="when" value="${esc(o.when)}" placeholder="Saturday 14 November 2026, 10 am"></label>
+          <label>Place<input type="text" maxlength="80" data-bk="where" value="${esc(o.where)}" placeholder="The mandir or hall"></label>
+          <div class="bk-opts">${box("meaning", "The meaning")}${box("steps", "The steps")}${set ? box("mantras", "The mantras") : ""}</div>
+          ${set ? `<div class="bk-opts">${box("sa", "Devanagari")}${box("tr", "Transliteration")}${box("en", "English")}</div>` : ""}
+        </div>
+        <div class="btn-row"><button class="btn" data-bk-print>Print or save as PDF</button>${set ? `<a class="btn ghost" href="#/follow/${r.id}">Follow along</a>` : ""}</div>
+        <p class="meta">In the print window choose “Save as PDF” to share it by message or email. Your choices are saved on this device.</p>
+        <h3 class="phase">Preview</h3>
+      </div>
+      <div class="booklet" id="booklet">${bookletBody(r, o)}</div>`;
+  }
+
+  function bindBooklet() {
+    const form = document.getElementById("bookletForm");
+    if (!form) return;
+    const id = form.dataset.id, r = byId(C.lifeEvents, id);
+    const update = (el) => {
+      const o = bookletPrefs(id);
+      o[el.dataset.bk] = el.type === "checkbox" ? el.checked : el.value.trim();
+      store.set("booklet:" + id, o);
+      document.getElementById("booklet").innerHTML = bookletBody(r, o);
+    };
+    form.addEventListener("input", (e) => { if (e.target.dataset.bk) update(e.target); });
+    form.addEventListener("change", (e) => { if (e.target.dataset.bk) update(e.target); });
+  }
+
   function lifeEventView(id) {
     const r = byId(C.lifeEvents, id);
     if (!r) return notFound();
@@ -2573,6 +2663,10 @@
 
         <div class="glance">${glance.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div>
         ${riteMantraSet(r) ? `<button class="chip m-jump" data-jump="riteMantras">The ${riteMantraCount(riteMantraSet(r))} mantras of this rite ›</button>` : ""}
+        <div class="btn-row rite-tools">
+          ${riteMantraSet(r) ? `<a class="btn" href="#/follow/${r.id}">Follow along</a>` : ""}
+          <a class="btn ghost" href="#/booklet/${r.id}">Booklet for guests</a>
+        </div>
 
         <div class="section"><div class="section-head"><h2 class="section-title">The meaning</h2></div>
           <div class="prose lesson-body">${r.intro}</div>
@@ -3345,8 +3439,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { rites: "learn", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn" };
+  const TAB = { rites: "learn", booklet: "learn", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -3364,12 +3458,13 @@
     if (section === "festivals" && id) { section = "festival"; }
     if (section === "academy" && !id) section = "learn";
     if (section === "life" && !id) section = "learn";
+    if (section === "follow") { section = "aarti"; id = "rite:" + id; }
 
     stopAudio();
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -3396,6 +3491,7 @@
         case "academy": html = a ? lessonView(id, +a) : courseView(id); break;
         case "life": html = lifeEventView(id); break;
         case "rites": html = ritesView(); break;
+        case "booklet": html = bookletView(id); break;
         case "read":
           if (!id) html = libraryView();
           else if (id === "about") html = aboutTextsView();
@@ -3426,6 +3522,7 @@
     if (section === "home") fillGitaToday();
     if (section === "puja" && !id) bindPrayerSearch(query);
     if (section === "search") bindSearch();
+    if (section === "booklet") bindBooklet();
     fillProgressBars();
     if (readerState) {
       applyMarks();
@@ -3527,6 +3624,7 @@
       location.hash = "#/aarti/" + t.dataset.aartiOpen;
       return;
     }
+    if (t.hasAttribute("data-bk-print")) { window.print(); return; }
     if (t.dataset.aarti) {
       const act = t.dataset.aarti;
       if (act === "prev") aartiGo(-1);

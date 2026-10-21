@@ -93,7 +93,7 @@ The texts in `texts/` are generated from public-domain and openly licensed sourc
 | Atharva Veda | Ralph T. H. Griffith (1895–96), all 20 books, cleaned from two archive.org scans | DharmicData |
 | Upanishads | Swami Paramananda (1919): Isha, Katha, Kena; F. Max Müller (1879, 1884): Prasna, Mundaka, Taittiriya, Aitareya, Chandogya, Brihadaranyaka, Svetasvatara; R. E. Hume (1921): Mandukya | Sanskrit Wikisource (CC BY-SA), matched verse by verse |
 | Ramayana | Manmatha Nath Dutt (1891–94), about 15,000 verses across all 7 kandas | Critical edition e-text |
-| Ramcharitmanas (and the Sundar Kand on its own) | none yet; F. S. Growse's (1883) to follow | Tulsidas's Awadhi from the IIT Kanpur Ramcharitmanas project, via DharmicData |
+| Ramcharitmanas (and the Sundar Kand on its own) | F. S. Growse (1883, revised 1914), in prose after each doha group, from the Internet Archive scans of the 1922 and 1914 printings | Tulsidas's Awadhi from the IIT Kanpur Ramcharitmanas project, via DharmicData; the closing passage of kands 2–7 from the Gita Press edition |
 | Mahabharata | Kisari Mohan Ganguli (1883–96), complete, all 18 parvas | — |
 | Vishnu Purana | Manmatha Nath Dutt after H. H. Wilson, all 6 books | — |
 | Garuda Purana | Ernest Wood and S. V. Subrahmanyam (1911), the Saroddhara | — |
@@ -131,7 +131,8 @@ The later books are built by their own scripts, each of which explains in its he
 - `scripts/build_puranas.py`: the Garuda Purana and the Devi Bhagavatam, from archive.org.
 - `scripts/build_sanskrit_puranas.py`: the Sanskrit-only Puranas, from GRETIL and Sanskrit Wikisource.
 - `scripts/build_wikisource_puranas.py`: the Padma and Bhavishya Puranas, from Sanskrit Wikisource.
-- `scripts/build_ramcharitmanas.py`: the Ramcharitmanas in Awadhi, one section per doha with the standard numbering, and the Sundar Kand on its own.
+- `scripts/build_ramcharitmanas.py`: the Ramcharitmanas in Awadhi, one section per doha with the standard numbering, and the Sundar Kand on its own. The closing passages missing from its source are in `scripts/data/ramcharitmanas_endings.json`.
+- `scripts/build_ramcharitmanas_english.py`: Growse's English, cleaned from two OCR scans (one fills the other's missing pages and misread words) and matched to the sections by length and names, in order. Run it after `build_ramcharitmanas.py`.
 - `scripts/add_upanishad_sanskrit.py`: adds the Sanskrit of the eleven Upanishads, from Sanskrit Wikisource, to the English built by `build_upanishads.py`, matching Müller's and Paramananda's numbering verse by verse.
 
 The Rig Veda hymn selection and its English translations live in `scripts/rigveda_hymns.py`.

@@ -140,14 +140,15 @@ window.CONTENT = {
       id: "ramcharitmanas",
       title: "Ramcharitmanas",
       sanskritTitle: "रामचरितमानस",
-      tagline: "Tulsidas's Ramayan · 7 kands · Awadhi",
+      tagline: "Tulsidas's Ramayan · 7 kands · Awadhi and English",
       partLabel: "Kand",
       sectionLabel: "Doha",
       verses: true,
       sanskrit: true,
       sanskritOnly: true,
       category: "itihasa",
-      translation: "Tulsidas's Awadhi, from the IIT Kanpur Ramcharitmanas project via DharmicData, with a transliteration that drops the silent final a, as the Manas is sung. The closing passage of each kand from the Ayodhya Kand on is missing from the source and will be added; F. S. Growse's English translation (1883) is being prepared.",
+      transLabel: "English · F. S. Growse",
+      translation: "Tulsidas's Awadhi, from the IIT Kanpur Ramcharitmanas project via DharmicData (the closing passage of each kand from the Gita Press edition), with a transliteration that drops the silent final a, as the Manas is sung. English in prose by F. S. Growse (1883, revised 1914), given after each doha group, from scans of the 1922 and 1914 printings; a few misread words may remain.",
       about: "The Ramayan of the poet-saint Tulsidas (1574), retold in Awadhi for everyone, and the scripture most sung in Hindu homes and mandirs across North India and the diaspora. Its chaupais and dohas tell the whole story of Rama, from his birth to his reign, as an outpouring of devotion: Shiva tells it to Parvati, Kakabhushundi to Garuda, and Tulsidas to us."
     },
     {
@@ -162,7 +163,8 @@ window.CONTENT = {
       sanskritOnly: true,
       singlePart: true,
       category: "itihasa",
-      translation: "Tulsidas's Awadhi, from the IIT Kanpur Ramcharitmanas project via DharmicData, with a transliteration that drops the silent final a, as the Manas is sung. The closing passage of the kand (doha 60) is missing from the source and will be added; F. S. Growse's English translation (1883) is being prepared.",
+      transLabel: "English · F. S. Growse",
+      translation: "Tulsidas's Awadhi, from the IIT Kanpur Ramcharitmanas project via DharmicData (the closing passage from the Gita Press edition), with a transliteration that drops the silent final a, as the Manas is sung. English in prose by F. S. Growse (1883, revised 1914), given after each doha group; a few misread words from the old scans may remain.",
       about: "The fifth book of the Ramcharitmanas, read on its own in countless homes, often on Tuesdays and Saturdays or in times of trouble: Hanuman leaps the ocean, finds Sita in Lanka, gives her Rama's ring, sets Lanka ablaze and returns with her token, and Rama's army reaches the shore."
     },
     {

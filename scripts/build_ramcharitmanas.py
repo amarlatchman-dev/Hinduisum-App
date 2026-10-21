@@ -10,7 +10,9 @@ The source has each kand as a list of blocks (shloka, chaupai, doha/soratha, chh
 Kanpur Ramcharitmanas project. The text is laid out as it is read: each doha closes a group of
 chaupais, and that group is one section here, "Doha N", with the standard (Gita Press) numbers.
 The shlokas and sorathas that open a kand before its first chaupai make an "Invocation" section,
-and any verses after the last doha a closing one.
+and any verses after the last doha a closing one. The source lacks the closing passage of kands 2 to
+7 (the last chaupais, chhand and doha); those come from scripts/data/ramcharitmanas_endings.json,
+taken from the Gita Press edition.
 
 Writes texts/ramcharitmanas/<k>.json for the seven kands, texts/sundarkand/1.json (the Sundar Kand
 on its own, as many families read it), and their entries in texts/index.json. The transliteration
@@ -136,8 +138,9 @@ def build(src):
     files = sorted(f for f in os.listdir(src) if f.endswith(".json"))
     index = json.load(open(os.path.join(OUT, "index.json"), encoding="utf-8"))
     parts = []
+    endings = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ramcharitmanas_endings.json"), encoding="utf-8"))
     for k, f in enumerate(files, 1):
-        blocks = json.load(open(os.path.join(src, f), encoding="utf-8"))
+        blocks = json.load(open(os.path.join(src, f), encoding="utf-8")) + endings.get(str(k), [])
         secs = []
         for meta, bl in sections_of(blocks):
             vs = [v for b in bl for v in block_verses(b)]

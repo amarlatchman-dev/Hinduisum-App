@@ -2936,9 +2936,12 @@
     const contentsHref = bookId === "gita" || book.singlePart || meta.count === 1 ? `#/read/${bookId}` : `#/read/${bookId}/${part}`;
     const state = { bookId, part, sec, title, target: query.get("v"), targetP: query.get("p"), partName: meta.name, single: meta.count === 1 };
     const intro = (s.intro || []).map((p, k) => `<p class="para intro" data-i="${-1 - k}">${esc(p)}</p>`).join("");
+    // A translation given for the section as a whole (Growse's prose for each doha group).
+    const trans = s.trans ? `<div class="vhead trans-head" data-i="-99">${esc(book.transLabel || "Translation")}</div>${s.trans.map((p, k) => `<p class="para trans" data-i="${-100 - k}">${esc(p)}</p>`).join("")}`
+      : s.trans_with ? `<p class="para trans-with" data-i="-99">The translation of this ${esc(book.sectionLabel.toLowerCase())} is given with ${esc(book.sectionLabel)} ${esc(s.trans_with)}.</p>` : "";
     const body = intro + (s.verses
       ? s.verses.map((v) => renderVerse(v, bookId === "gita" ? `${part}.` : "", showSa)).join("")
-      : s.paras.map(renderPara).join(""));
+      : s.paras.map(renderPara).join("")) + trans;
 
     return { state, html: `
       <div class="reader-head">
@@ -3358,10 +3361,10 @@
   const keyOf = (...parts) => fold(parts.join(" ")).toLowerCase();
   const stripTags = (h) => String(h).replace(/<[^>]+>/g, " ");
   const SMALL_BOOKS = ["gita", "samaveda", "upanishads", "yoga", "vishnu", "garuda"];
-  const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "mahabharata"];
+  const LARGE_BOOKS = ["rigveda", "yajurveda", "atharvaveda", "devibhagavatam", "ramayana", "ramcharitmanas", "mahabharata"];
   // The Puranas given only in Sanskrit are searched by their transliteration, on request.
-  const SANSKRIT_BOOKS = ["ramcharitmanas", "bhagavata", "shiva", "linga", "skanda", "narada", "padma", "brahma", "brahmanda", "bhavishya", "kurma", "vamana", "varaha"];
-  const LARGE_MB = 37, SANSKRIT_MB = 76; // download sizes of the texts, in MB
+  const SANSKRIT_BOOKS = ["bhagavata", "shiva", "linga", "skanda", "narada", "padma", "brahma", "brahmanda", "bhavishya", "kurma", "vamana", "varaha"];
+  const LARGE_MB = 41, SANSKRIT_MB = 72; // download sizes of the texts, in MB
   const searchBooks = {};
   const searchJobs = {};
   let searchToken = 0;
@@ -3396,6 +3399,7 @@
           const n = si + 1;
           const where = bookId === "gita" ? `Chapter ${part.n}` : book.singlePart ? sectionTitle(book, part.n, n, sec) : `${part.name} · ${sectionTitle(book, part.n, n, sec)}`;
           const base = readerHref(bookId, part.n, n);
+          (sec.trans || []).forEach((t) => entries.push({ href: base, title: book.title, where, text: t, key: keyOf(t) }));
           if (sec.verses) {
             sec.verses.forEach((v) => {
               const o = Array.isArray(v) ? { n: v[0], sa: v[1], tr: v[2], en: v[3], ref: bookId === "gita" ? `${part.n}.${v[0]}` : `Verse ${v[0]}` } : v;
@@ -3468,10 +3472,10 @@
     const box = document.getElementById("scriptureResults");
     if (!box || token !== searchToken) return;
     box.innerHTML = html + (epics ? "" : `
-      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Devi Bhagavatam, the Ramayana and the Mahabharata are very large. Searching them downloads about ${LARGE_MB} MB the first time, then works offline.</p>
+      <div class="card" style="margin-top:20px"><p style="margin:0 0 12px;color:var(--ink-2)">The Rig, Yajur and Atharva Vedas, the Devi Bhagavatam, the Ramayana, the Ramcharitmanas and the Mahabharata are very large. Searching them downloads about ${LARGE_MB} MB the first time, then works offline.</p>
       <button class="btn ghost" data-search-epics>Also search the Vedas and the epics</button></div>`) +
       (skt ? "" : `
-      <div class="card" style="margin-top:12px"><p style="margin:0 0 12px;color:var(--ink-2)">The Ramcharitmanas and twelve Puranas are here in the original only. Search them by their transliteration, such as “krishna” or “narayana”. They download about ${SANSKRIT_MB} MB the first time.</p>
+      <div class="card" style="margin-top:12px"><p style="margin:0 0 12px;color:var(--ink-2)">Twelve Puranas are here in the original only. Search them by their transliteration, such as “krishna” or “narayana”. They download about ${SANSKRIT_MB} MB the first time.</p>
       <button class="btn ghost" data-search-sanskrit>Also search the Sanskrit Puranas</button></div>`) +
       (found ? "" : `<div class="card empty">Nothing found for “${esc(q)}”. Try a shorter word or a different spelling.</div>`);
   }

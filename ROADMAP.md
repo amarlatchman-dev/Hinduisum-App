@@ -11,12 +11,9 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
       readers who find diacritics hard.
 - [x] **Sanskrit for the Upanishads**: the Upanishads are in English only; add the Devanagari and IAST
       (GRETIL has the texts).
-- [ ] **The Ramcharitmanas**, and the Sundar Kand on its own: Tulsidas's Awadhi with F. S. Growse's
-      public-domain English (1883). For many diaspora families this is the scripture they sing. The
-      DharmicData set already used for the Vedas has the Ramcharitmanas text.
-      **Done:** the Awadhi text with transliteration, all seven kands and the Sundar Kand on its own.
-      **Still to do:** Growse's English, matched doha by doha (his scan marks each doha); the closing
-      passage of six kands, missing from DharmicData (Hindi Wikisource has it, once hi.wikisource.org is allowed).
+- [x] **The Ramcharitmanas**, and the Sundar Kand on its own: Tulsidas's Awadhi with a transliteration, the
+      closing passage of each kand from the Gita Press edition, and F. S. Growse's public-domain English (1883)
+      after each doha group.
 - [x] **Dates by tithi for loved ones**: enter the date someone passed away and get their yearly
       shraddha tithi and their day in Pitru Paksha; birthdays by Hindu tithi too. The city calendars
       already hold the tithis.
@@ -28,15 +25,13 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 - [x] **Rite booklets and follow-along mode**: print or save a rite (above all the wedding) as a programme
       with each step and mantra for guests, and a big-text mode that shows one mantra at a time during the
       ceremony, like Aarti mode.
-- [ ] **Recorded audio**: finish the ElevenLabs prayer recordings (16 prayers left), then the 141 rite
-      mantras (about 13,000 characters, more than one month's free quota).
+- [ ] **Recorded audio**: finish the ElevenLabs prayer recordings on the free quota (16 prayers left), then the
+      141 rite mantras (about 13,000 characters, more than one month's free quota).
 - [x] **Listen to any book with the device voice**: a Listen button in the reader that reads verse by
       verse, highlights each one and carries on into the next chapter, in English and (where the phone
       has a Hindi voice) Sanskrit. Free, works offline, about a day's work.
-- [ ] **Recorded readings of the most-read texts** with ElevenLabs: the Bhagavad Gita (about 160,000
-      characters, Sanskrit and English), then the Sundar Kand and the key Upanishads. One or two months of a
-      paid plan rather than years of the free quota. Recording every book (about 43 million characters,
-      roughly 800 hours and 20–25 GB of audio) would need paid hosting and is not planned.
+- ~~Recorded readings of the most-read texts with ElevenLabs~~: not planned, as it needs a paid plan. The device
+      voice (Listen) reads every book instead.
 - [ ] Link public-domain human readings where they exist (e.g. LibriVox English readings of the Gita and
       Upanishads; Sanskrit chanting on archive.org once each licence is checked).
 - [ ] Notes on each rite page where the old manuals differ from today's custom (e.g. three rounds of the

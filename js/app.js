@@ -13,6 +13,9 @@
   /* ====================================================================== */
   /* Utilities                                                               */
   /* ====================================================================== */
+  // Values kept only on this device: never backed up or synced.
+  const LOCAL_ONLY = (k) => k.startsWith("backup:") || k.startsWith("sync:") || k === "reminders:periodic" || k.startsWith("voice:");
+  const syncHooks = { changed: null };
   const store = {
     get(key, fallback) {
       try {
@@ -22,8 +25,24 @@
         return fallback;
       }
     },
-    set(key, value) {
-      try { localStorage.setItem("dp:" + key, JSON.stringify(value)); } catch (e) { /* storage unavailable */ }
+    // Each change is stamped with its time (or the given one), so sync can tell which version is newer.
+    set(key, value, stamp) {
+      try { localStorage.setItem("dp:" + key, JSON.stringify(value)); } catch (e) { return; /* storage unavailable */ }
+      store.stamp(key, stamp, false);
+    },
+    del(key, stamp) {
+      try { localStorage.removeItem("dp:" + key); } catch (e) { return; }
+      store.stamp(key, stamp, true);
+    },
+    stamp(key, stamp, gone) {
+      if (LOCAL_ONLY(key)) return;
+      try {
+        const t = JSON.parse(localStorage.getItem("dp:sync:t") || "{}"), g = JSON.parse(localStorage.getItem("dp:sync:gone") || "{}");
+        if (gone) { delete t[key]; g[key] = stamp || Date.now(); } else { delete g[key]; t[key] = stamp || Date.now(); }
+        localStorage.setItem("dp:sync:t", JSON.stringify(t));
+        localStorage.setItem("dp:sync:gone", JSON.stringify(g));
+      } catch (e) { /* ignore */ }
+      if (!stamp && syncHooks.changed) syncHooks.changed(key);
     }
   };
 
@@ -954,7 +973,8 @@
       </div>
       ${f.atHome ? `<div class="card prose"><h3>Celebrate at home</h3><ol class="steps">${f.atHome.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></div>` : ""}
       ${f.caribbean ? `<a class="row" href="${f.caribbean[1]}" style="margin-top:12px"><span class="body"><span class="eyebrow">In the Caribbean</span><h3>${esc(f.caribbean[0])}</h3></span><span class="chev">›</span></a>` : ""}
-      ${prs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Prayers for ${esc(f.name.split(" ·")[0])}</h2></div><div class="list">${prs.map(prayerRow).join("")}</div></div>` : ""}`;
+      ${prs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Prayers for ${esc(f.name.split(" ·")[0])}</h2></div><div class="list">${prs.map(prayerRow).join("")}</div></div>` : ""}
+      <p class="footer-note"><button class="linkish" data-report="1" data-report-where="${esc(`Festival guide: ${f.name}`)}">Report a mistake on this page</button></p>`;
   }
 
   async function locationView() {
@@ -1111,7 +1131,7 @@
             <p class="en">${esc(v[2])}</p>
           </div>`).join("")}
       </div>
-      <p class="meta" style="margin:0 4px">${esc(p.lang)}${p.verses.length > 1 ? ` · ${p.verses.length} verses` : ""}. Translation by Dharma Path.</p>
+      <p class="meta" style="margin:0 4px">${esc(p.lang)}${p.verses.length > 1 ? ` · ${p.verses.length} verses` : ""}. Translation by Dharma Path. <button class="linkish" data-report="1" data-report-where="${esc(`Prayer: ${p.name}`)}">Report a mistake on this page</button></p>
       ${related.length ? `<div class="section"><div class="section-head"><h2 class="section-title">More for ${esc(deityOf(p.deity).name)}</h2><a href="#/puja#browse?d=${p.deity}">See all</a></div><div class="list">${related.map(prayerRow).join("")}</div></div>` : ""}`;
   }
 
@@ -1651,6 +1671,7 @@
           <a class="row" href="#/saved">${seal("ग्रन्थ")}<span class="body"><h3>Bookmarks and notes</h3><p>Verses you have saved while reading</p></span><span class="chev">›</span></a>
           <a class="row" href="#/recordings">${seal("नाद")}<span class="body"><h3>Your recordings</h3><p>Chants recorded in your own voice</p></span><span class="chev">›</span></a>
           <a class="row" href="#/remember">${seal("स्मृति")}<span class="body"><h3>Remembering dates</h3><p>A loved one's shraddha or birthday, by the tithi</p></span><span class="chev">›</span></a>
+          <a class="row" href="#/sync">${seal("सङ्ग")}<span class="body"><h3>Sync between devices</h3><p>${store.get("sync:on", false) ? `On${store.get("sync:last", 0) ? ` · last synced ${esc(fmtDay(store.get("sync:last", 0)))}` : ""}` : "Keep your things the same on all your devices"}</p></span><span class="chev">›</span></a>
           <a class="row" href="#/backup">${seal("रक्षा")}<span class="body"><h3>Backup and restore</h3><p>${store.get("backup:last", 0) ? `Last backup ${esc(fmtDay(store.get("backup:last", 0)))}` : "Save everything here to a file, or move it to a new phone"}</p></span><span class="chev">›</span></a>
         </div>
       </div>`;
@@ -2104,8 +2125,6 @@
   const BACKUP_VERSION = 1;
   // Not carried between devices: the backup's own bookkeeping, and what belongs to this device alone
   // (its background-sync registration and its speech voices).
-  const LOCAL_ONLY = (k) => k.startsWith("backup:") || k === "reminders:periodic" || k.startsWith("voice:");
-
   function storedKeys() {
     const keys = [];
     try {
@@ -2212,7 +2231,7 @@
   }
 
   async function restoreBackup(b, mode) {
-    if (mode === "replace") storedKeys().forEach((k) => { try { localStorage.removeItem("dp:" + k); } catch (e) { /* ignore */ } });
+    if (mode === "replace") storedKeys().forEach((k) => store.del(k));
     Object.entries(b.data).forEach(([k, v]) => {
       if (LOCAL_ONLY(k)) return;
       store.set(k, mode === "replace" ? v : mergeValue(store.get(k, undefined), v, true));
@@ -2274,6 +2293,7 @@
         ${ids.length ? `<label class="bk-rec"><input type="checkbox" id="bkRec" checked><span>Include my recordings (${fmtSize(bytes)})</span></label>` : ""}
         <div class="btn-row"><button class="btn" data-backup="save">Download a backup</button>${canShareFiles() ? `<button class="btn ghost" data-backup="share">Send it…</button>` : ""}</div>
         <p class="meta" style="margin:12px 0 0">${last ? `Last backup: ${esc(fmtDay(last))}.` : "No backup made on this device yet."} Keep the file somewhere safe, such as your email, Google Drive or iCloud.</p>
+        <p class="meta" style="margin:8px 0 0">To keep several devices the same all the time, use <a href="#/sync">sync</a>.</p>
       </div>
       <div class="card">
         <div class="eyebrow">Restore</div>
@@ -2503,6 +2523,7 @@
           ${prev ? `<a href="${lessonHref(id, i - 1)}"><span class="meta">Previous</span><span>${esc(prev.title)}</span></a>` : `<span></span>`}
           ${next ? `<a class="next" href="${lessonHref(id, i + 1)}"><span class="meta">Next</span><span>${esc(next.title)}</span></a>` : `<a class="next" href="#/academy/${id}"><span class="meta">Finished</span><span>Back to the course</span></a>`}
         </nav>
+        <p class="footer-note"><button class="linkish" data-report="1" data-report-where="${esc(`Lesson: ${l.title}`)}">Report a mistake on this page</button></p>
       </article>`;
   }
 
@@ -2578,7 +2599,7 @@
           <p class="m-sa">${esc(m.sa)}</p>
           <p class="m-tr" ${romanAttr(m.tr)}>${esc(roman(m.tr))}</p>
           <p class="m-en">${esc(m.en)}</p>
-          <p class="m-src">${esc(m.src)}${book ? ` · <a href="${m.read}">Read it in the ${book}</a>` : ""}</p>
+          <p class="m-src">${esc(m.src)}${book ? ` · <a href="${m.read}">Read it in the ${book}</a>` : ""} · <button class="linkish" data-report="1" data-report-where="${esc(`${r.name}: mantra ${k}, ${m.at}`)}" data-report-text="${esc(`${m.tr}\n\n${m.en}`)}" data-report-deva="${esc(m.sa)}">Report a mistake</button></p>
         </div>`;
       }).join("")}</div>`).join("")}
     </div>`;
@@ -2710,7 +2731,7 @@
           ${prev ? `<a href="${riteHref(prev)}"><span class="meta">Before this</span><span>${esc(prev.name)}</span></a>` : `<a href="#/rites"><span class="meta">The journey</span><span>All rites</span></a>`}
           ${next ? `<a class="next" href="${riteHref(next)}"><span class="meta">Next in life</span><span>${esc(next.name)}</span></a>` : `<a class="next" href="#/rites"><span class="meta">The journey</span><span>All rites</span></a>`}
         </nav>
-        <p class="footer-note">Customs vary by region and family. Where your family's tradition differs, follow it.</p>
+        <p class="footer-note">Customs vary by region and family. Where your family's tradition differs, follow it. <button class="linkish" data-report="1" data-report-where="${esc(`Rite: ${r.name}`)}">Report a mistake on this page</button></p>
       </article>`;
   }
 
@@ -2779,6 +2800,218 @@
         if (label) label.textContent = pct + "% read";
       });
     }).catch(() => {});
+  }
+
+  /* ====================================================================== */
+  /* Sync: keep the same things on every device, through the person's own    */
+  /* Google Drive. The data sits in the app's hidden folder in their Drive,  */
+  /* which only Dharma Path can read; there is no Dharma Path server.        */
+  /* ====================================================================== */
+  const SYNC_FILE = "dharma-path-sync.json";
+  const DRIVE = "https://www.googleapis.com/drive/v3";
+  const DRIVE_UP = "https://www.googleapis.com/upload/drive/v3";
+  const syncCfg = () => (window.DP_CONFIG || {}).googleClientId || "";
+  const syncOn = () => !!store.get("sync:on", false);
+  let syncToken = null;          // { value, exp } for this session; Google's tokens last an hour
+  let syncBusy = null, syncTimer = 0, gisLoading = null;
+  try { const t = JSON.parse(sessionStorage.getItem("dp:sync:token") || "null"); if (t && t.exp > Date.now()) syncToken = t; } catch (e) { /* ignore */ }
+
+  // Changes to synced values are stamped, so the newest version of each one wins.
+  syncHooks.changed = (key) => {
+    if (!syncOn() || LOCAL_ONLY(key)) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => { if (syncToken && syncToken.exp > Date.now()) syncNow(false).catch(() => {}); }, 6000);
+  };
+
+  function loadGis() {
+    if (window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    if (!gisLoading) gisLoading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.onload = resolve;
+      s.onerror = () => { gisLoading = null; reject(new Error("Couldn't reach Google")); };
+      document.head.appendChild(s);
+    });
+    return gisLoading;
+  }
+
+  // Ask Google for access to the app's folder in the person's Drive. Needs a tap (it opens a window).
+  async function syncSignIn() {
+    await loadGis();
+    return new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: syncCfg(),
+        scope: "https://www.googleapis.com/auth/drive.appdata",
+        callback: (r) => {
+          if (r.error || !r.access_token) return reject(new Error(r.error || "Sign-in was cancelled"));
+          syncToken = { value: r.access_token, exp: Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60000 };
+          try { sessionStorage.setItem("dp:sync:token", JSON.stringify(syncToken)); } catch (e) { /* ignore */ }
+          resolve();
+        },
+        error_callback: (e) => reject(new Error(e && e.type === "popup_closed" ? "Sign-in was cancelled" : "Sign-in didn't work")),
+      });
+      client.requestAccessToken({ prompt: store.get("sync:on", false) ? "" : "consent" });
+    });
+  }
+
+  async function drive(path, opts = {}, up = false) {
+    const res = await fetch((up ? DRIVE_UP : DRIVE) + path, { ...opts, headers: { Authorization: "Bearer " + syncToken.value, ...(opts.headers || {}) } });
+    if (res.status === 401) { syncToken = null; throw new Error("auth"); }
+    if (!res.ok) throw new Error("Drive " + res.status);
+    return res;
+  }
+
+  async function readRemote() {
+    const q = encodeURIComponent(`name='${SYNC_FILE}'`);
+    const list = await (await drive(`/files?spaces=appDataFolder&q=${q}&fields=files(id)`)).json();
+    const id = list.files && list.files[0] && list.files[0].id;
+    if (!id) return { id: null, data: { v: 1, keys: {}, gone: {} } };
+    const data = await (await drive(`/files/${id}?alt=media`)).json();
+    return { id, data: { v: 1, keys: data.keys || {}, gone: data.gone || {} } };
+  }
+
+  async function writeRemote(id, data) {
+    const body = JSON.stringify(data);
+    if (id) return drive(`/files/${id}?uploadType=media`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body }, true);
+    const meta = { name: SYNC_FILE, parents: ["appDataFolder"], mimeType: "application/json" };
+    const b = "dp" + Math.random().toString(36).slice(2);
+    const multipart = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+    return drive(`/files?uploadType=multipart`, { method: "POST", headers: { "Content-Type": "multipart/related; boundary=" + b }, body: multipart }, true);
+  }
+
+  // Bring this device and the Drive copy together, key by key. Where only one side has changed a
+  // value since the last sync, its version wins (so deletions carry over too); where both have, the
+  // two are merged, as a backup is when added to what is already here.
+  async function syncMerge() {
+    const { id, data: remote } = await readRemote();
+    const times = store.get("sync:t", {}), gone = store.get("sync:gone", {});
+    const last = store.get("sync:last", 0);
+    const local = {};
+    storedKeys().forEach((k) => { local[k] = store.get(k, null); });
+    const keys = new Set([...Object.keys(local), ...Object.keys(gone), ...Object.keys(remote.keys), ...Object.keys(remote.gone)]);
+    let pushed = 0, pulled = 0;
+    const now = Date.now();
+    for (const k of keys) {
+      if (LOCAL_ONLY(k)) continue;
+      const lt = k in local ? (times[k] || 0) : (gone[k] || 0);
+      const r = remote.keys[k], rg = remote.gone[k] || 0;
+      const rt = r ? r.t : rg;
+      const lHas = k in local, rHas = !!r && (!rg || r.t >= rg);
+      if (lt === rt && JSON.stringify(lHas ? local[k] : null) === JSON.stringify(rHas ? r.v : null)) continue;
+      // changed on both sides since the last sync, or never synced before: keep both
+      if (lHas && rHas && ((lt > last && rt > last) || !lt || !last)) {
+        const v = mergeValue(local[k], r.v, true);
+        store.set(k, v, now);
+        remote.keys[k] = { t: now, v };
+        delete remote.gone[k];
+        pushed++; pulled++;
+      } else if (rt > lt) {
+        if (rHas) store.set(k, r.v, rt);
+        else store.del(k, rt);
+        pulled++;
+      } else if (lHas) {
+        remote.keys[k] = { t: lt || now, v: local[k] };
+        delete remote.gone[k];
+        if (!lt) store.set(k, local[k], now);
+        pushed++;
+      } else {
+        delete remote.keys[k];
+        remote.gone[k] = lt;
+        pushed++;
+      }
+    }
+    if (pushed || !id) await writeRemote(id, remote);
+    store.set("sync:last", Date.now());
+    return { pushed, pulled };
+  }
+
+  // Sync now. With ask = true (a tap), sign in first if needed.
+  async function syncNow(ask) {
+    if (!syncCfg()) throw new Error("not set up");
+    if (syncBusy) return syncBusy;
+    syncBusy = (async () => {
+      try {
+        if (!syncToken || syncToken.exp < Date.now()) {
+          if (!ask) throw new Error("auth");
+          await syncSignIn();
+        }
+        try { return await syncMerge(); }
+        catch (e) {
+          if (e.message !== "auth" || !ask) throw e;
+          await syncSignIn();
+          return await syncMerge();
+        }
+      } finally { syncBusy = null; }
+    })();
+    return syncBusy;
+  }
+
+  function syncView() {
+    const on = syncOn();
+    const last = store.get("sync:last", 0);
+    const live = syncToken && syncToken.exp > Date.now();
+    if (!syncCfg()) return `
+      <h2 class="page-title">Sync</h2>
+      <p class="page-sub">Keep your bookmarks, notes, practice and progress the same on all your devices.</p>
+      <div class="card notice"><div class="eyebrow">Not set up yet</div><p>Sync uses each person's own Google Drive, and this copy of Dharma Path hasn't been connected to Google yet. Until then, use <a href="#/backup">backup and restore</a> to move your things between devices.</p></div>`;
+    return `
+      <h2 class="page-title">Sync</h2>
+      <p class="page-sub">Keep your bookmarks, notes, practice, reading plans and progress the same on your phone, tablet and computer.</p>
+      <div class="card">
+        <div class="eyebrow">${on ? "Sync is on" : "Sync is off"}</div>
+        <p class="meta" style="margin:6px 0 0">${on ? (last ? `Last synced ${esc(new Date(last).toLocaleString(undefined, { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" }))}.` : "Not synced yet.") + (live ? " Changes sync by themselves while the app is open." : " Tap Sync now to bring this device up to date.") : "Sign in with Google on each device you use. Dharma Path keeps a copy of your things in a private folder in your own Google Drive, which only this app can open."}</p>
+        <div class="btn-row">
+          ${on ? `<button class="btn" data-sync="now">Sync now</button><button class="btn ghost" data-sync="off">Turn off on this device</button>` : `<button class="btn" data-sync="on">Sign in with Google and sync</button>`}
+        </div>
+      </div>
+      <p class="footer-note">Synced: bookmarks, highlights and notes, practice history and japa counts, favourite prayers, finished lessons, places in the books, reading plans, rite checklists, remembered dates, reminder choices and settings. Your own recordings stay on the device where you made them; move them with a <a href="#/backup">backup</a>. Dharma Path has no server and never sees your data. To remove it, turn sync off and delete the app's data in Google Drive's settings (Manage apps).</p>`;
+  }
+
+  async function syncAction(act, btn) {
+    if (act === "off") {
+      store.set("sync:on", false);
+      syncToken = null;
+      try { sessionStorage.removeItem("dp:sync:token"); } catch (e) { /* ignore */ }
+      toast("Sync is off on this device");
+      return route();
+    }
+    btn.disabled = true;
+    btn.textContent = "Syncing…";
+    try {
+      const r = await syncNow(true);
+      store.set("sync:on", true);
+      toast(r.pulled ? "Synced: this device is up to date" : "Synced");
+    } catch (e) {
+      toast(e.message === "Sign-in was cancelled" ? "Sign-in was cancelled" : "Couldn't sync. Check your connection and try again.");
+    }
+    route();
+  }
+
+  // On opening the app, sync quietly if this session is already signed in.
+  setTimeout(() => { if (syncOn() && syncToken && syncToken.exp > Date.now()) syncNow(false).then((r) => { if (r && r.pulled) route(); }).catch(() => {}); }, 1500);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && syncOn() && syncToken && syncToken.exp > Date.now()) syncNow(false).then((r) => { if (r && r.pulled) route(); }).catch(() => {});
+  });
+
+  /* ====================================================================== */
+  /* Report a mistake: a ready-filled issue on the app's GitHub page          */
+  /* ====================================================================== */
+  const REPORT_URL = "https://github.com/amarlatchman-dev/Hinduisum-App/issues/new";
+  function reportMistake({ where, text = "", deva = "", link = location.href }) {
+    const quote = (t) => t.split("\n").map((l) => "> " + l).join("\n");
+    const clip = (t, n) => (t.length > n ? t.slice(0, n) + "…" : t);
+    const body = [`**Where:** ${where}`, `**Link:** ${link}`, deva ? `**Original:**\n${quote(clip(deva, 500))}` : "", text ? `**As shown:**\n${quote(clip(text, 900))}` : "",
+      `**What's wrong?**\n(Describe the mistake: a wrong word, a misspelling, a verse in the wrong place, a missing passage. If you know the right reading and where it comes from, please add it.)`].filter(Boolean).join("\n\n");
+    const url = `${REPORT_URL}?title=${encodeURIComponent("Mistake: " + clip(where, 90))}&body=${encodeURIComponent(body)}`;
+    openSheet({
+      eyebrow: "Report a mistake",
+      preview: "Thank you for helping. Reports go to the Dharma Path page on GitHub, where every correction is tracked. You'll need a free GitHub account; the report opens already filled in, so just describe what's wrong.",
+      actions: [{ id: "go", label: "Open the report", primary: true }, { id: "copy", label: "Copy the details instead" }]
+    }).then((res) => {
+      if (!res) return;
+      if (res.id === "go") window.open(url, "_blank", "noopener");
+      else copyText(body);
+    });
   }
 
   /* ====================================================================== */
@@ -3470,10 +3703,12 @@
         { id: "bm", label: m.bm ? "Remove bookmark" : "Bookmark" },
         { id: "hl", label: m.hl ? "Remove highlight" : "Highlight" },
         { id: "share", label: "Share as image" },
-        { id: "copy", label: "Copy text" }
+        { id: "copy", label: "Copy text" },
+        { id: "report", label: "Report a mistake" }
       ]
     });
     if (!res) return;
+    if (res.id === "report") return reportMistake({ where: `${info.bookTitle} · ${info.where}`, text: info.text, deva: info.deva || "", link: location.href.split("?")[0] + `?${info.kind === "v" ? "v" : "p"}=${info.num}` });
     const next = { ...m, ...info, text: info.text.slice(0, 600), t: Date.now() };
     if (res.id === "share") return shareCard({ eyebrow: info.bookTitle, deva: info.deva, text: info.text.length > 520 ? info.text.slice(0, 520) + "…" : info.text, cite: `${info.bookTitle} · ${info.where}` });
     if (res.id === "copy") return copyText(`${info.deva ? info.deva + "\n\n" : ""}${info.text}\n\n${info.bookTitle} · ${info.where}`);
@@ -3493,9 +3728,10 @@
     const v = p.verses[i];
     const res = await openSheet({
       eyebrow: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}`, deva: v[0], preview: v[2],
-      actions: [{ id: "share", label: "Share as image", primary: true }, { id: "copy", label: "Copy text" }, { id: "close", label: "Close" }]
+      actions: [{ id: "share", label: "Share as image", primary: true }, { id: "copy", label: "Copy text" }, { id: "report", label: "Report a mistake" }, { id: "close", label: "Close" }]
     });
     if (!res) return;
+    if (res.id === "report") return reportMistake({ where: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}`, text: `${roman(v[1])}\n\n${v[2]}`, deva: v[0] });
     if (res.id === "share") shareCard({ eyebrow: `${typeOf(p.type).one} · ${deityOf(p.deity).name}`, deva: v[0], text: v[2], cite: `${p.name}${p.verses.length > 1 ? " · verse " + (i + 1) : ""}` });
     if (res.id === "copy") copyText(`${v[0]}\n\n${roman(v[1])}\n\n${v[2]}\n\n${p.name}`);
   }
@@ -3681,8 +3917,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures" };
-  const TAB = { rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures", sync: "Practice" };
+  const TAB = { sync: "home", rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -3706,7 +3942,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans", "sync"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -3735,6 +3971,7 @@
         case "rites": html = ritesView(); break;
         case "booklet": html = bookletView(id); break;
         case "plans": html = plansView(); break;
+        case "sync": html = syncView(); break;
         case "plan": html = await planView(id); break;
         case "read":
           if (!id) html = libraryView();
@@ -3875,6 +4112,12 @@
     }
     if (t.hasAttribute("data-bk-print")) { window.print(); return; }
     if (t.hasAttribute("data-read-aloud")) { readAloud(t, false); return; }
+    if (t.dataset.sync) { syncAction(t.dataset.sync, t); return; }
+    if (t.dataset.report) {
+      const card = t.closest("[data-report-where]") || t;
+      reportMistake({ where: card.dataset.reportWhere || document.title, text: card.dataset.reportText || "", deva: card.dataset.reportDeva || "" });
+      return;
+    }
     if (t.dataset.planStart) {
       const plan = byId(PLANS, t.dataset.planStart);
       store.set("plan:" + plan.id, plan.weekly ? { start: ymd(today()), weekday: 2, done: [] } : { start: ymd(today()), done: [] });
@@ -3883,7 +4126,7 @@
     }
     if (t.dataset.planStop) {
       if (!confirm("Stop this plan? Your progress in it will be cleared.")) return;
-      try { localStorage.removeItem("dp:plan:" + t.dataset.planStop); } catch (e) { /* ignore */ }
+      store.del("plan:" + t.dataset.planStop);
       route();
       return;
     }

@@ -62,11 +62,11 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 ## Quality and reach
 
-- [ ] A **"report a mistake"** button on every verse and mantra.
+- [x] A **"report a mistake"** button on every verse and mantra.
 - [ ] Review of the rite mantras by a pandit.
 - [ ] **Automated tests and CI** on GitHub (the browser checks now run only in development sessions).
 - [ ] A **Google Play** listing, by wrapping the web app (the App Store is possible but harder).
 - [ ] Simple, **privacy-friendly usage counts**.
-- [ ] **Sync between devices** (needs a server; backup and restore covers moving phones until then).
+- [x] **Sync between devices**, through each person's own Google Drive (switch on with `docs/SYNC_SETUP.md`).
 - [ ] Optional **"ask about this verse"**, answered only from the app's own texts with their sources
       (needs a small server and has running costs).

@@ -212,6 +212,7 @@ main { padding: 6px 18px 28px; outline: none; }
   margin: 2px 0 4px;
 }
 .greeting .hindu { color: var(--gold); font-size: 0.82rem; letter-spacing: 0.02em; }
+.greeting .timing-line { display: inline-block; margin-top: 4px; color: var(--ink-2); font-size: 0.76rem; text-decoration: none; }
 
 /* ---------- Surfaces ---------- */
 .card {
@@ -1005,6 +1006,8 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .glance div { background: var(--surface); padding: 12px 14px; min-width: 0; }
 .glance span { display: block; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
 .glance b { display: block; font-weight: 500; font-size: 0.86rem; line-height: 1.4; margin-top: 3px; color: var(--ink); }
+.glance small { display: block; font-size: 0.72rem; color: var(--ink-2); margin-top: 2px; }
+.glance.timings + .meta { margin: 8px 2px 0; }
 .rite-verse { text-align: center; padding: 24px 20px; margin: 4px 0 6px; }
 .rite-verse .v-dev { font-family: var(--deva); color: var(--night-gold); font-size: 1.15rem; line-height: 1.8; margin: 0; }
 .rite-verse .v-rom { font-style: italic; color: var(--night-muted); font-size: 0.86rem; margin: 6px 0 10px; }

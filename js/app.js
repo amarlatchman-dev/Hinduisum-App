@@ -85,12 +85,6 @@
   /* ====================================================================== */
   let cal = null;
 
-  function tzOffset(tz, at) {
-    const local = new Date(at.toLocaleString("en-US", { timeZone: tz }));
-    const utc = new Date(at.toLocaleString("en-US", { timeZone: "UTC" }));
-    return (local - utc) / 60000;
-  }
-
   function guessCity(cities) {
     let tz = "";
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { /* ignore */ }
@@ -190,6 +184,107 @@
   function fmtTime(mins) {
     const h = Math.floor(mins / 60), m = mins % 60;
     return `${((h + 11) % 12) + 1}:${pad(m)} ${h < 12 ? "am" : "pm"}`;
+  }
+
+  /* Daily timings: the periods of the day reckoned from sunrise and sunset ---------------- */
+  // Rahu Kalam, Yamaganda and Gulika Kalam are one eighth of the daytime each; which eighth
+  // depends on the weekday (Sunday first).
+  const RAHU = [8, 2, 7, 5, 6, 4, 3], YAMA = [5, 4, 3, 2, 1, 7, 6], GULIKA = [7, 6, 5, 4, 3, 2, 1];
+  const fmtSpan = ([a, b]) => `${fmtTime(Math.round(a))} – ${fmtTime(Math.round(b))}`;
+
+  function dayTimings(i) {
+    const [, , , rise, set] = cal.days[i];
+    const wd = calDate(i).getDay();
+    const eighth = (set - rise) / 8, part = (k) => [rise + (k - 1) * eighth, rise + k * eighth];
+    // A muhurta is a fifteenth of the day, or of the night; Abhijit is the eighth of the day, and
+    // Brahma muhurta the second-last of the night.
+    const mu = (set - rise) / 15;
+    const prevSet = inCal(i - 1) ? cal.days[i - 1][4] : set;
+    const nightMu = (rise + 1440 - prevSet) / 15;
+    return {
+      rise, set,
+      brahma: [rise - 2 * nightMu, rise - nightMu],
+      abhijit: wd === 3 ? null : [rise + 7 * mu, rise + 8 * mu],   // not kept on Wednesdays
+      rahu: part(RAHU[wd]), yama: part(YAMA[wd]), gulika: part(GULIKA[wd])
+    };
+  }
+
+  // The tithi tables give moments in UTC minutes; these are minutes after local midnight on day i.
+  function localOf(i) {
+    const d = calDate(i);
+    const midnight = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 60000;
+    const ci = cal.index.cities.find((x) => x.id === cal.id);
+    const off = tzOffset(ci ? ci.tz : "UTC", (midnight + 720) * 60000);
+    return (u) => u + off - midnight;
+  }
+  function placeHere(i) {
+    const c = tithiTable && tithiTable.cities.find((x) => x.id === cal.id);
+    return c ? placeFor(c.id, calDate(i).getTime()) : null;
+  }
+  // A time on day i, with the day named when it falls on another.
+  function timeOn(mins) {
+    const day = Math.floor(mins / 1440);
+    return fmtTime(Math.round(mins - day * 1440)) + (day === 1 ? " tomorrow" : day === -1 ? " yesterday" : "");
+  }
+  const tithiName = (t) => (t === 15 ? "Purnima" : t === 30 ? "Amavasya" : TITHI[(t - 1) % 15]);
+
+  // When the tithi at sunrise on day i ends, and the one that follows: { end, next } or null.
+  function tithiEnd(i) {
+    const place = placeHere(i);
+    if (!place) return null;
+    const d = calDate(i);
+    const x = tithiTable.ofDate(d.getFullYear(), d.getMonth() + 1, d.getDate(), place);
+    if (!x || x.t !== cal.days[i][0]) return null;
+    return { end: localOf(i)(tithiTable.bounds(x.i)[1]), next: tithiName((x.t % 30) + 1) };
+  }
+
+  // The window for breaking the Ekadashi fast (parana) on day i, the day after a fast: after
+  // sunrise and after Hari Vasara (the first quarter of Dwadashi), within Dwadashi, and in the
+  // morning (the first fifth of the day) when it can be; otherwise in the afternoon (the fourth
+  // fifth), never at midday.
+  function parana(i) {
+    if (!inCal(i) || !inCal(i - 1) || !(cal.byDay.get(i - 1) || []).some((e) => e[1] === "ekadashi")) return null;
+    const place = placeHere(i);
+    if (!place) return null;
+    const d = calDate(i), { rise, set } = dayTimings(i), L = localOf(i);
+    const x = tithiTable.ofDate(d.getFullYear(), d.getMonth() + 1, d.getDate(), place);
+    if (!x) return null;
+    const k = x.t % 15 === 12 ? x.i : x.t % 15 === 11 ? x.i + 1 : x.t % 15 === 13 ? x.i - 1 : -1;
+    if (k < 0) return null;
+    const [s, e] = tithiTable.bounds(k).map(L);
+    const hariVasara = s + (e - s) / 4;
+    const morning = rise + (set - rise) / 5, afternoon = rise + 3 * (set - rise) / 5;
+    let from = Math.max(rise, hariVasara), to = Math.min(morning, e);
+    if (e <= rise) { from = rise; to = morning; }              // Dwadashi over before sunrise
+    else if (from >= to) { from = Math.max(from, afternoon); to = Math.min(e, rise + 4 * (set - rise) / 5); }
+    if (from >= to) return null;
+    return { from, to, dwadashiEnd: e, hariVasara: hariVasara > rise ? hariVasara : null };
+  }
+  const paranaText = (p) => `${fmtTime(Math.round(p.from))} to ${fmtTime(Math.round(p.to))}`;
+  // ", and is broken on Friday between …", for the day after an Ekadashi, if it can be reckoned.
+  function paranaBy(i) {
+    const p = tithiTable && parana(i);
+    return p ? `, and is broken on ${WEEKDAYS[calDate(i).getDay()]} between ${paranaText(p)}` : "";
+  }
+
+  function timingsCard(i) {
+    const t = dayTimings(i), te = tithiEnd(i), p = parana(i), pNext = parana(i + 1);
+    const row = (k, v, note) => `<div><span>${k}</span><b>${v}</b>${note ? `<small>${note}</small>` : ""}</div>`;
+    return `
+      <div class="section">
+        <div class="section-head"><h2 class="section-title">Timings</h2></div>
+        ${p ? `<div class="card notice"><div class="eyebrow">Break the Ekadashi fast</div><p><b>${paranaText(p)}</b>${p.hariVasara ? `, after Hari Vasara ends at ${fmtTime(Math.round(p.hariVasara))}` : ""}. Dwadashi ends ${esc(timeOn(p.dwadashiEnd))}; the fast should be broken while it lasts. Vaishnava (ISKCON) calendars may differ.</p></div>` : ""}
+        ${pNext ? `<div class="card notice"><div class="eyebrow">Ekadashi fast</div><p>The fast begins at sunrise. Break it tomorrow between <b>${paranaText(pNext)}</b>.</p></div>` : ""}
+        <div class="glance timings">
+          ${te ? row("Tithi", `${esc(tithiName(cal.days[i][0]))} until ${esc(timeOn(te.end))}`, `then ${esc(te.next)}`) : ""}
+          ${row("Brahma muhurta", fmtSpan(t.brahma), "before dawn, for meditation")}
+          ${row("Abhijit muhurta", t.abhijit ? fmtSpan(t.abhijit) : "Not on Wednesdays", "the auspicious midday")}
+          ${row("Rahu Kalam", fmtSpan(t.rahu), "avoided for new beginnings")}
+          ${row("Yamaganda", fmtSpan(t.yama), "inauspicious")}
+          ${row("Gulika Kalam", fmtSpan(t.gulika), "inauspicious")}
+        </div>
+        <p class="meta">Reckoned from sunrise and sunset in ${esc(cityName())}. Rahu Kalam and the other periods are each an eighth of the daytime.</p>
+      </div>`;
   }
 
   function relDay(i) {
@@ -610,13 +705,19 @@
     const d0 = today();
     const w = C.wisdom[dayOfYear(d0) % C.wisdom.length];
     const ref = C.gitaDaily[dayOfYear(d0) % C.gitaDaily.length];
-    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [], tomorrow = "";
+    let calHtml = "", hindu = "", eventsHtml = "", todayEvents = [], tomorrow = "", timing = "", paranaRow = "";
     try {
       await loadCalendar();
       const i = calIdx(d0);
+      await loadTithi().catch(() => null);
       if (inCal(i)) {
         const hd = hinduDate(i);
         hindu = `${hd.line} · Vikram Samvat ${hd.samvat}`;
+        const t = dayTimings(i), p = tithiTable && parana(i);
+        timing = `<a class="timing-line" href="#/day/${ymd(d0)}">Rahu Kalam ${fmtSpan(t.rahu)}${t.abhijit ? ` · Abhijit ${fmtSpan(t.abhijit)}` : ""} ›</a>`;
+        if (p) paranaRow = `
+            <a class="row" href="#/day/${ymd(d0)}">${seal(C.vrats.ekadashi.deva)}
+              <span class="body"><span class="eyebrow">Today</span><h3>Break the Ekadashi fast</h3><p>Between ${paranaText(p)}, while Dwadashi lasts.</p></span><span class="chev">›</span></a>`;
         todayEvents = (cal.byDay.get(i) || []).map(obsInfo).filter(Boolean)
           .sort((a, b) => (a.kind === "festival" ? 0 : 1) - (b.kind === "festival" ? 0 : 1));
       }
@@ -637,17 +738,18 @@
         <div class="date">${esc(longDate(d0))}</div>
         <h2>${greeting()}</h2>
         ${hindu ? `<div class="hindu">${esc(hindu)}</div>` : ""}
+        ${timing}
       </div>
 
-      ${todayEvents.length || tomorrow ? `
+      ${todayEvents.length || tomorrow || paranaRow ? `
         <div class="section" style="margin-top:18px">
           <div class="list">${todayEvents.map((o) => `
             <a class="row" href="#/day/${ymd(d0)}">${seal(o.deva)}
-              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}${tomorrow}
+              <span class="body"><span class="eyebrow">Today</span><h3>${esc(o.name)}</h3><p>${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("")}${paranaRow}${tomorrow}
           </div>
         </div>` : ""}
 
-      <div class="hero-wrap" style="margin-top:${todayEvents.length || tomorrow ? 0 : 20}px">
+      <div class="hero-wrap" style="margin-top:${todayEvents.length || tomorrow || paranaRow ? 0 : 20}px">
         <a class="night verse-hero fade-in" id="gitaToday" href="#/read/gita/${ref[0]}?v=${ref[1]}">
           ${mandala()}
           <div class="eyebrow">Bhagavad Gita · Verse of the day</div>
@@ -778,6 +880,7 @@
     const i = calIdx(d);
     if (!inCal(i)) return `<p class="empty">The calendar covers ${esc(cal.index.start.slice(0, 4))} to ${esc(cal.index.end.slice(0, 4))}.</p>`;
     const hd = hinduDate(i);
+    await loadTithi().catch(() => null);
     const evs = (cal.byDay.get(i) || []).map(obsInfo).filter(Boolean)
       .sort((a, b) => (a.kind === "festival" ? 0 : 1) - (b.kind === "festival" ? 0 : 1));
     const wd = C.weekdays[d.getDay()];
@@ -807,6 +910,8 @@
           <div class="eyebrow">An ordinary day</div>
           <p style="margin:8px 0 0">No major festival or vrat falls today. ${esc(wd.note)}</p>
         </div>`}
+
+      ${timingsCard(i)}
 
       <div class="section">
         <div class="section-head"><h2 class="section-title">Prayers for this day</h2></div>
@@ -1573,7 +1678,7 @@
     const hd = hinduDate(i);
     return list.map(({ o }) => `
       <a class="row tomorrow" href="#/day/${ymd(calDate(i))}">${seal(o.deva)}
-        <span class="body"><span class="eyebrow">Tomorrow</span><h3>${esc(o.name)}</h3><p>${o.id === "ekadashi" ? `The fast begins at sunrise, ${esc(hd.sunrise)}. ` : ""}${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("");
+        <span class="body"><span class="eyebrow">Tomorrow</span><h3>${esc(o.name)}</h3><p>${o.id === "ekadashi" ? `The fast begins at sunrise, ${esc(hd.sunrise)}${paranaBy(i + 1)}. ` : ""}${esc(o.summary)}</p></span><span class="chev">›</span></a>`).join("");
   }
 
   const icsText = (t) => String(t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
@@ -1594,6 +1699,7 @@
 
   async function downloadIcs() {
     await loadCalendar();
+    await loadTithi().catch(() => null);
     const prefs = remindPrefs();
     const t0 = calIdx(today());
     const appUrl = location.href.split("#")[0];
@@ -1605,7 +1711,7 @@
     events.forEach(({ e, o }) => {
       const d = calDate(e[0]);
       const hd = hinduDate(e[0]);
-      const desc = `${o.summary}${o.id === "ekadashi" ? ` The fast begins at sunrise (${hd.sunrise}).` : ""}\n${hd.line}. Sunrise ${hd.sunrise}, sunset ${hd.sunset} in ${cityName()}.\n\n${appUrl}#/day/${ymd(d)}`;
+      const desc = `${o.summary}${o.id === "ekadashi" ? ` The fast begins at sunrise (${hd.sunrise})${paranaBy(e[0] + 1)}.` : ""}\n${hd.line}. Sunrise ${hd.sunrise}, sunset ${hd.sunset} in ${cityName()}.\n\n${appUrl}#/day/${ymd(d)}`;
       L.push("BEGIN:VEVENT", `UID:${ymd(d)}-${e[1]}@dharma-path`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${icsDate(d)}`, `DTEND;VALUE=DATE:${icsDate(addDays(d, 1))}`,
         `SUMMARY:${icsText(o.name)}`, `DESCRIPTION:${icsText(desc)}`, "TRANSP:TRANSPARENT", "CATEGORIES:Dharma Path");
       if (prefs.eve) L.push(...alarm(icsOffset(toMin(prefs.eveTime) - 1440), `Tomorrow: ${o.name}`));

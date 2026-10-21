@@ -23,9 +23,8 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 ## Daily practice
 
-- [ ] **Daily timings**: Rahu Kalam and Abhijit muhurta from the sunrise and sunset already in the
-      calendars; the Ekadashi parana (fast-breaking) window, which needs tithi end times added to the
-      calendar data.
+- [x] **Daily timings**: Rahu Kalam, Yamaganda, Gulika, Abhijit and Brahma muhurta, the time each tithi
+      ends, and the Ekadashi parana (fast-breaking) window, on each day page and the Today page.
 - [ ] **Rite booklets and follow-along mode**: print or save a rite (above all the wedding) as a programme
       with each step and mantra for guests, and a big-text mode that shows one mantra at a time during the
       ceremony, like Aarti mode.

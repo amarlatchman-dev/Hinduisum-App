@@ -76,7 +76,10 @@
       return out;
     }
 
-    return { at, ofDate, keptOn, datesOf, first, last };
+    // When tithi number i (an index into the table) begins and ends.
+    const bounds = (i) => [starts[i], starts[i + 1]];
+
+    return { at, ofDate, keptOn, datesOf, bounds, first, last };
   }
 
   window.Tithi = { sunrise, make };

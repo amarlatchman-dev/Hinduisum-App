@@ -1,0 +1,11 @@
+{
+  "name": "dharma-path",
+  "private": true,
+  "description": "Dharma Path: tests for the web app (the app itself needs no build step).",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.47.2"
+  }
+}

@@ -55,8 +55,8 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 ## Learning
 
-- [ ] **Quizzes** at the end of each course.
-- [ ] **Gita memorisation** with spaced repetition.
+- [x] **Quizzes** at the end of each course.
+- [x] **Gita memorisation** with spaced repetition.
 - [x] **Reading plans**, such as "the Gita in 18 days" or "the Sundar Kand on Tuesdays".
 - [ ] **Children's stories** from the Panchatantra and Hitopadesha, illustrated in the app's painting style.
 
@@ -64,7 +64,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 
 - [x] A **"report a mistake"** button on every verse and mantra.
 - [ ] Review of the rite mantras by a pandit.
-- [ ] **Automated tests and CI** on GitHub (the browser checks now run only in development sessions).
+- [x] **Automated tests and CI** on GitHub: data checks, every page, the main features and sync, on every push (`tests/`).
 - [ ] A **Google Play** listing, by wrapping the web app (the App Store is possible but harder).
 - [ ] Simple, **privacy-friendly usage counts**.
 - [x] **Sync between devices**, through each person's own Google Drive (switch on with `docs/SYNC_SETUP.md`).

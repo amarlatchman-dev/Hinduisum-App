@@ -1135,3 +1135,33 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 
 /* ---------- Report a mistake ---------- */
 .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--gold); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+/* ---------- Quizzes ---------- */
+.quiz-progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 10px 0 6px; }
+.quiz-progress span { display: block; height: 100%; background: var(--gold); }
+.quiz-q { font-family: var(--display); font-size: 1.45rem; line-height: 1.3; margin: 8px 0 16px; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-opt { text-align: left; font: inherit; font-size: 1rem; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+.quiz-opt:hover:not(:disabled) { border-color: var(--gold); }
+.quiz-opt.right { border-color: #2f8a4a; background: color-mix(in srgb, #2f8a4a 14%, var(--surface)); }
+.quiz-opt.wrong { border-color: #b8342a; background: color-mix(in srgb, #b8342a 12%, var(--surface)); }
+.quiz-opt.dim { opacity: .55; }
+.quiz-why { margin-top: 14px; }
+.quiz-why.ok .eyebrow { color: #2f8a4a; }
+.quiz-why.no .eyebrow { color: #b8342a; }
+.quiz-why p { margin: 6px 0 10px; }
+.quiz-done { text-align: center; }
+.quiz-score { font-family: var(--display); font-size: 3.2rem; color: var(--gold); }
+.quiz-score span { font-size: 1.2rem; color: var(--ink-2); }
+
+/* ---------- Learning verses by heart ---------- */
+.mem-card { text-align: center; padding: 24px 18px; }
+.mem-card .mem-sa, .mem-row .mem-sa { font-family: var(--deva); font-size: 1.15rem; line-height: 1.7; white-space: pre-line; margin: 10px 0 0; }
+.mem-card .mem-sa.full { font-size: 1.25rem; }
+.mem-card .mem-tr { font-style: italic; white-space: pre-line; color: var(--ink-2); margin: 8px 0 0; }
+.mem-card .mem-en { font-family: var(--display); font-size: 1.08rem; margin: 10px 0 0; }
+.mem-ask { margin-top: 16px !important; }
+.mem-row .mem-sa { font-size: 1rem; margin: 2px 0 4px; }
+.mem-dots { display: inline-flex; gap: 3px; vertical-align: middle; }
+.mem-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+.mem-dots i.on { background: var(--gold); }

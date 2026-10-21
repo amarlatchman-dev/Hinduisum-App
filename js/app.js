@@ -745,6 +745,8 @@
       }
       tomorrow = tomorrowRows();
       planRows = await planTodayRows().catch(() => "");
+      const memN = memDue().length;
+      if (memN) planRows += `<a class="row" href="#/memorise/review">${seal("गीता")}<span class="body"><span class="eyebrow">Learn by heart</span><h3>${memN} Gita verse${memN === 1 ? "" : "s"} to review</h3><p>A few minutes keeps them fresh.</p></span><span class="chev">›</span></a>`;
       if (!homeMonth) homeMonth = [d0.getFullYear(), d0.getMonth()];
       calHtml = `<div class="card" id="homeCal">${monthGrid(homeMonth[0], homeMonth[1], "home")}</div>`;
       const next = upcoming(i, 5, (e) => isFestival(e[1]) || e[1] === "ekadashi");
@@ -1526,7 +1528,7 @@
   }
 
   const len = (a) => (a ? a.length : 0);
-  const dayPoints = (d) => !d ? 0 : (d.japa || 0) / 27 + len(d.read) * 2 + len(d.prayers) + len(d.aarti) * 2 + len(d.lessons) * 2 + len(d.done) * 2;
+  const dayPoints = (d) => !d ? 0 : (d.japa || 0) / 27 + len(d.read) * 2 + len(d.prayers) + len(d.aarti) * 2 + len(d.lessons) * 2 + len(d.done) * 2 + len(d.quiz) * 2 + len(d.memorise) * 2;
   const dayLevel = (d) => { const x = dayPoints(d); return x <= 0 ? 0 : x < 2 ? 1 : x < 4 ? 2 : x < 8 ? 3 : 4; };
   const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
   const plural = (n, one, many) => `${n.toLocaleString()} ${n === 1 ? one : many || one + "s"}`;
@@ -1540,6 +1542,8 @@
     if (len(d.aarti)) out.push(plural(len(d.aarti), "aarti"));
     if (len(d.prayers)) out.push(plural(len(d.prayers), "prayer") + " heard");
     if (len(d.lessons)) out.push(plural(len(d.lessons), "lesson"));
+    if (len(d.quiz)) out.push(plural(len(d.quiz), "quiz", "quizzes"));
+    if (len(d.memorise)) out.push("verses reviewed");
     (d.done || []).forEach((k) => { const c = CHECKINS.find((x) => x[0] === k); if (c) out.push(c[1].toLowerCase()); });
     return out;
   }
@@ -2471,6 +2475,176 @@
       </div>`;
   }
 
+  /* ====================================================================== */
+  /* Course quizzes                                                          */
+  /* ====================================================================== */
+  const quizFor = (id) => (C.quizzes || {})[id] || null;
+  let quiz = null;   // { id, order, i, picked, right }
+
+  function quizView(id) {
+    const c = byId(C.courses, id), qs = quizFor(id);
+    if (!c || !qs) return notFound();
+    if (!quiz || quiz.id !== id) {
+      quiz = { id, order: qs.map((_, k) => k).sort(() => Math.random() - .5), i: 0, picked: null, right: 0 };
+    }
+    const best = store.get("quiz:" + id, null);
+    if (quiz.i >= qs.length) {
+      const n = qs.length, r = quiz.right;
+      const prev = best ? best.best : 0;
+      if (!quiz.saved) {
+        quiz.saved = true;
+        store.set("quiz:" + id, { best: Math.max(prev, r), last: r, of: n, t: Date.now() });
+        logPractice("quiz", id);
+      }
+      const msg = r === n ? "Perfect. Every answer right." : r >= n * .7 ? "Very good. You know this course well." : r >= n * .4 ? "A good start. The lessons are there to look back on." : "Every journey begins somewhere. Read the lessons again and try once more.";
+      return `
+        <a class="eyebrow course-link" href="#/academy/${id}">${esc(c.title)}</a>
+        <h2 class="lesson-title">Quiz complete</h2>
+        <div class="card quiz-done"><div class="quiz-score">${r}<span> / ${n}</span></div><p>${esc(msg)}</p>
+          ${prev && prev > r ? `<p class="meta">Your best is ${prev} of ${n}.</p>` : ""}
+          <div class="btn-row"><button class="btn" data-quiz="again">Try again</button><a class="btn ghost" href="#/academy/${id}">Back to the course</a></div></div>`;
+    }
+    const k = quiz.order[quiz.i], q = qs[k];
+    const answered = quiz.picked !== null;
+    return `
+      <a class="eyebrow course-link" href="#/academy/${id}">${esc(c.title)} · Quiz</a>
+      <div class="quiz-progress"><span style="width:${Math.round(quiz.i / qs.length * 100)}%"></span></div>
+      <p class="meta">Question ${quiz.i + 1} of ${qs.length}</p>
+      <h2 class="quiz-q">${esc(q.q)}</h2>
+      <div class="quiz-options">${q.options.map((o, j) => {
+        const cls = !answered ? "" : j === q.answer ? "right" : j === quiz.picked ? "wrong" : "dim";
+        return `<button class="quiz-opt ${cls}" data-quiz-pick="${j}" ${answered ? "disabled" : ""}>${esc(o)}</button>`;
+      }).join("")}</div>
+      ${answered ? `<div class="card quiz-why ${quiz.picked === q.answer ? "ok" : "no"}"><div class="eyebrow">${quiz.picked === q.answer ? "Right" : "Not quite"}</div><p>${esc(q.why)}</p>
+        <a class="meta" href="${lessonHref(id, q.lesson - 1)}">Lesson ${q.lesson}: ${esc(c.lessons[q.lesson - 1].title)} ›</a></div>
+        <div class="btn-row"><button class="btn" data-quiz="next">${quiz.i + 1 === qs.length ? "See my score" : "Next question"}</button></div>` : ""}`;
+  }
+
+  function quizAct(act, j) {
+    if (!quiz) return;
+    const qs = quizFor(quiz.id);
+    if (act === "pick" && quiz.picked === null) {
+      quiz.picked = j;
+      if (j === qs[quiz.order[quiz.i]].answer) quiz.right++;
+    } else if (act === "next") { quiz.i++; quiz.picked = null; }
+    else if (act === "again") quiz = null;
+    route();
+  }
+
+  /* ====================================================================== */
+  /* Learning Gita verses by heart, with spaced repetition                  */
+  /* ====================================================================== */
+  // The review intervals, in days, for each box a verse can be in.
+  const MEM_DAYS = [0, 1, 3, 7, 14, 30, 60, 120];
+  const MEM_STARTERS = ["2.47", "2.20", "2.14", "2.48", "3.21", "4.7", "4.8", "6.5", "9.22", "9.26", "12.13", "18.66"];
+  const memAll = () => store.get("mem:gita", {});
+  const memDue = () => Object.entries(memAll()).filter(([, m]) => m.due <= ymd(today())).map(([k]) => k);
+  let memSession = null;   // { queue: [ref], shown, done }
+
+  async function gitaVerse(ref) {
+    const [c, v] = ref.split(".").map(Number);
+    const d = await loadJSON("texts/gita.json");
+    const x = d.chapters[c - 1].verses.find((y) => y[0] === v);
+    if (!x) return null;
+    const sa = x[1].replace(/^[^\n]*उवाच\n/, ""), tr = x[2].replace(/^[^\n]*uvāca\n/, "");
+    return { ref, sa, tr, en: x[3], chapter: d.chapters[c - 1].sub };
+  }
+
+  function memAdd(refs) {
+    const all = memAll();
+    let n = 0;
+    refs.forEach((r) => { if (!all[r]) { all[r] = { box: 0, due: ymd(today()), added: Date.now() }; n++; } });
+    store.set("mem:gita", all);
+    return n;
+  }
+
+  function memGrade(ref, g) {
+    const all = memAll(), m = all[ref];
+    if (!m) return;
+    m.box = g === "again" ? 0 : g === "hard" ? Math.max(1, m.box) : Math.min(MEM_DAYS.length - 1, m.box + (g === "easy" ? 2 : 1));
+    m.due = ymd(addDays(today(), g === "again" ? 0 : g === "hard" ? 1 : MEM_DAYS[m.box]));
+    m.seen = (m.seen || 0) + 1;
+    m.t = Date.now();
+    store.set("mem:gita", all);
+  }
+
+  async function memorizeView() {
+    const all = memAll(), refs = Object.keys(all).sort((a, b) => a.split(".")[0] - b.split(".")[0] || a.split(".")[1] - b.split(".")[1]);
+    const due = memDue();
+    const learned = refs.filter((r) => all[r].box >= 5).length;
+    const rows = await Promise.all(refs.map(async (r) => {
+      const v = await gitaVerse(r).catch(() => null);
+      const m = all[r];
+      const dots = MEM_DAYS.slice(1).map((_, k) => `<i class="${m.box > k ? "on" : ""}"></i>`).join("");
+      return `<div class="row mem-row"><span class="body"><span class="eyebrow">Gita ${esc(r)}</span><p class="mem-sa">${esc(v ? v.sa.split("\n")[0] : "")}</p>
+        <span class="mem-dots" title="Box ${m.box} of ${MEM_DAYS.length - 1}">${dots}</span><span class="meta"> ${m.due <= ymd(today()) ? "Due today" : "Next " + esc(fmtDay(parseYmd(m.due)))}</span></span>
+        <button class="chip" data-mem-remove="${r}" aria-label="Stop learning ${esc(r)}">Remove</button></div>`;
+    }));
+    return `
+      <h2 class="page-title">Learn the Gita by heart</h2>
+      <p class="page-sub">Verses come back for review just before you would forget them: the next day, then after three days, a week, two weeks, a month and more. A few minutes a day is enough.</p>
+      <div class="card">
+        <div class="eyebrow">${due.length ? `${due.length} to review today` : refs.length ? "All done for today" : "Begin"}</div>
+        <p class="meta" style="margin:6px 0 0">${refs.length ? `${refs.length} verse${refs.length === 1 ? "" : "s"} in your list · ${learned} learned well` : "Start with twelve of the best-loved verses, or add any verse while reading: tap it and choose Learn by heart."}</p>
+        <div class="btn-row">${due.length ? `<a class="btn" href="#/memorise/review">Review now</a>` : ""}
+          ${MEM_STARTERS.some((r) => !all[r]) ? `<button class="btn ${due.length ? "ghost" : ""}" data-mem-starters>Add the twelve best-loved verses</button>` : ""}
+          <a class="btn ghost" href="#/read/gita/2">Choose from the Gita</a></div>
+      </div>
+      ${rows.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Your verses</h2></div><div class="list">${rows.join("")}</div></div>` : ""}`;
+  }
+
+  async function memReviewView() {
+    if (!memSession || memSession.done) memSession = { queue: memDue(), shown: false, done: false, count: 0 };
+    if (!memSession.queue.length) {
+      memSession.done = true;
+      return `
+        <h2 class="page-title">Review complete</h2>
+        <div class="card quiz-done"><div class="quiz-score">${memSession.count}<span> reviewed</span></div><p>Well done. Come back tomorrow for the next ones.</p>
+          <div class="btn-row"><a class="btn" href="#/memorise">Back to your verses</a></div></div>`;
+    }
+    const ref = memSession.queue[0], m = memAll()[ref];
+    const v = await gitaVerse(ref);
+    const lines = v.sa.split("\n"), tlines = v.tr.split("\n");
+    // The cue gets smaller as the verse is learned: the meaning and the first line, then the meaning, then only the opening words.
+    const cue = m.box <= 1 ? `<p class="mem-en">${esc(v.en)}</p><p class="mem-sa">${esc(lines[0])}</p><p class="mem-tr" ${romanAttr(tlines[0])}>${esc(roman(tlines[0]))}</p>`
+      : m.box <= 3 ? `<p class="mem-en">${esc(v.en)}</p>`
+      : `<p class="mem-sa">${esc(lines[0].split(" ").slice(0, 2).join(" "))} …</p>`;
+    return `
+      <a class="eyebrow course-link" href="#/memorise">Learn the Gita by heart · ${memSession.queue.length} left</a>
+      <div class="card mem-card">
+        <div class="eyebrow">Bhagavad Gita ${esc(ref)} · ${esc(v.chapter)}</div>
+        ${memSession.shown ? `<p class="mem-sa full">${esc(v.sa)}</p><p class="mem-tr" ${romanAttr(v.tr)}>${esc(roman(v.tr))}</p><p class="mem-en">${esc(v.en)}</p>`
+          : `${cue}<p class="meta mem-ask">Say the whole verse to yourself, then check.</p>`}
+      </div>
+      <div class="btn-row">
+        ${memSession.shown ? `
+          <button class="btn ghost" data-mem-grade="again">Again</button>
+          <button class="btn ghost" data-mem-grade="hard">Hard</button>
+          <button class="btn" data-mem-grade="good">Good</button>
+          <button class="btn ghost" data-mem-grade="easy">Easy</button>`
+          : `<button class="btn" data-mem-show>Show the verse</button>`}
+        ${canSpeak() ? `<button class="chip" data-mem-say="${ref}">${PLAY_ICON}Hear it</button>` : ""}
+      </div>
+      ${memSession.shown ? `<p class="meta">Again: not yet · Hard: with effort · Good: remembered · Easy: knew it at once</p>` : ""}`;
+  }
+
+  async function memAct(t) {
+    if (t.hasAttribute("data-mem-starters")) { const n = memAdd(MEM_STARTERS); toast(`${n} verses added`); return route(); }
+    if (t.dataset.memRemove) { const all = memAll(); delete all[t.dataset.memRemove]; store.set("mem:gita", all); return route(); }
+    if (t.hasAttribute("data-mem-show")) { memSession.shown = true; return route(); }
+    if (t.dataset.memSay) { const v = await gitaVerse(t.dataset.memSay); stopAudio(); return say(chantText([v.sa, v.tr], { lang: "Sanskrit" }), { rate: .8 }); }
+    if (t.dataset.memGrade) {
+      const ref = memSession.queue.shift(), g = t.dataset.memGrade;
+      memGrade(ref, g);
+      if (g === "again") memSession.queue.push(ref);    // once more before the session ends
+      else memSession.count++;
+      if (!memSession.count && !memSession.queue.length) memSession.count = 1;
+      memSession.shown = false;
+      if (memSession.count === 1 && g !== "again") logPractice("memorise", ymd(today()));
+      return route();
+    }
+  }
+
   function courseView(id) {
     const c = byId(C.courses, id);
     if (!c) return notFound();
@@ -2486,7 +2660,8 @@
         <p class="page-sub">${esc(c.subtitle)}</p>
         ${c.intro ? `<p class="lede">${esc(c.intro)}</p>` : ""}
         ${done.length ? `<div class="progress course-progress"><span style="width:${(done.length / c.lessons.length) * 100}%"></span></div><p class="meta">${done.length} of ${c.lessons.length} lessons completed</p>` : ""}
-        <div class="btn-row" style="margin-top:12px"><a class="btn" href="${lessonHref(id, next == null ? 0 : next)}">${next == null ? "Read again" : done.length ? "Continue" : "Begin the course"}</a></div>
+        <div class="btn-row" style="margin-top:12px"><a class="btn" href="${lessonHref(id, next == null ? 0 : next)}">${next == null ? "Read again" : done.length ? "Continue" : "Begin the course"}</a>
+          ${quizFor(id) ? `<a class="btn ghost" href="#/quiz/${id}">${store.get("quiz:" + id, null) ? `Quiz · best ${store.get("quiz:" + id).best} of ${quizFor(id).length}` : "Take the quiz"}</a>` : ""}</div>
       </div>
       <div class="list lesson-list">
         ${c.lessons.map((l, i) => `
@@ -2521,7 +2696,7 @@
         </div>
         <nav class="lesson-nav">
           ${prev ? `<a href="${lessonHref(id, i - 1)}"><span class="meta">Previous</span><span>${esc(prev.title)}</span></a>` : `<span></span>`}
-          ${next ? `<a class="next" href="${lessonHref(id, i + 1)}"><span class="meta">Next</span><span>${esc(next.title)}</span></a>` : `<a class="next" href="#/academy/${id}"><span class="meta">Finished</span><span>Back to the course</span></a>`}
+          ${next ? `<a class="next" href="${lessonHref(id, i + 1)}"><span class="meta">Next</span><span>${esc(next.title)}</span></a>` : quizFor(id) ? `<a class="next" href="#/quiz/${id}"><span class="meta">Finished</span><span>Take the quiz</span></a>` : `<a class="next" href="#/academy/${id}"><span class="meta">Finished</span><span>Back to the course</span></a>`}
         </nav>
         <p class="footer-note"><button class="linkish" data-report="1" data-report-where="${esc(`Lesson: ${l.title}`)}">Report a mistake on this page</button></p>
       </article>`;
@@ -3212,6 +3387,7 @@
         return books.length ? `<div class="section-head" style="margin-top:22px"><h2 class="section-title">${esc(c.name)}</h2></div><div class="list">${books.map(bookRow).join("")}</div>` : "";
       }).join("")}
       <div class="list" style="margin-top:22px">
+        <a class="row" href="#/memorise">${seal("स्मृति")}<span class="body"><h3>Learn the Gita by heart</h3><p>${Object.keys(memAll()).length ? `${Object.keys(memAll()).length} verses · ${memDue().length} to review today` : "Verses come back just before you would forget them"}</p></span><span class="chev">›</span></a>
         <a class="row" href="#/plans">${seal("नित्य")}<span class="body"><h3>Reading plans</h3><p>${activePlans().length ? `${activePlans().length} in progress` : "The Gita in 18 days, the Manas in 30 or 9, the Sundar Kand weekly"}</p></span><span class="chev">›</span></a>
         <a class="row" href="#/saved">${seal("चिह्न")}<span class="body"><h3>Bookmarks and notes</h3><p>${Object.keys(getMarks()).length} saved · tap any verse while reading</p></span><span class="chev">›</span></a>
         <a class="row" href="#/read/about">${seal("स्रोत")}<span class="body"><h3>About these translations</h3><p>Sources and credits</p></span><span class="chev">›</span></a></div>`;
@@ -3704,9 +3880,16 @@
         { id: "hl", label: m.hl ? "Remove highlight" : "Highlight" },
         { id: "share", label: "Share as image" },
         { id: "copy", label: "Copy text" },
+        ...(info.book === "gita" && info.kind === "v" ? [{ id: "mem", label: memAll()[`${info.part}.${info.num}`] ? "Stop learning by heart" : "Learn by heart" }] : []),
         { id: "report", label: "Report a mistake" }
       ]
     });
+    if (res && res.id === "mem") {
+      const ref = `${info.part}.${info.num}`, all = memAll();
+      if (all[ref]) { delete all[ref]; store.set("mem:gita", all); toast("Removed from your verses"); }
+      else { memAdd([ref]); toast(`Gita ${ref} added to your verses to learn by heart`); }
+      return;
+    }
     if (!res) return;
     if (res.id === "report") return reportMistake({ where: `${info.bookTitle} · ${info.where}`, text: info.text, deva: info.deva || "", link: location.href.split("?")[0] + `?${info.kind === "v" ? "v" : "p"}=${info.num}` });
     const next = { ...m, ...info, text: info.text.slice(0, 600), t: Date.now() };
@@ -3917,8 +4100,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures", sync: "Practice" };
-  const TAB = { sync: "home", rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures", sync: "Practice", quiz: "Learn", memorise: "Scriptures" };
+  const TAB = { quiz: "learn", memorise: "read", sync: "home", rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -3942,7 +4125,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans", "sync"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans", "sync", "memorise"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -3971,6 +4154,8 @@
         case "rites": html = ritesView(); break;
         case "booklet": html = bookletView(id); break;
         case "plans": html = plansView(); break;
+        case "quiz": html = quizView(id); break;
+        case "memorise": html = id === "review" ? await memReviewView() : await memorizeView(); break;
         case "sync": html = syncView(); break;
         case "plan": html = await planView(id); break;
         case "read":
@@ -4004,6 +4189,8 @@
     if (section === "puja" && !id) bindPrayerSearch(query);
     if (section === "search") bindSearch();
     if (section === "booklet") bindBooklet();
+    if (section !== "quiz") quiz = null;
+    if (section !== "memorise" || id !== "review") memSession = null;
     fillProgressBars();
     if (readerState) {
       applyMarks();
@@ -4113,6 +4300,9 @@
     if (t.hasAttribute("data-bk-print")) { window.print(); return; }
     if (t.hasAttribute("data-read-aloud")) { readAloud(t, false); return; }
     if (t.dataset.sync) { syncAction(t.dataset.sync, t); return; }
+    if (t.dataset.quizPick) { quizAct("pick", +t.dataset.quizPick); return; }
+    if (t.dataset.quiz) { quizAct(t.dataset.quiz); return; }
+    if (t.hasAttribute("data-mem-starters") || t.hasAttribute("data-mem-show") || t.dataset.memRemove || t.dataset.memSay || t.dataset.memGrade) { memAct(t); return; }
     if (t.dataset.report) {
       const card = t.closest("[data-report-where]") || t;
       reportMistake({ where: card.dataset.reportWhere || document.title, text: card.dataset.reportText || "", deva: card.dataset.reportDeva || "" });

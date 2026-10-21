@@ -14,6 +14,9 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 - [ ] **The Ramcharitmanas**, and the Sundar Kand on its own: Tulsidas's Awadhi with F. S. Growse's
       public-domain English (1883). For many diaspora families this is the scripture they sing. The
       DharmicData set already used for the Vedas has the Ramcharitmanas text.
+      **Done:** the Awadhi text with transliteration, all seven kands and the Sundar Kand on its own.
+      **Still to do:** Growse's English, matched doha by doha (his scan marks each doha); the closing
+      passage of six kands, missing from DharmicData (Hindi Wikisource has it, once hi.wikisource.org is allowed).
 - [ ] **Dates by tithi for loved ones**: enter the date someone passed away and get their yearly
       shraddha tithi and their day in Pitru Paksha; birthdays by Hindu tithi too. The city calendars
       already hold the tithis.

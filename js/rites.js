@@ -416,7 +416,7 @@ rite({
   withPriest: `A priest guides the family through every stage, from the prayers at home to the cremation and the shraddha. Most funeral homes can arrange a Hindu priest.`,
   abroad: `Contact a funeral director early and ask about a Hindu service, viewing at home, and a crematorium that allows the family to be present. Ashes can be scattered at sea or sent to India for immersion.`,
   prayers: [`mahamrityunjaya`, `rama-rameti`, `asato-ma`],
-  links: [[`Bhagavad Gita, chapter 2`, `#/read/gita/2`], [`Pitru Paksha`, `#/festival/pitru-paksha`]]
+  links: [[`Bhagavad Gita, chapter 2`, `#/read/gita/2`], [`Remembering dates: the yearly shraddha`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`]]
 });
 
 rite({
@@ -443,5 +443,5 @@ rite({
   withPriest: `A priest can perform the full shraddha with pinda daan. Many temples hold collective shraddha ceremonies during Pitru Paksha.`,
   abroad: `If a full rite isn't possible, light a lamp before a photograph, offer water with sesame, cook a favourite dish, and give to charity in their name.`,
   prayers: [`mahamrityunjaya`, `ganga-snana`, `sarve-bhavantu`],
-  links: [[`Pitru Paksha`, `#/festival/pitru-paksha`], [`Open the Calendar`, `#/calendar`]]
+  links: [[`Remembering dates: find a loved one's shraddha tithi`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`], [`Open the Calendar`, `#/calendar`]]
 });

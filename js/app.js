@@ -741,6 +741,7 @@
       <div class="section">
         <div class="section-head"><h2 class="section-title">Festival guides</h2><a href="#/festivals">All guides</a></div>
         <div class="list">${guideRows(4)}</div>
+        <div class="list" style="margin-top:12px"><a class="row" href="#/remember">${seal("स्मृति")}<span class="body"><h3>Remembering dates</h3><p>Find a loved one's shraddha tithi, their day in Pitru Paksha, or a birthday by the Hindu calendar</p></span><span class="chev">›</span></a></div>
       </div>
       <p class="footer-note">Dates follow the Hindu lunar calendar, calculated astronomically for your chosen city. Local temples may observe some days a day earlier or later.</p>`;
   }
@@ -1515,6 +1516,7 @@
           <a class="row" href="#/reminders">${seal("स्मर")}<span class="body"><h3>Reminders</h3><p>Festival alerts and a daily prayer nudge</p></span><span class="chev">›</span></a>
           <a class="row" href="#/saved">${seal("ग्रन्थ")}<span class="body"><h3>Bookmarks and notes</h3><p>Verses you have saved while reading</p></span><span class="chev">›</span></a>
           <a class="row" href="#/recordings">${seal("नाद")}<span class="body"><h3>Your recordings</h3><p>Chants recorded in your own voice</p></span><span class="chev">›</span></a>
+          <a class="row" href="#/remember">${seal("स्मृति")}<span class="body"><h3>Remembering dates</h3><p>A loved one's shraddha or birthday, by the tithi</p></span><span class="chev">›</span></a>
           <a class="row" href="#/backup">${seal("रक्षा")}<span class="body"><h3>Backup and restore</h3><p>${store.get("backup:last", 0) ? `Last backup ${esc(fmtDay(store.get("backup:last", 0)))}` : "Save everything here to a file, or move it to a new phone"}</p></span><span class="chev">›</span></a>
         </div>
       </div>`;
@@ -1610,6 +1612,14 @@
       if (prefs.morn) L.push(...alarm(icsOffset(toMin(prefs.mornTime)), `Today: ${o.name}`));
       L.push("END:VEVENT");
     });
+    const mine = await personalEvents(today(), addDays(today(), 366)).catch(() => []);
+    mine.forEach((p) => {
+      L.push("BEGIN:VEVENT", `UID:${ymd(p.date)}-${p.id}@dharma-path`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${icsDate(p.date)}`, `DTEND;VALUE=DATE:${icsDate(addDays(p.date, 1))}`,
+        `SUMMARY:${icsText(p.title)}`, `DESCRIPTION:${icsText(p.body + "\n\n" + appUrl + "#/remember")}`, "TRANSP:TRANSPARENT", "CATEGORIES:Dharma Path");
+      if (prefs.eve) L.push(...alarm(icsOffset(toMin(prefs.eveTime) - 1440), `Tomorrow: ${p.title}`));
+      if (prefs.morn) L.push(...alarm(icsOffset(toMin(prefs.mornTime)), `Today: ${p.title}`));
+      L.push("END:VEVENT");
+    });
     if (prefs.daily) {
       const d = addDays(today(), 1);
       const [h, m] = prefs.dailyTime.split(":");
@@ -1624,8 +1634,8 @@
     a.download = "dharma-path-reminders.ics";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    toast(`${events.length} dates${prefs.daily ? " and a daily prayer" : ""} ready to add`);
-    return events.length;
+    toast(`${events.length + mine.length} dates${prefs.daily ? " and a daily prayer" : ""} ready to add`);
+    return events.length + mine.length;
   }
 
   /* Notices shown by the app itself. The service worker reads this list on a periodic background sync. */
@@ -1643,6 +1653,8 @@
     const events = remindEvents(t0, t0 + 45, prefs).map(({ e, o }) => ({
       date: ymd(calDate(e[0])), id: e[1], title: o.name, body: o.summary, url: `#/day/${ymd(calDate(e[0]))}`
     }));
+    (await personalEvents(today(), addDays(today(), 45)).catch(() => [])).forEach((p) =>
+      events.push({ date: ymd(p.date), id: p.id, title: p.title, body: p.body, url: "#/remember" }));
     const data = {
       notify: true, eve: prefs.eve, morn: prefs.morn, daily: prefs.daily, dailyMin: toMin(prefs.dailyTime),
       events, shown: (old && old.shown) || []
@@ -1983,6 +1995,7 @@
       [sum("progress:", (l) => (Array.isArray(l) ? l.length : 0)), "finished lesson"],
       [sum("read:pos:", () => 1), "book with your place kept", "books with your place kept"],
       [sum("rite:need:", (l) => (Array.isArray(l) && l.length ? 1 : 0)), "rite checklist"],
+      [(data.people || []).length, "remembered date"],
       [recs, "recording"]
     ].filter(([n]) => n > 0).map(([n, one, many]) => plural(n, one, many));
   }
@@ -2133,6 +2146,111 @@
         <div class="btn-row"><label class="btn ghost">Choose a backup file<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
       </div>
       <p class="footer-note">A backup holds your bookmarks, highlights and notes, practice history and japa counts, favourite prayers, finished lessons, places in the books, rite checklists, reminder choices and settings, and your recordings if you include them. Books saved for offline reading aren't included; save them again from the library.</p>`;
+  }
+
+  /* ====================================================================== */
+  /* Remembering dates: a loved one's shraddha or birthday, by the tithi      */
+  /* ====================================================================== */
+  let tithiTable = null;
+  async function loadTithi() {
+    if (!tithiTable) {
+      const t = await loadJSON("calendar/tithi.json");
+      tithiTable = { ...window.Tithi.make(t), cities: t.cities };
+    }
+    return tithiTable;
+  }
+  const people = () => store.get("people", []);
+
+  // A time zone's offset from UTC, in minutes, at a moment.
+  function tzOffset(tz, ms) {
+    try {
+      const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" }).formatToParts(new Date(ms));
+      const g = (k) => +p.find((x) => x.type === k).value;
+      return (Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute")) - Math.floor(ms / 60000) * 60000) / 60000;
+    } catch (e) { return 0; }
+  }
+  function placeFor(cityId, ms) {
+    const c = tithiTable.cities.find((x) => x.id === cityId) || tithiTable.cities[0];
+    const ci = cal.index.cities.find((x) => x.id === c.id);
+    return { lat: c.lat, lon: c.lon, offset: tzOffset(ci ? ci.tz : "UTC", ms) };
+  }
+  // Named as on the calendar: the dark fortnight takes the following month's name (purnimanta).
+  function tithiLabel(x) {
+    const shukla = x.t <= 15, name = x.t === 15 ? "Purnima" : x.t === 30 ? "Amavasya" : TITHI[(x.t - 1) % 15];
+    const month = (x.adhika ? "Adhika " : "") + LUNAR[shukla || x.adhika ? x.month : (x.month + 1) % 12];
+    return `${month} ${x.t === 15 || x.t === 30 ? "" : shukla ? "Shukla " : "Krishna "}${name}`;
+  }
+  const longDay = (d) => d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  function personInfo(p, tt) {
+    const [y, m, d] = p.date.split("-").map(Number);
+    const place = placeFor(p.city, Date.UTC(y, m - 1, d, 12));
+    const mins = p.time ? +p.time.slice(0, 2) * 60 + +p.time.slice(3, 5) : null;
+    const x = tt.ofDate(y, m, d, place, mins);
+    if (!x) return { p, outside: true };
+    const now = today(), here = placeFor(p.city, Date.now());
+    const next = (month, t) => {
+      for (let yr = now.getFullYear(); yr <= now.getFullYear() + 2; yr++) {
+        const ds = tt.datesOf(yr, month, t, here).map((o) => new Date(o.y, o.m - 1, o.d)).filter((dt) => dt >= now);
+        if (ds.length) return ds[0];
+      }
+      return null;
+    };
+    const info = { p, x, label: tithiLabel(x), next: next(x.month, x.t) };
+    // In Pitru Paksha (the dark fortnight of Bhadrapada) each soul is remembered on its own tithi.
+    if (p.kind === "passing") info.pitru = next(5, x.t === 15 || x.t === 30 ? x.t : 15 + ((x.t - 1) % 15) + 1);
+    return info;
+  }
+
+  // The coming dates for everyone saved, for reminders: [{ date, id, title, body }]
+  async function personalEvents(from, to) {
+    if (!people().length) return [];
+    await loadCalendar();
+    const tt = await loadTithi();
+    const out = [];
+    people().forEach((p) => {
+      const info = personInfo(p, tt);
+      if (info.outside) return;
+      const add = (date, kind, title) => { if (date && date >= from && date <= to) out.push({ date, id: `person-${p.id}-${kind}`, title, body: `${info.label}. ${kind === "pitru" ? "Their day in Pitru Paksha." : p.kind === "passing" ? "The yearly shraddha, on the tithi of their passing." : "Their birthday by the Hindu calendar."}` }); };
+      add(info.next, p.kind === "passing" ? "shraddha" : "birthday", p.kind === "passing" ? `Shraddha for ${p.name}` : `${p.name}'s tithi birthday`);
+      if (info.pitru) add(info.pitru, "pitru", `Pitru Paksha: ${p.name}`);
+    });
+    return out.sort((a, b) => a.date - b.date);
+  }
+
+  async function rememberView() {
+    await loadCalendar();
+    const tt = await loadTithi();
+    const infos = people().map((p) => personInfo(p, tt)).sort((a, b) => (a.next || Infinity) - (b.next || Infinity));
+    const rel = (d) => { const n = Math.round((d - today()) / 86400000); return n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`; };
+    const cities = cal.index.cities.map((c) => `<option value="${c.id}" ${c.id === cal.id ? "selected" : ""}>${esc(c.name)}</option>`).join("");
+    return `
+      <h2 class="page-title">Remembering dates</h2>
+      <p class="page-sub">A shraddha, and a birthday kept the traditional way, return each year on the same tithi, not the same date. Add a loved one and Dharma Path finds the day every year.</p>
+      ${infos.map((i) => i.outside ? `<div class="card person"><h3 class="card-h">${esc(i.p.name)}</h3><p class="meta">Dates before 1930 or after 2060 can't be reckoned yet.</p><div class="btn-row"><button class="btn ghost danger" data-person-del="${i.p.id}">Remove</button></div></div>` : `
+        <div class="card person">
+          <div class="eyebrow">${i.p.kind === "passing" ? "In loving memory" : "Birthday"}</div>
+          <h3 class="card-h">${esc(i.p.name)}</h3>
+          <p class="meta" style="margin:0 0 12px">${i.p.kind === "passing" ? "Passed away" : "Born"} ${esc(parseYmd(i.p.date).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }))}${i.p.time ? ` at ${esc(i.p.time)}` : ""} · <b>${esc(i.label)}</b></p>
+          <div class="glance">
+            <div><span>${i.p.kind === "passing" ? "Yearly shraddha" : "Tithi birthday"}</span><b>${i.next ? `${esc(longDay(i.next))}, ${rel(i.next)}` : "Beyond 2060"}</b></div>
+            ${i.p.kind === "passing" ? `<div><span>In Pitru Paksha</span><b>${i.pitru ? `${esc(longDay(i.pitru))}, ${rel(i.pitru)}` : "Beyond 2060"}</b></div>` : ""}
+          </div>
+          <div class="btn-row">${i.p.kind === "passing" ? `<a class="btn ghost" href="#/life/shraddha">How to observe a shraddha</a>` : ""}<button class="btn ghost danger" data-person-del="${i.p.id}">Remove</button></div>
+        </div>`).join("")}
+      <div class="card">
+        <div class="eyebrow">Add a date</div>
+        <div class="form-grid">
+          <label>Name<input id="pName" type="text" maxlength="60" placeholder="e.g. Nani, or Ravi"></label>
+          <label>This is<select id="pKind"><option value="passing">the day they passed away</option><option value="birth">their birthday</option></select></label>
+          <label>Date<input id="pDate" type="date" min="1930-01-01" max="2060-12-31"></label>
+          <label>Time, if known <input id="pTime" type="time"></label>
+          <label>Where<select id="pCity">${cities}</select></label>
+        </div>
+        <p class="meta" style="margin:10px 0 0">The tithi is reckoned at sunrise on that date in that place. If a passing came at night or before sunrise, giving the time is more exact, because the tithi may have changed.</p>
+        <div class="btn-row"><button class="btn" data-person-add>Add</button></div>
+      </div>
+      <p class="footer-note">These dates are kept only on this device (and in your backup), and appear in your <a href="#/reminders">reminders</a>. A shraddha is kept on the day the tithi stands at sunrise, as most calendars do; some families follow the afternoon tithi, so ask your priest when the two differ. Any date from 1930 to 2060 can be reckoned.</p>`;
   }
 
   /* ====================================================================== */
@@ -3121,8 +3239,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
-  const TAB = { rites: "learn", practice: "home", reminders: "home", backup: "home", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn" };
+  const TAB = { rites: "learn", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -3145,7 +3263,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -3159,6 +3277,7 @@
         case "reminders": html = await remindersView(); break;
         case "recordings": await recordingsReady; html = recordingsView(); break;
         case "backup": await recordingsReady; html = backupView(); break;
+        case "remember": html = await rememberView(); break;
         case "calendar": html = await calendarView(id); break;
         case "day": html = await dayView(id); break;
         case "festival": html = await festivalView(id); break;
@@ -3224,6 +3343,23 @@
   /* Interactions                                                            */
   /* ====================================================================== */
   view.addEventListener("click", (e) => {
+    const padd = e.target.closest("[data-person-add]");
+    if (padd) {
+      const v = (id) => document.getElementById(id).value.trim();
+      if (!v("pName") || !/^\d{4}-\d{2}-\d{2}$/.test(v("pDate"))) { toast("Please give a name and a date"); return; }
+      if (v("pDate") < "1930-01-01" || v("pDate") > "2060-12-31") { toast("Dates from 1930 to 2060 can be reckoned"); return; }
+      store.set("people", people().concat({ id: Date.now().toString(36), name: v("pName"), kind: v("pKind"), date: v("pDate"), time: v("pTime") || "", city: v("pCity") }));
+      syncReminderData().catch(() => {});
+      route();
+      return;
+    }
+    const pdel = e.target.closest("[data-person-del]");
+    if (pdel) {
+      store.set("people", people().filter((p) => p.id !== pdel.dataset.personDel));
+      syncReminderData().catch(() => {});
+      route();
+      return;
+    }
     const simple = e.target.closest("[data-simple]");
     if (simple) {
       store.set("roman:simple", !simpleOn());

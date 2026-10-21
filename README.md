@@ -17,6 +17,7 @@ Across the app:
 - **Search** (top bar) finds prayers, festivals, lessons and words in every scripture. Spellings with or without diacritics both match, so "Krishna" finds "Kṛṣṇa". The Ramayana and Mahabharata are searched on request because of their size.
 - **Your practice** keeps a private record of mantras and malas chanted, chapters read, aartis sung and lessons finished, with a daily streak, a 12-week view and simple check-ins (prayed, meditated, fasted…).
 - **Simple spelling**, a switch on any prayer, rite or Sanskrit text, shows the transliteration as most families write it ("om namah shivaya" rather than "oṃ namaḥ śivāya") throughout the app.
+- **Remembering dates**: enter the day a loved one passed away (or was born) and the app finds its Hindu tithi and month, the day of the yearly shraddha, their day in Pitru Paksha and the tithi birthday, for any date from 1930 to 2060. The dates go into the calendar file and reminders.
 - **Backup and restore** saves everything the app keeps on the device (bookmarks, highlights and notes, practice history, japa counts, favourites, finished lessons, reading places, rite checklists, reminder choices, settings and, if chosen, your recordings) to one file, and restores it on any device, either added to what is there or replacing it.
 - **Reminders** cover festivals, Ekadashi, moon days and vrats, the evening before or the same morning, plus an optional daily prayer reminder. They can be added to the phone's own calendar as an `.ics` file for exact alerts, and on browsers that allow it the app can show its own notices.
 
@@ -73,6 +74,8 @@ python3 scripts/build_calendar.py 2026 2028
 Each tithi is reckoned from local sunrise, so dates are calculated separately for each city. Months are amanta and named by the sidereal (Lahiri) sign of the sun at the new moon, with adhika (leap) months detected automatically. Each festival is placed on the day its tithi covers the traditional time of worship: sunrise, forenoon, midday, afternoon, evening (pradosh), midnight (nishita) or moonrise. Raksha Bandhan avoids Bhadra, and Janmashtami lists the ISKCON/Vaishnava date when it differs. The results were checked against published panchang dates for 2026 and 2027. Some communities and temples follow regional rules and may observe a day earlier or later.
 
 To add a city, add it to `CITIES` in the script and run it again.
+
+`calendar/tithi.json`, used for Remembering dates, holds the start of every tithi from 1930 to 2060 and the month of each lunation, from the same astronomy (`python3 scripts/build_tithi_table.py 1930 2060`). The app works out sunrise itself; it agrees with the city calendars on the tithi at sunrise on 19,726 of 19,728 days.
 
 ## Scriptures
 

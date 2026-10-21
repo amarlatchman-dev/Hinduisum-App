@@ -490,6 +490,9 @@
     if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
     document.querySelectorAll(".stanza.playing").forEach((el) => el.classList.remove("playing"));
     document.querySelectorAll("[data-listen], #chantAlong").forEach((b) => b.classList.remove("on"));
+    document.querySelectorAll(".reader .speaking").forEach((el) => el.classList.remove("speaking"));
+    const ra = document.querySelector("[data-read-aloud]");
+    if (ra) { ra.classList.remove("on"); ra.innerHTML = PLAY_ICON + "Listen"; }
     const l = document.querySelector("[data-listen]");
     if (l) l.innerHTML = PLAY_ICON + "Listen";
     const mb = document.querySelector("[data-meaning]");
@@ -2950,6 +2953,8 @@
           ${book.sanskrit && showSa ? simpleChip() : ""}
           ${hasNotes ? `<button class="chip ${showNotes ? "active" : ""}" data-notes>Commentary</button>` : ""}
           <a class="chip" href="${contentsHref}">Contents</a>
+          ${canSpeak() ? `<button class="chip listen" data-read-aloud>${PLAY_ICON}Listen</button>` : ""}
+          ${canSpeak() && book.sanskrit && !book.sanskritOnly && showSa ? `<button class="chip" data-listen-lang>${LISTEN_LABEL[listenMode(book)]}</button>` : ""}
         </div>
       </div>
       <article class="reader ${showNotes ? "" : "hide-notes"}" style="--read-scale:${store.get("read:font", 1)}">${body}</article>
@@ -2958,6 +2963,71 @@
         ${next ? `<a class="btn" href="${readerHref(bookId, next[0], next[1])}">${esc(navLabel(next))} ›</a>` : `<span class="meta">The end</span>`}
       </nav>
       <div class="read-progress"><span id="readBar"></span></div>` };
+  }
+
+  /* Listen: the device voice reads the section aloud verse by verse, highlighting each one, and
+     carries on into the next section. ---------------------------------------------------------- */
+  const LISTEN_LABEL = { en: "Reading: English", sa: "Reading: Sanskrit", both: "Reading: both" };
+  let listenNext = false;
+  function listenMode(book) {
+    if (book.sanskritOnly) return "sa";
+    if (!book.sanskrit || !store.get("read:sanskrit", true)) return "en";
+    return store.get("read:listen", "en");
+  }
+  // Browsers cut off long utterances, so English is spoken a sentence or two at a time.
+  function speechChunks(text) {
+    const out = [];
+    for (const piece of text.replace(/\s+/g, " ").match(/[^.!?;:]+[.!?;:]*["”’)]*\s*/g) || [text]) {
+      if (out.length && (out[out.length - 1] + piece).length < 220) out[out.length - 1] += piece;
+      else out.push(piece);
+    }
+    return out.map((x) => x.trim()).filter(Boolean);
+  }
+  function listenParts(el, mode) {
+    if (!el.classList.contains("verse")) return [[el.textContent, true]];
+    const sa = el.querySelector(".sanskrit"), tr = el.querySelector(".translit"), en = el.querySelector(".vtext");
+    const parts = [];
+    const sanskrit = () => sa && parts.push([chantText([sa.textContent, (tr && tr.dataset.iast) || ""], { lang: "Sanskrit" }), false]);
+    const english = () => en && parts.push([en.textContent, true]);
+    if (mode !== "en") sanskrit();
+    if (mode !== "sa") english();
+    if (!parts.length) { english(); sanskrit(); }
+    return parts;
+  }
+
+  async function readAloud(btn, fromTop) {
+    if (btn.classList.contains("on")) { stopAudio(); return; }
+    stopAudio();
+    const token = playToken;
+    keepAwake();
+    btn.classList.add("on");
+    btn.innerHTML = STOP_ICON + "Stop";
+    const mode = listenMode(byId(C.books, readerState.bookId));
+    const items = [...view.querySelectorAll(".reader > .verse, .reader > .para")];
+    const here = currentItem();
+    let k = fromTop || !here ? 0 : Math.max(0, items.findIndex((x) => !(here.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_PRECEDING)));
+    const began = Date.now(), first = k;
+    for (; k < items.length; k++) {
+      const el = items[k];
+      el.classList.add("speaking");
+      const r = el.getBoundingClientRect();
+      if (r.top < topbar.getBoundingClientRect().bottom || r.top > innerHeight * 0.6) {
+        scrollTo({ top: r.top + scrollY - topbar.getBoundingClientRect().height - 16, behavior: "smooth" });
+      }
+      for (const [text, english] of listenParts(el, mode)) {
+        for (const c of english ? speechChunks(text) : [text]) {
+          await say(c, { english, rate: english ? 0.95 : 0.85 });
+          if (token !== playToken) return;
+        }
+      }
+      el.classList.remove("speaking");
+    }
+    // Carry on into the next section, unless the voice did not really speak (none on this device).
+    const next = document.querySelector(".reader-nav a.btn:not(.ghost)");
+    if (next && Date.now() - began > (k - first) * 150) {
+      listenNext = true;
+      location.hash = next.getAttribute("href");
+    } else stopAudio();
   }
 
   /* Track the reader's place: the first verse or paragraph visible below the top bar. */
@@ -3531,6 +3601,11 @@
       const st = readerState;
       setTimeout(() => { if (readerState === st) markIfRead(); }, 20500);
     }
+    if (listenNext) {
+      listenNext = false;
+      const b = readerState && document.querySelector("[data-read-aloud]");
+      if (b) readAloud(b, true);
+    }
   }
 
   function bindPrayerSearch(query) {
@@ -3625,6 +3700,15 @@
       return;
     }
     if (t.hasAttribute("data-bk-print")) { window.print(); return; }
+    if (t.hasAttribute("data-read-aloud")) { readAloud(t, false); return; }
+    if (t.hasAttribute("data-listen-lang")) {
+      const book = byId(C.books, readerState.bookId);
+      const order = ["en", "sa", "both"];
+      const m = order[(order.indexOf(listenMode(book)) + 1) % 3];
+      store.set("read:listen", m);
+      t.textContent = LISTEN_LABEL[m];
+      return;
+    }
     if (t.dataset.aarti) {
       const act = t.dataset.aarti;
       if (act === "prev") aartiGo(-1);

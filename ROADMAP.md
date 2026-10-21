@@ -30,7 +30,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
       ceremony, like Aarti mode.
 - [ ] **Recorded audio**: finish the ElevenLabs prayer recordings (16 prayers left), then the 141 rite
       mantras (about 13,000 characters, more than one month's free quota).
-- [ ] **Listen to any book with the device voice**: a Listen button in the reader that reads verse by
+- [x] **Listen to any book with the device voice**: a Listen button in the reader that reads verse by
       verse, highlights each one and carries on into the next chapter, in English and (where the phone
       has a Hindi voice) Sanskrit. Free, works offline, about a day's work.
 - [ ] **Recorded readings of the most-read texts** with ElevenLabs: the Bhagavad Gita (about 160,000

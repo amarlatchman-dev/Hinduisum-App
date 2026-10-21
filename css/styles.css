@@ -1115,3 +1115,9 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
   .bk-part h2 { break-after: avoid; }
   .bk-part h3 { break-after: avoid; }
 }
+
+/* ---------- Listening in the reader ---------- */
+.reader .speaking { background: var(--gold-soft); border-radius: 16px; box-shadow: 0 0 0 10px var(--gold-soft); transition: background 0.3s; }
+.chip.listen .ico { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; }
+.chip.listen.on { position: fixed; z-index: 21; bottom: calc(86px + env(safe-area-inset-bottom)); right: max(16px, calc(50% - 284px)); padding: 10px 18px; background: var(--gold); color: #fff; border-color: var(--gold); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22); }
+@media print { .chip.listen { display: none; } }

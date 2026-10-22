@@ -33,6 +33,7 @@ not on the default paths.
 | `scenes_divine.py` | The gods through their emblems, sacred geometry and the cosmos. Adds the `nebula`, `starfield`, `addglow` and `beam` effects. |
 | `scenes_still.py` | Still lifes of sacred objects. A small numpy 3D renderer (the `still3d` effect) shades the hero objects, so these are the slowest to build, at about a minute each. |
 | `scenes_festive.py` | Festivals, home rituals and the rites of passage. Adds the `powder` effect for Holi colour. |
+| `scenes_stories.py` | The children's stories: the Panchatantra animals as silhouettes (monkey, crocodile, lion, hare, geese, jackal, crows, mongoose, heron, crab, donkey, doves). |
 | `scenes_story.py` | People, animals and stories: sages, devotees, the temple elephant, the chariot. |
 | `compose.py`, `finish.py`, `render.js`, `build.py` | The pipeline. |
 

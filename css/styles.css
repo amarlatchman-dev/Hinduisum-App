@@ -1165,3 +1165,15 @@ a.card.practice-card { display: flex; align-items: center; gap: 16px; padding: 1
 .mem-dots { display: inline-flex; gap: 3px; vertical-align: middle; }
 .mem-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
 .mem-dots i.on { background: var(--gold); }
+
+/* ---------- Stories for children ---------- */
+.story-text p { font-family: var(--display); font-size: 1.22rem; line-height: 1.65; margin: 0 0 1em; }
+.story-text p.speaking { background: var(--gold-soft); border-radius: 12px; box-shadow: 0 0 0 8px var(--gold-soft); }
+.story-ask { margin: 8px 0 0; padding-left: 1.2em; }
+.story-ask li { margin: 0 0 6px; }
+
+/* ---------- Rites: then and now ---------- */
+.then-now h4 { font-family: var(--display); font-size: 1.12rem; margin: 0 0 8px; }
+.then-now .tn-row { padding: 8px 0 0; border-top: 1px solid var(--line); margin-top: 8px; }
+.then-now .tn-row:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+.then-now .tn-row p { margin: 4px 0 0; }

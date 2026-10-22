@@ -29,7 +29,7 @@ function appData() {
   const root = path.join(__dirname, "..");
   const ctx = { window: {} };
   vm.createContext(ctx);
-  for (const f of ["config", "content", "academy", "rites", "rite-mantras", "prayers", "plans", "quizzes"]) {
+  for (const f of ["config", "content", "academy", "rites", "rite-mantras", "prayers", "plans", "quizzes", "stories"]) {
     vm.runInContext(fs.readFileSync(path.join(root, "js", f + ".js"), "utf8"), ctx);
   }
   return { C: ctx.window.CONTENT, P: ctx.window.PRAYERS, root };

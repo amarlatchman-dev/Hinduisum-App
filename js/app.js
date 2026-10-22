@@ -2459,6 +2459,10 @@
           <span class="body"><span class="eyebrow">Continue learning</span><h3>${esc(lc.lessons[li].title)}</h3><span class="meta">${esc(lc.title)} · Lesson ${li + 1} of ${lc.lessons.length}</span></span>
           <span class="chev">›</span></a>` : ""}
       ${ritesFeature()}
+      <a class="night continue-lesson" href="#/stories">
+        ${plate("story-monkey-crocodile", "", "mini")}
+        <span class="body"><span class="eyebrow">For children</span><h3>Stories from the Panchatantra</h3><span class="meta">${STORIES.length} tales of clever hares, loyal friends and foolish lions, with a lesson in each</span></span>
+        <span class="chev">›</span></a>
       <div class="section-head"><h2 class="section-title">Academy</h2></div>
       <div class="chips" style="margin-bottom:12px">
         ${C.categories.map((c) => `<button class="chip ${c.id === active ? "active" : ""}" data-filter="${c.id}">${esc(c.name)}</button>`).join("")}
@@ -2643,6 +2647,74 @@
       if (memSession.count === 1 && g !== "again") logPractice("memorise", ymd(today()));
       return route();
     }
+  }
+
+  /* ====================================================================== */
+  /* Stories for children, from the Panchatantra and the Hitopadesha         */
+  /* ====================================================================== */
+  const STORIES = C.stories || [];
+  const storiesRead = () => store.get("stories:read", []);
+
+  function storiesView() {
+    const read = storiesRead();
+    return `
+      ${plate("story-tortoise-geese", "Stories for children", "course-hero")}
+      <div class="course-head">
+        <div class="eyebrow">Panchatantra · Hitopadesha · ${STORIES.length} stories</div>
+        <h2 class="page-title">Stories for children</h2>
+        <p class="lede">Long ago, the story goes, a king despaired of his three idle sons. A wise teacher, Vishnu Sharma, promised to make them wise in six months, and he did it with stories: clever hares and foolish lions, loyal friends and false ones. These are the tales of the Panchatantra, and of the Hitopadesha, “good counsel”, which retells many of them. Read them together, then talk about them.</p>
+      </div>
+      <div class="list lesson-list">
+        ${STORIES.map((st, i) => `
+          <a class="row course-row ${read.includes(st.id) ? "done" : ""}" href="#/story/${st.id}">${plate(st.art, "", "thumb")}
+            <span class="body"><h3>${esc(st.title)}</h3><p>${esc(st.from.split(":")[0])}${read.includes(st.id) ? " · read ✓" : ""}</p></span><span class="chev">›</span></a>`).join("")}
+      </div>`;
+  }
+
+  function storyView(id) {
+    const i = STORIES.findIndex((x) => x.id === id);
+    if (i < 0) return notFound();
+    const st = STORIES[i], prev = STORIES[i - 1], next = STORIES[i + 1];
+    return `
+      <article class="story-page">
+        ${plate(st.art, st.title, "rite-hero")}
+        <a class="eyebrow course-link" href="#/stories">Stories for children · ${esc(st.from)}</a>
+        <h2 class="lesson-title">${esc(st.title)}</h2>
+        ${canSpeak() ? `<div class="btn-row"><button class="btn ghost" data-story-read="${st.id}">${PLAY_ICON}Read it to me</button></div>` : ""}
+        <div class="story-text" id="storyText">${st.body.map((p) => `<p>${esc(p)}</p>`).join("")}</div>
+        <div class="card practice"><div class="eyebrow">The lesson</div><p>${esc(st.lesson)}</p></div>
+        <div class="card terms"><div class="eyebrow">Talk about it</div><ul class="story-ask">${st.ask.map((q) => `<li>${esc(q)}</li>`).join("")}</ul></div>
+        <nav class="lesson-nav">
+          ${prev ? `<a href="#/story/${prev.id}"><span class="meta">Previous story</span><span>${esc(prev.title)}</span></a>` : `<a href="#/stories"><span class="meta">All stories</span><span>Stories for children</span></a>`}
+          ${next ? `<a class="next" href="#/story/${next.id}"><span class="meta">Next story</span><span>${esc(next.title)}</span></a>` : `<a class="next" href="#/stories"><span class="meta">All stories</span><span>Stories for children</span></a>`}
+        </nav>
+        <p class="footer-note">Retold for children by Dharma Path from the ancient tales. <button class="linkish" data-report="1" data-report-where="${esc(`Story: ${st.title}`)}">Report a mistake on this page</button></p>
+      </article>`;
+  }
+
+  // Read the story aloud, a paragraph at a time, with the device voice.
+  async function storyRead(btn) {
+    if (btn.classList.contains("on")) { stopAudio(); btn.classList.remove("on"); btn.innerHTML = PLAY_ICON + "Read it to me"; return; }
+    stopAudio();
+    const token = playToken;
+    keepAwake();
+    btn.classList.add("on");
+    btn.innerHTML = STOP_ICON + "Stop";
+    const st = byId(STORIES, btn.dataset.storyRead);
+    const paras = [...document.querySelectorAll("#storyText p")];
+    for (let k = 0; k < paras.length; k++) {
+      paras.forEach((p) => p.classList.remove("speaking"));
+      paras[k].classList.add("speaking");
+      for (const c of speechChunks(paras[k].textContent)) {
+        await say(c, { english: true, rate: .9 });
+        if (token !== playToken) return;
+      }
+    }
+    paras.forEach((p) => p.classList.remove("speaking"));
+    await say("The lesson. " + st.lesson, { english: true, rate: .9 });
+    if (token !== playToken) return;
+    stopAudio();
+    if (btn.isConnected) { btn.classList.remove("on"); btn.innerHTML = PLAY_ICON + "Read it to me"; }
   }
 
   function courseView(id) {
@@ -2889,6 +2961,13 @@
         </div>
 
         ${riteMantras(r)}
+
+        ${r.thenNow ? `<div class="section" id="thenNow"><div class="section-head"><h2 class="section-title">Then and now</h2></div>
+          <p class="meta" style="margin:-4px 4px 12px">How the old ritual manuals, the Grihya Sutras, describe this rite, and how families usually keep it today.</p>
+          ${r.thenNow.map(([t, then, now]) => `<div class="card then-now"><h4>${esc(t)}</h4>
+            <div class="tn-row"><span class="eyebrow">In the old manuals</span><p>${esc(then)}</p></div>
+            <div class="tn-row"><span class="eyebrow">Today</span><p>${esc(now)}</p></div></div>`).join("")}
+        </div>` : ""}
 
         ${r.customs && r.customs.length ? `<div class="section"><div class="section-head"><h2 class="section-title">Across regions</h2></div>
           <div class="list customs">${r.customs.map(([where, what]) => `<div class="row static"><span class="body"><h3>${esc(where)}</h3><p>${esc(what)}</p></span></div>`).join("")}</div>
@@ -4100,8 +4179,8 @@
   /* ====================================================================== */
   /* Router                                                                  */
   /* ====================================================================== */
-  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures", sync: "Practice", quiz: "Learn", memorise: "Scriptures" };
-  const TAB = { quiz: "learn", memorise: "read", sync: "home", rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
+  const TITLES = { rites: "Learn", search: "Search", saved: "Scriptures", practice: "Practice", reminders: "Reminders", backup: "Practice", remember: "Calendar", recordings: "Puja", calendar: "Calendar", day: "Calendar", festival: "Calendar", festivals: "Calendar", location: "Calendar", puja: "Puja", japa: "Puja", read: "Scriptures", learn: "Learn", academy: "Learn", life: "Learn", booklet: "Learn", plans: "Scriptures", plan: "Scriptures", sync: "Practice", quiz: "Learn", memorise: "Scriptures", stories: "Learn", story: "Learn" };
+  const TAB = { stories: "learn", story: "learn", quiz: "learn", memorise: "read", sync: "home", rites: "learn", booklet: "learn", plans: "read", plan: "read", practice: "home", reminders: "home", backup: "home", remember: "calendar", recordings: "puja", saved: "read", day: "calendar", festival: "calendar", festivals: "calendar", location: "calendar", japa: "puja", academy: "learn", life: "learn" };
   let routeSeq = 0;
   let navCount = 0;
 
@@ -4125,7 +4204,7 @@
     if (rec) stopRecording(true);
     aarti = null;
     document.body.classList.toggle("immersive", section === "aarti");
-    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans", "sync", "memorise"].includes(section);
+    const detail = (!!id && section !== "calendar") || ["japa", "location", "day", "festival", "festivals", "search", "saved", "practice", "reminders", "recordings", "rites", "backup", "remember", "booklet", "plans", "sync", "memorise", "stories"].includes(section);
     setHeader(detail ? TITLES[section] || "" : "", detail);
     setActiveTab(TAB[section] || section);
 
@@ -4155,6 +4234,8 @@
         case "booklet": html = bookletView(id); break;
         case "plans": html = plansView(); break;
         case "quiz": html = quizView(id); break;
+        case "stories": html = storiesView(); break;
+        case "story": html = storyView(id); break;
         case "memorise": html = id === "review" ? await memReviewView() : await memorizeView(); break;
         case "sync": html = syncView(); break;
         case "plan": html = await planView(id); break;
@@ -4189,6 +4270,11 @@
     if (section === "puja" && !id) bindPrayerSearch(query);
     if (section === "search") bindSearch();
     if (section === "booklet") bindBooklet();
+    if (section === "story" && byId(STORIES, id)) {
+      const read = storiesRead();
+      if (!read.includes(id)) store.set("stories:read", [...read, id]);
+      logPractice("read", `story|${id}`);
+    }
     if (section !== "quiz") quiz = null;
     if (section !== "memorise" || id !== "review") memSession = null;
     fillProgressBars();
@@ -4300,6 +4386,7 @@
     if (t.hasAttribute("data-bk-print")) { window.print(); return; }
     if (t.hasAttribute("data-read-aloud")) { readAloud(t, false); return; }
     if (t.dataset.sync) { syncAction(t.dataset.sync, t); return; }
+    if (t.dataset.storyRead) { storyRead(t); return; }
     if (t.dataset.quizPick) { quizAct("pick", +t.dataset.quizPick); return; }
     if (t.dataset.quiz) { quizAct(t.dataset.quiz); return; }
     if (t.hasAttribute("data-mem-starters") || t.hasAttribute("data-mem-show") || t.dataset.memRemove || t.dataset.memSay || t.dataset.memGrade) { memAct(t); return; }

@@ -41,7 +41,8 @@ rite({
   ],
   withPriest: `A priest can perform the traditional Simantonnayana with Vedic verses and a small havan, usually in the morning, before the women's celebration.`,
   abroad: `This ceremony adapts easily to a baby shower. Many families combine both: a short puja and blessings, then a relaxed gathering with friends of every background.`,
-  prayers: [`ganesha`, `sarve-bhavantu`, `sarva-mangala`]
+  prayers: [`ganesha`, `sarve-bhavantu`, `sarva-mangala`],
+  thenNow: [["Three rites in one", "The Grihya Sutras describe three separate rites before birth: Garbhadhana, Pumsavana in the third month and Simantonnayana in the later months.", "They are rarely done separately. A priest usually performs a short Simantonnayana with a havan, often folding in Pumsavana verses, and the women's celebration (Godh Bharai, Seemantham, Valaikappu) is the heart of the day."], ["Parting the hair", "In Paraskara's rite the husband himself parts his wife's hair upwards from the front, with a bunch of darbha grass, a porcupine quill and unripe udumbara figs, while musicians sing.", "The parting of the hair is often left out or done symbolically, and the mother-to-be is instead dressed, adorned with bangles and fed by the women of the family."]]
 });
 
 /* ---------------------------------------------------------------------- */
@@ -74,7 +75,8 @@ rite({
   ],
   withPriest: `A priest can perform a short havan, cast the birth chart, suggest the first syllable of the name, and lead the Vedic blessings.`,
   abroad: `If a legal name must be registered before the ceremony, many families register it first and still hold the naming rite later, as a spiritual welcome.`,
-  prayers: [`ganesha`, `gayatri`, `sarve-bhavantu`]
+  prayers: [`ganesha`, `gayatri`, `sarve-bhavantu`],
+  thenNow: [["The welcome", "The father welcomes the newborn soon after birth, touching its lips with honey and ghee and whispering blessings for long life and wisdom.", "Most babies are born in hospital, so the birth blessings are usually performed later, together with the naming."], ["The name", "Paraskara gives rules rather than a ceremony: the name is given on the tenth day, a boy's name with an even number of syllables and a girl's with an odd number.", "Many families choose a name beginning with a syllable linked to the baby's birth star, as the priest advises, and celebrate the naming with friends, in the Caribbean often as the Barahi on the twelfth day."]]
 });
 
 rite({
@@ -99,7 +101,8 @@ rite({
   ],
   withPriest: `At the temple, ask the priest for an archana in the baby's name and birth star. It takes only a few minutes.`,
   abroad: `Keep the baby warm and out of harsh sun or cold. The meaning lies in the greeting, not the length of the outing.`,
-  prayers: [`surya-mantra`, `gayatri`, `shuklambaradharam`]
+  prayers: [`surya-mantra`, `gayatri`, `shuklambaradharam`],
+  thenNow: [["The first outing", "In the fourth month the father carries the child out of the house for the first time and shows it the sun, with a single Vedic verse.", "Many families make the baby's first outing a visit to the mandir, and it is often combined with the naming or the first feeding."]]
 });
 
 rite({
@@ -127,7 +130,8 @@ rite({
   ],
   withPriest: `A priest can chant Vedic verses for health and add a short havan before the first feeding.`,
   abroad: `Check with your doctor about when your baby is ready for solids. The rite can be held on any day close to that time.`,
-  prayers: [`annapurna`, `brahmarpanam`, `ganesha`]
+  prayers: [`annapurna`, `brahmarpanam`, `ganesha`],
+  thenNow: [["The first food", "Paraskara lists different first foods for different hopes for the child, among them the meat of goat and partridge, fish, and rice with ghee.", "Nearly everywhere the first food is now sweet rice pudding (kheer) or rice with ghee, fed with a silver spoon after a puja."], ["Choosing a future", "The Grihya Sutras say nothing of it.", "In many families the child is set before a book, a pen, money, food and other objects, and the family watches with delight to see which one it reaches for first: a later folk custom, kept for fun."]]
 });
 
 rite({
@@ -152,7 +156,8 @@ rite({
   ],
   withPriest: `A priest can recite blessings and a short prayer, but the piercing itself should be done by a trained professional.`,
   abroad: `Choose a licensed piercer or clinic. The prayers and blessings can be done at home before or after.`,
-  prayers: [`ganesha`, `shuklambaradharam`]
+  prayers: [`ganesha`, `shuklambaradharam`],
+  thenNow: [["An unwritten rite", "Ear piercing is not described in the Grihya Sutras: it enters the lists of samskaras only in later manuals.", "It is often done with the mundan or on its own, after a short puja, and the piercing itself by a jeweller or a trained piercer rather than by the family."]]
 });
 
 rite({
@@ -180,7 +185,8 @@ rite({
   ],
   withPriest: `Many temples offer a mundan service with a barber and a priest. At home, a priest can perform the havan and the first cut.`,
   abroad: `Some families visit India or a major temple for the mundan; others hold it at their local mandir and later offer the hair at a river.`,
-  prayers: [`ganesha`, `ganga-snana`]
+  prayers: [`ganesha`, `ganga-snana`],
+  thenNow: [["Who shaves", "In Paraskara's rite the father makes the first cuts himself, with a verse for each side of the head, and then the barber finishes.", "The father, or the priest, usually makes a few symbolic cuts, and a barber does the rest, often at a temple or by a river."], ["The tufts", "The texts leave a tuft or tufts of hair on the head, arranged according to family custom.", "Many families still leave a small tuft (shikha), and the hair is offered at a temple or to a river."], ["When", "In the first or the third year, or as family custom directs.", "Usually in the first, third or fifth year, at a family shrine or a famous temple where the family has made a vow."]]
 });
 
 /* ---------------------------------------------------------------------- */
@@ -212,7 +218,8 @@ rite({
   withPriest: `Many temples hold a vidyarambha ceremony on Vijayadashami, with a priest or teacher guiding each child.`,
   abroad: `Hold it at home on the day your child begins nursery or school, and keep the first slate or page as a treasured memento.`,
   prayers: [`saraswati`, `ya-kundendu`, `guru`, `sahana`],
-  links: [[`Vasant Panchami`, `#/festival/vasant-panchami`], [`Navaratri and Vijayadashami`, `#/festival/navaratri`]]
+  links: [[`Vasant Panchami`, `#/festival/vasant-panchami`], [`Navaratri and Vijayadashami`, `#/festival/navaratri`]],
+  thenNow: [["A later rite", "No Grihya Sutra has a ceremony for beginning to learn. The old manuals went straight from the early childhood rites to the Upanayana.", "It is widely kept today, on Vijayadashami in Kerala and the South, and on Vasant Panchami in the North and East, when a child writes its first letters in rice."]]
 });
 
 rite({
@@ -243,7 +250,8 @@ rite({
   withPriest: `This rite is almost always led by a priest, because of the many Vedic recitations. Ask in advance about the date, the items needed and the role of each family member.`,
   abroad: `Many temples outside India hold group upanayana ceremonies. Afterwards, help the child keep up a simple daily practice, such as saying the Gayatri Mantra each morning.`,
   prayers: [`gayatri`, `guru`, `sahana`],
-  links: [[`Course: The Sacred Texts`, `#/academy/vedas`]]
+  links: [[`Course: The Sacred Texts`, `#/academy/vedas`]],
+  thenNow: [["The age", "Paraskara gives the eighth year for a Brahmin boy, the eleventh for a Kshatriya and the twelfth for a Vaishya, after which he lived with his teacher.", "Many families hold it in the early teens, and some only shortly before the wedding. It is no longer the start of years of living with a teacher."], ["The order", "The manual gives the new garment, the girdle and the staff, then the teacher's blessings, and only then teaches the Gayatri.", "Priests often shorten it, giving the thread and the Gayatri first. Some reform movements, such as the Arya Samaj, give the thread to girls as well as boys."]]
 });
 
 rite({
@@ -271,7 +279,8 @@ rite({
   ],
   withPriest: `A priest can perform a short puja or havan. For Samavartana-style graduation blessings, a simple home puja is enough.`,
   abroad: `Choose what feels right for your family and your child. A quiet blessing from the grandparents can mean as much as a big celebration.`,
-  prayers: [`saraswati`, `asato-ma`, `sarva-mangala`]
+  prayers: [`saraswati`, `asato-ma`, `sarva-mangala`],
+  thenNow: [["Two forgotten rites", "Keshanta, the first shave of a youth, and Samavartana, the bath that ended a student's years with his teacher, were full rites with their own mantras.", "Both are rarely performed today. Some families mark a graduation or a sixteenth birthday with a simple puja instead."], ["For girls", "The Grihya Sutras have no rite for a girl's coming of age.", "In parts of South India and Sri Lanka a girl's first period is marked with a family celebration (Ritu Shuddhi and its regional forms). These rest on family and community custom."]]
 });
 
 /* ---------------------------------------------------------------------- */
@@ -321,7 +330,8 @@ rite({
   withPriest: `A priest leads the Vedic recitations and guides the families through each step. Many priests offer shorter ceremonies with explanations in English for guests of every background.`,
   abroad: `If you need a civil ceremony for legal reasons, it can be held separately. A printed or projected guide to the rituals helps guests follow and share in the meaning.`,
   prayers: [`ganesha`, `sarva-mangala`, `sarve-bhavantu`, `jagdish`],
-  links: [[`Course: the Matikor and other Caribbean traditions`, `#/academy/caribbean/5`]]
+  links: [[`Course: the Matikor and other Caribbean traditions`, `#/academy/caribbean/5`]],
+  thenNow: [["Around the fire", "In Paraskara's rite the couple circle the fire three times, with an offering of puffed rice, the stepping on the stone and a song at each round. Then, separately, the groom leads the bride seven steps towards the north, the saptapadi.", "Most North Indian and Caribbean weddings circle the fire seven times, and some communities four, and the seven rounds are often thought of as the seven steps themselves."], ["Giving the bride", "The giving of the bride is a simple handing over by her father. The words most priests say for the kanyadan come from later texts such as the Manusmriti.", "The kanyadan is one of the most moving moments of the day, and the order is often changed so that it and the joining of hands come before the fire offerings."], ["Sindoor and mangalsutra", "Neither is in the Grihya Sutras.", "Applying sindoor in the parting of the bride's hair and tying the mangalsutra are now among the most important moments of many weddings, with verses from later manuals."], ["The pole star", "After sunset the groom shows the bride the pole star, the sign of a steadfast marriage, and she answers “I see it”, even if she cannot.", "Weddings are usually by day, so this is often done symbolically, or left out."]]
 });
 
 rite({
@@ -349,7 +359,8 @@ rite({
   ],
   withPriest: `A priest can perform the Vastu Shanti, Navagraha and Ganesha pujas with a havan. Ask how much space the fire needs, and open the windows.`,
   abroad: `In apartments, use a small electric lamp or a sealed havan kund, and check fire-safety rules. Boiling milk and a lamp-lit prayer keep the heart of the ceremony.`,
-  prayers: [`ganesha`, `mahalakshmi`, `bhumi`, `jagdish`]
+  prayers: [`ganesha`, `mahalakshmi`, `bhumi`, `jagdish`],
+  thenNow: [["Building and entering", "Paraskara describes the rite of building a house: raising the main post with verses, carrying in a full pot of water, and a fire offering to Vastoshpati, the guardian of the home.", "A modern Griha Pravesh usually adds a Ganesha puja, a Navagraha puja and a Vastu Shanti from later manuals."], ["Boiling milk", "The texts do not mention it.", "In many homes milk is boiled in the new kitchen until it overflows, a sign of abundance, and the first meal is cooked and offered there."]]
 });
 
 rite({
@@ -376,7 +387,8 @@ rite({
   ],
   withPriest: `A priest can perform the Ayushya homa for long life and guide the renewal of vows.`,
   abroad: `This is a lovely occasion to gather the whole family, near and far. Share a recorded message from relatives who can't attend.`,
-  prayers: [`mahamrityunjaya`, `sarve-bhavantu`, `jagdish`]
+  prayers: [`mahamrityunjaya`, `sarve-bhavantu`, `jagdish`],
+  thenNow: [["A later rite", "No Grihya Sutra describes it. Living to sixty was rare, and the rite appears only in later manuals.", "It is kept above all in South India, where the couple often repeat parts of their wedding, and elsewhere as a family puja with prayers for long life."]]
 });
 
 /* ---------------------------------------------------------------------- */
@@ -417,7 +429,8 @@ rite({
   withPriest: `A priest guides the family through every stage, from the prayers at home to the cremation and the shraddha. Most funeral homes can arrange a Hindu priest.`,
   abroad: `Contact a funeral director early and ask about a Hindu service, viewing at home, and a crematorium that allows the family to be present. Ashes can be scattered at sea or sent to India for immersion.`,
   prayers: [`mahamrityunjaya`, `rama-rameti`, `asato-ma`],
-  links: [[`Bhagavad Gita, chapter 2`, `#/read/gita/2`], [`Remembering dates: the yearly shraddha`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`]]
+  links: [[`Bhagavad Gita, chapter 2`, `#/read/gita/2`], [`Remembering dates: the yearly shraddha`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`]],
+  thenNow: [["The fire", "The body was burned with the family's own sacred fires, carried from the house, with verses from the Rig Veda's funeral hymns, and the bones were gathered some days later.", "Most cremations now take place in a crematorium, or at an open-air cremation site where this is allowed, as in parts of the Caribbean. The ashes are scattered in a river or the sea, or taken to India."], ["The days after", "The rites of the following days, the offerings to the departed and the joining with the ancestors, stretched over a year.", "They are usually completed within about thirteen days, and the yearly shraddha keeps the remembering going."]]
 });
 
 rite({
@@ -444,5 +457,6 @@ rite({
   withPriest: `A priest can perform the full shraddha with pinda daan. Many temples hold collective shraddha ceremonies during Pitru Paksha.`,
   abroad: `If a full rite isn't possible, light a lamp before a photograph, offer water with sesame, cook a favourite dish, and give to charity in their name.`,
   prayers: [`mahamrityunjaya`, `ganga-snana`, `sarve-bhavantu`],
-  links: [[`Remembering dates: find a loved one's shraddha tithi`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`], [`Open the Calendar`, `#/calendar`]]
+  links: [[`Remembering dates: find a loved one's shraddha tithi`, `#/remember`], [`Pitru Paksha`, `#/festival/pitru-paksha`], [`Open the Calendar`, `#/calendar`]],
+  thenNow: [["Feeding the brahmins", "At the heart of the old shraddha is a meal served to learned brahmins, who receive it on behalf of the ancestors, with offerings of rice balls (pindas) to three generations.", "Many families make the water offering (tarpana) and the pinda offering without the full meal, give food to the needy, or feed crows, cows and dogs in the ancestors' name."], ["When", "On the day of the death each year, and at other set times in the year.", "Most families keep the yearly day and Pitru Paksha, the dark fortnight before the autumn new moon, and many make a journey to Gaya, Varanasi or another tirtha to offer pindas there."]]
 });

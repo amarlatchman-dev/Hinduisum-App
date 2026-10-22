@@ -34,7 +34,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
       voice (Listen) reads every book instead.
 - [ ] Link public-domain human readings where they exist (e.g. LibriVox English readings of the Gita and
       Upanishads; Sanskrit chanting on archive.org once each licence is checked).
-- [ ] Notes on each rite page where the old manuals differ from today's custom (e.g. three rounds of the
+- [x] Notes on each rite page where the old manuals differ from today's custom (e.g. three rounds of the
       fire in Paraskara; the meaning of the seven steps).
 
 ## Texts
@@ -58,7 +58,7 @@ Ideas agreed for the app, roughly in the order we plan to do them. Tick them off
 - [x] **Quizzes** at the end of each course.
 - [x] **Gita memorisation** with spaced repetition.
 - [x] **Reading plans**, such as "the Gita in 18 days" or "the Sundar Kand on Tuesdays".
-- [ ] **Children's stories** from the Panchatantra and Hitopadesha, illustrated in the app's painting style.
+- [x] **Children's stories** from the Panchatantra and Hitopadesha, illustrated in the app's painting style.
 
 ## Quality and reach
 

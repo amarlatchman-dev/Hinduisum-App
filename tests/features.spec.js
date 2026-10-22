@@ -110,3 +110,17 @@ test("a backup can be made and restored", async ({ page }) => {
   await page.click('[data-sheet="merge"]');
   await expect.poll(() => page.evaluate(() => localStorage.getItem("dp:favorites"))).toContain("gayatri");
 });
+
+test("a story can be read and is marked as read", async ({ page }) => {
+  await open(page, "stories");
+  await page.click('a[href="#/story/lion-hare"]');
+  await expect(page.locator(".story-text")).toContainText("well");
+  await expect(page.locator(".card.practice")).toContainText("Cleverness");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dp:stories:read")))).toContain("lion-hare");
+});
+
+test("a rite page shows how the rite was kept then and now", async ({ page }) => {
+  await open(page, "life/vivaha");
+  await expect(page.locator("#thenNow")).toContainText("Around the fire");
+  await expect(page.locator("#thenNow")).toContainText("In the old manuals");
+});

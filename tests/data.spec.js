@@ -108,3 +108,22 @@ test("the offline cache lists only files that exist", () => {
   const list = sw.match(/\[([^\]]+)\]/)[1].match(/"([^"]+)"/g).map((s) => s.slice(1, -1));
   for (const f of list) if (f !== "./") expect(exists(f), f).toBe(true);
 });
+
+test("every children's story has its painting, a lesson and questions", () => {
+  const ids = new Set();
+  for (const st of C.stories) {
+    expect(ids.has(st.id), st.id).toBe(false);
+    ids.add(st.id);
+    expect(exists(art(st.art)), st.id).toBe(true);
+    expect(st.body.length).toBeGreaterThan(2);
+    expect(st.lesson.length).toBeGreaterThan(20);
+    expect(st.ask.length).toBeGreaterThan(0);
+  }
+});
+
+test("every rite has its then-and-now notes", () => {
+  for (const r of C.lifeEvents) {
+    expect(r.thenNow && r.thenNow.length, r.id).toBeTruthy();
+    for (const n of r.thenNow) expect(n.length === 3 && n[0].length > 2 && n[1].length > 10 && n[2].length > 10, r.id).toBe(true);
+  }
+});
